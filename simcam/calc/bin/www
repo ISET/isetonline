@@ -10,9 +10,10 @@ var http = require('http');
 
 /**
  * Get port from environment and store in Express.
+ * For now pick a port that isn't our React port
  */
 
-var port = normalizePort(process.env.PORT || '3000');
+var port = normalizePort(process.env.PORT || '9000');
 app.set('port', port);
 
 /**
