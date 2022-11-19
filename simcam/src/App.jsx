@@ -121,15 +121,13 @@ const App = () => {
       headerName: 'Thumbnail',
       width: 128,
       field: 'thumbnail',
-<<<<<<< HEAD
       cellRenderer: ImageRenderer
     },
     { headerName: 'Scene', field: 'scene', width: 128, filter: true },
     // Lighting is Demo only so far
     { headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
 
-    { headerName: 'Lens Used', field: 'lens', filter: true },
-=======
+    { headerName: 'Lens Used', field: 'lens', filter: true,
       cellRenderer: ImageRenderer,
       tooltipField: 'Scene Thumbnail',
     },
@@ -141,7 +139,6 @@ const App = () => {
     { headerName: 'Lens Used', field: 'lens', filter: true,
     tooltipField: 'Filter and sort by lens',
     },
->>>>>>> parent of 7dcf406 (Add static site files)
     { headerName: 'Sensor', field: 'sensor', filter: true },
     // Hidden fields for addtional info
     { headerName: 'Preview', field: 'preview', hide: true },
