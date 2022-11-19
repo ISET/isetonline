@@ -13,6 +13,10 @@ function [outputFile] = oi2sensor(options)
 % sensorFile is (for now) the data file for the desired sensor
 %
 
+% other options would be changed parameters to the sensor file
+% _unless_ those are already written in to a modified sensor file?
+%
+
 % Should test for oiFiles as some type of array here
 arguments
     options.oiFiles = 'sampleoi.mat';
