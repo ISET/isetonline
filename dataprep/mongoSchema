@@ -1,0 +1,17 @@
+use iset
+
+db.createCollection('scene')
+db.scene.createIndex({"name":1},{unique:true})
+
+db.createCollection('sensor')
+db.scene.createIndex({"name":1, "pixel":1},{unique:true})
+
+db.createCollection('lens')
+db.scene.createIndex({"name":1, "pixel":1},{unique:true})
+
+db.createCollection('oi')
+db.scene.createIndex({"name":1, "pixel":1},{unique:true})
+
+db.createCollection('sensorImage')
+db.sensorImage.createIndex({"sensorname":1, "scenename":1, "opticsname":1, "aeMethod":1, "exposureTime":1}, {unique:true})
+
