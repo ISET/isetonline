@@ -167,9 +167,7 @@ const App = () => {
     return () => annotorious.destroy()
   }, [])
 
-  // Flip preview to show/hide YOLO results
-  const toggleYOLO = () => {}
-
+ 
   // Toggles current tool + button label
   const toggleTool = () => {
     if (tool === 'rect') {
@@ -181,6 +179,10 @@ const App = () => {
     }
   }
 
+      // display modes for toggling
+const captureType = useRef('single');
+const YOLOMode = useRef(false);
+  
   const gridRef = useRef()
   const expSlider = useRef()
 
@@ -252,10 +254,6 @@ const App = () => {
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
   const btnExposureListener = useCallback(event => {
-    // display modes for toggling
-    var captureType = 'single';
-
-    var YOLOMode = false;
 
     pI.current = document.getElementById('previewImage')
     fSlider.current = document.getElementById('frameSlider')
@@ -268,7 +266,7 @@ const App = () => {
         pI.current.src = selectedRow.current.preview
         selectedImage.rgbData = selectedRow.current.previewImage
         setValue(1) // sets the number of frames slider
-        captureType = 'single'
+        captureType.current = 'single'
         break
 
       case 'buttonBurst':
@@ -276,7 +274,7 @@ const App = () => {
         pI.current.src = selectedRow.current.burstPreview
         selectedImage.rgbData = selectedRow.current.burstPreview
         setValue(5)
-        captureType = 'burst'
+        captureType.current = 'burst'
         break
 
       case 'buttonBracket':
@@ -284,15 +282,15 @@ const App = () => {
         pI.current.src = selectedRow.current.bracketPreview
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
-        captureType = 'bracket'
+        captureType.current = 'bracket'
         break
       case 'buttonYOLO':
         // Show /toggle YOLO annotations
-        if (YOLOMode === false) {
+        if (YOLOMode.current === false) {
           
-          YOLOMode = true
+          YOLOMode.current = true
           ourButton.innerHTML = 'Hide YOLO'
-          switch (captureType) {
+          switch (captureType.current) {
             case 'single':
               pI.current.src = selectedRow.current.YOLOPreview
               selectedImage.rgbData = selectedRow.current.YOLOPreview
@@ -310,10 +308,10 @@ const App = () => {
               break
           }
         } else {
-          YOLOMode = false
+          YOLOMode.current = false
           ourButton.innerHTML = 'Show YOLO'
-          pI.current.src = selectedRow.current.JPEGPreview
-          selectedImage.rgbData = selectedRow.current.JPEGPreview
+          pI.current.src = selectedRow.current.preview
+          selectedImage.rgbData = selectedRow.current.preview
         }
         break
       default:
