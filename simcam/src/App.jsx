@@ -259,6 +259,7 @@ const App = () => {
 
     pI.current = document.getElementById('previewImage')
     fSlider.current = document.getElementById('frameSlider')
+    var ourButton = document.getElementById(event.target.id)
 
     // need to also change the DL file(s)
     switch (event.target.id) {
@@ -288,7 +289,9 @@ const App = () => {
       case 'buttonYOLO':
         // Show /toggle YOLO annotations
         if (YOLOMode === false) {
+          
           YOLOMode = true
+          ourButton.innerHTML = 'Hide YOLO'
           switch (captureType) {
             case 'single':
               pI.current.src = selectedRow.current.YOLOPreview
@@ -307,6 +310,8 @@ const App = () => {
               break
           }
         } else {
+          YOLOMode = false
+          ourButton.innerHTML = 'Show YOLO'
           pI.current.src = selectedRow.current.JPEGPreview
           selectedImage.rgbData = selectedRow.current.JPEGPreview
         }
@@ -631,7 +636,7 @@ const App = () => {
         </CCol>
         <CCol xs={1}>
           {/* Put buttons here? */}
-          <CButton id='buttonYOLO' onClick={btnExposureListener}>YOLO</CButton>
+          <CButton id='buttonYOLO' onClick={btnExposureListener}>Show YOLO</CButton>
         </CCol>
       </CRow>
 
