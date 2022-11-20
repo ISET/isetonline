@@ -198,17 +198,6 @@ const YOLOMode = useRef(false);
       field: 'thumbnail',
       cellRenderer: ImageRenderer
     },
-    { headerName: 'Scene', field: 'scene', width: 128, filter: true },
-    // Lighting is Demo only so far
-    { headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
-
-    {
-      headerName: 'Lens Used',
-      field: 'lens',
-      filter: true,
-      cellRenderer: ImageRenderer,
-      tooltipField: 'Scene Thumbnail'
-    },
     {
       headerName: 'Scene',
       field: 'scene',
@@ -217,7 +206,7 @@ const YOLOMode = useRef(false);
       tooltipField: 'Filter and Sort by Scene name'
     },
     // Lighting is Demo only so far
-    { headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
+    //{ headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
 
     {
       headerName: 'Lens Used',
@@ -225,7 +214,8 @@ const YOLOMode = useRef(false);
       filter: true,
       tooltipField: 'Filter and sort by lens'
     },
-    { headerName: 'Sensor', field: 'sensor', filter: true },
+    { headerName: 'Sensor', field: 'sensor', filter: true,
+      tooltipField: 'Filter and sort by sensor' },
     // Hidden fields for addtional info
     { headerName: 'Preview', field: 'preview', hide: true },
     { headerName: 'jpegName', field: 'jpegName', hide: true },
