@@ -45,8 +45,8 @@ let oiDir = '/oi/'
 
 let imageData = require(dataDir + 'metadata.json')
 
-let testImage = 'http://stanford.edu/favicon.ico'
-let previewImage = testImage // imageDir + imageData[0].jpegName
+let SU_Logo = '/glyphs/Stanford_Logo.png'
+let previewImage = SU_Logo // imageDir + imageData[0].jpegName
 
 // When the user selects a row, we will set the data files for possible download
 let selectedImage = {
@@ -344,7 +344,7 @@ const App = () => {
       {/* Row 1 is our Header & README*/}
       <CRow className="justify-content-start">
         <CCol xs={1}>
-          <CImage width='100' src='/glyphs/Stanford_Logo.png'></CImage>
+          <CImage width='100' src={SU_Logo}></CImage>
         </CCol>
         <CCol xs={4}>
           <CImage  width='300' src='/glyphs/Vista_Lab_Logo.png'></CImage>
