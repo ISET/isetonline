@@ -33,7 +33,9 @@ import { saveAs } from 'file-saver'
 
 // for showing object labels
 import { Annotorious } from '@recogito/annotorious';
-// import '@recogito/annotorious/dist/annotorious.min.css';
+// plugin to allow labels on shapes
+//import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
+import '@recogito/annotorious/dist/annotorious.min.css';
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -121,10 +123,14 @@ const App = () => {
     if (imgEl.current) {
       // Init
       annotorious = new Annotorious({
-        image: imgEl.current
+        image: imgEl.current,
+        disableEditor: true,
+        readOnly:true,
+        // this doesn't work here!
+        // formatter: Annotorious.ShapeLabelsFormatter()
       });
 
-      // Attach event handlers here
+      // Attach event handlers here in case we want interactivity
       annotorious.on('createAnnotation', annotation => {
         console.log('created', annotation);
       });
@@ -142,8 +148,7 @@ const App = () => {
     setAnno(annotorious);
 
     // Cleanup: destroy current instance
-    // NEED TO TIE TO AN IMAGE BEFORE THIS SUCEEDS!
-    //return () => annotorious.destroy();
+    return () => annotorious.destroy();
   }, []);
 
   // Toggles current tool + button label
@@ -457,7 +462,7 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
-            <CImage id='previewImage' rounded thumbnail src={previewImage} />
+            <CImage id='previewImage' ref={imgEl} rounded thumbnail src={previewImage} />
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
