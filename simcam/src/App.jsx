@@ -14,12 +14,24 @@ import ImageRenderer from './ImageRenderer.jsx'
 import '@coreui/coreui/dist/css/coreui.min.css'
 import 'bootstrap/dist/css/bootstrap.min.css'
 import {
-  CContainer, CButton, CButtonGroup, CRow, CCol, CImage,
-  CFooter, CLink, CTooltip, CButtonToolbar
+  CContainer,
+  CButton,
+  CButtonGroup,
+  CRow,
+  CCol,
+  CImage,
+  CFooter,
+  CLink,
+  CTooltip,
+  CButtonToolbar
 } from '@coreui/react'
 import {
-  CTable, CTableHead, CTableRow,
-  CTableBody, CTableHeaderCell, CTableDataCell
+  CTable,
+  CTableHead,
+  CTableRow,
+  CTableBody,
+  CTableHeaderCell,
+  CTableDataCell
 } from '@coreui/react'
 
 // MUI since it has some free bits that CoreUI doesn't
@@ -32,10 +44,10 @@ import { saveAs } from 'file-saver'
 // import { PopupComponent } from 'ag-grid-community'
 
 // for showing object labels
-import { Annotorious } from '@recogito/annotorious';
+import { Annotorious } from '@recogito/annotorious'
 // plugin to allow labels on shapes
 //import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
-import '@recogito/annotorious/dist/annotorious.min.css';
+import '@recogito/annotorious/dist/annotorious.min.css'
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -108,67 +120,64 @@ for (let ii = 0; ii < imageData.length; ii++) {
 }
 
 const App = () => {
-
   // BOILERPLATE ONLY Support for annotations:
   // Ref to the image DOM element
-  const imgEl = useRef();
+  const imgEl = useRef()
 
   // The current Annotorious instance
-  const [ anno, setAnno ] = useState();
+  const [anno, setAnno] = useState()
 
   // Current drawing tool name
-  const [ tool, setTool ] = useState('rect');
+  const [tool, setTool] = useState('rect')
 
   // Init Annotorious when the component
   // mounts, and keep the current 'anno'
   // instance in the application state
   useEffect(() => {
-    let annotorious = null;
+    let annotorious = null
 
     if (imgEl.current) {
       // Init
       annotorious = new Annotorious({
         image: imgEl.current,
         disableEditor: true,
-        readOnly:true,
+        readOnly: true
         // this doesn't work here!
         // formatter: Annotorious.ShapeLabelsFormatter()
-      });
+      })
 
       // Attach event handlers here in case we want interactivity
       annotorious.on('createAnnotation', annotation => {
-        console.log('created', annotation);
-      });
+        console.log('created', annotation)
+      })
 
       annotorious.on('updateAnnotation', (annotation, previous) => {
-        console.log('updated', annotation, previous);
-      });
+        console.log('updated', annotation, previous)
+      })
 
       annotorious.on('deleteAnnotation', annotation => {
-        console.log('deleted', annotation);
-      });
+        console.log('deleted', annotation)
+      })
     }
 
     // Keep current Annotorious instance in state
-    setAnno(annotorious);
+    setAnno(annotorious)
 
     // Cleanup: destroy current instance
-    return () => annotorious.destroy();
-  }, []);
+    return () => annotorious.destroy()
+  }, [])
 
   // Flip preview to show/hide YOLO results
-  const toggleYOLO = () => {
-
-  }
+  const toggleYOLO = () => {}
 
   // Toggles current tool + button label
   const toggleTool = () => {
     if (tool === 'rect') {
-      setTool('polygon');
-      anno.setDrawingTool('polygon');
+      setTool('polygon')
+      anno.setDrawingTool('polygon')
     } else {
-      setTool('rect');
-      anno.setDrawingTool('rect');
+      setTool('rect')
+      anno.setDrawingTool('rect')
     }
   }
 
@@ -190,17 +199,28 @@ const App = () => {
     // Lighting is Demo only so far
     { headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
 
-    { headerName: 'Lens Used', field: 'lens', filter: true,
+    {
+      headerName: 'Lens Used',
+      field: 'lens',
+      filter: true,
       cellRenderer: ImageRenderer,
-      tooltipField: 'Scene Thumbnail',
+      tooltipField: 'Scene Thumbnail'
     },
-    { headerName: 'Scene', field: 'scene', width: 128, filter: true,
-      tooltipField: 'Filter and Sort by Scene name' },
+    {
+      headerName: 'Scene',
+      field: 'scene',
+      width: 128,
+      filter: true,
+      tooltipField: 'Filter and Sort by Scene name'
+    },
     // Lighting is Demo only so far
     { headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
 
-    { headerName: 'Lens Used', field: 'lens', filter: true,
-    tooltipField: 'Filter and sort by lens',
+    {
+      headerName: 'Lens Used',
+      field: 'lens',
+      filter: true,
+      tooltipField: 'Filter and sort by lens'
     },
     { headerName: 'Sensor', field: 'sensor', filter: true },
     // Hidden fields for addtional info
@@ -216,7 +236,11 @@ const App = () => {
     { headerName: 'Bracket Preview', field: 'bracketPreview', hide: true },
     { headerName: 'YOLO Preview', field: 'YOLOPreview', hide: true },
     { headerName: 'YOLO Burst Preview', field: 'YOLOBurstPreview', hide: true },
-    { headerName: 'YOLO Bracket Preview', field: 'YOLOBracketPreview', hide: true }
+    {
+      headerName: 'YOLO Bracket Preview',
+      field: 'YOLOBracketPreview',
+      hide: true
+    }
     // We don't currently provide the Raw for burst & bracket
     // TBD: Other burst & bracket frame numbers &/or f-Stops
   ])
@@ -225,16 +249,14 @@ const App = () => {
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
 
-  // display modes for toggling
-  var captureType = {
-    Single: 'single',
-    Burst: 'burst',
-    Bracket: 'bracket'
-  }
-
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
   const btnExposureListener = useCallback(event => {
+    // display modes for toggling
+    var captureType = '';
+
+    var YOLOMode = false;
+
     pI.current = document.getElementById('previewImage')
     fSlider.current = document.getElementById('frameSlider')
 
@@ -245,7 +267,7 @@ const App = () => {
         pI.current.src = selectedRow.current.preview
         selectedImage.rgbData = selectedRow.current.previewImage
         setValue(1) // sets the number of frames slider
-        captureType = captureType.Single;
+        captureType = 'single'
         break
 
       case 'buttonBurst':
@@ -253,7 +275,7 @@ const App = () => {
         pI.current.src = selectedRow.current.burstPreview
         selectedImage.rgbData = selectedRow.current.burstPreview
         setValue(5)
-        captureType = captureType.Burst;
+        captureType = 'burst'
         break
 
       case 'buttonBracket':
@@ -261,27 +283,32 @@ const App = () => {
         pI.current.src = selectedRow.current.bracketPreview
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
-        captureType = captureType.Bracket;
+        captureType = 'Bracket'
         break
       case 'buttonYOLO':
         // Show /toggle YOLO annotations
-        // need to keep state on bracket/burst on/off
-        switch (captureType) {
-        case captureType.Single:
-          pI.current.src = selectedRow.current.YOLOPreview
-          selectedImage.rgbData = selectedRow.current.YOLOPreview
-          break
-        case captureType.Burst:
-          pI.current.src = selectedRow.current.YOLOBurstPreview
-          selectedImage.rgbData = selectedRow.current.YOLOBurstPreview
-          break
-        case captureType.CButtonGroupBracket:
-          pI.current.src = selectedRow.current.YOLOBracketPreview
-          selectedImage.rgbData = selectedRow.current.YOLOBracketPreview
-        break
-        default:
-          // Shouldn't happen
-          break
+        if (YOLOMode === false) {
+          YOLOMode = true
+          switch (captureType) {
+            case 'single':
+              pI.current.src = selectedRow.current.YOLOPreview
+              selectedImage.rgbData = selectedRow.current.YOLOPreview
+              break
+            case 'burst':
+              pI.current.src = selectedRow.current.YOLOBurstPreview
+              selectedImage.rgbData = selectedRow.current.YOLOBurstPreview
+              break
+            case 'bracket':
+              pI.current.src = selectedRow.current.YOLOBracketPreview
+              selectedImage.rgbData = selectedRow.current.YOLOBracketPreview
+              break
+            default:
+              // Shouldn't happen
+              break
+          }
+        } else {
+          pI.current.src = selectedRow.current.JPEGPreview
+          selectedImage.rgbData = selectedRow.current.JPEGPreview
         }
         break
       default:
@@ -323,7 +350,6 @@ const App = () => {
     pVoltageSwing = document.getElementById('pVoltageSwing')
     pConversionGain.textContent = event.data.pixel.conversionGain
     pVoltageSwing.textContent = event.data.pixel.voltageSwing
-
   }, [])
 
   // Handle download buttons
@@ -386,12 +412,12 @@ const App = () => {
   return (
     <CContainer fluid>
       {/* Row 1 is our Header & README*/}
-      <CRow className="justify-content-start">
+      <CRow className='justify-content-start'>
         <CCol xs={1}>
           <CImage width='100' src={SU_Logo}></CImage>
         </CCol>
         <CCol xs={4}>
-          <CImage  width='300' src='/glyphs/Vista_Lab_Logo.png'></CImage>
+          <CImage width='300' src='/glyphs/Vista_Lab_Logo.png'></CImage>
           <h2>ISET Camera Simulator</h2>
         </CCol>
         <CCol xs={7}>
@@ -493,7 +519,7 @@ const App = () => {
                   </CTableRow>
                   <CTableRow color='secondary'>
                     <CTableDataCell>Voltage Swing:</CTableDataCell>
-                    <CTableDataCell id="pVoltageSwing">...</CTableDataCell>
+                    <CTableDataCell id='pVoltageSwing'>...</CTableDataCell>
                   </CTableRow>
                   <CTableRow color='primary'>
                     <CTableDataCell>...</CTableDataCell>
@@ -506,7 +532,13 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
-            <CImage id='previewImage' ref={imgEl} rounded thumbnail src={previewImage} />
+            <CImage
+              id='previewImage'
+              ref={imgEl}
+              rounded
+              thumbnail
+              src={previewImage}
+            />
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
@@ -599,7 +631,7 @@ const App = () => {
         </CCol>
         <CCol xs={1}>
           {/* Put buttons here? */}
-          <CButton onClick={toggleYOLO}>YOLO</CButton>
+          <CButton id='buttonYOLO' onClick={btnExposureListener}>YOLO</CButton>
         </CCol>
       </CRow>
 
