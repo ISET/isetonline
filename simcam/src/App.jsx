@@ -33,14 +33,7 @@ import { saveAs } from 'file-saver'
 
 // for showing object labels
 import { Annotorious } from '@recogito/annotorious';
-import '@recogito/annotorious/dist/annotorious.min.css';
-
-var anno = Annotorious.init({
-  // Since we are in REACT, not sure the image: tag does anything
-  image: 'previewImage',
-  readOnly: true,
-  disableEditor: true
-});
+// import '@recogito/annotorious/dist/annotorious.min.css';
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -149,7 +142,8 @@ const App = () => {
     setAnno(annotorious);
 
     // Cleanup: destroy current instance
-    return () => annotorious.destroy();
+    // NEED TO TIE TO AN IMAGE BEFORE THIS SUCEEDS!
+    //return () => annotorious.destroy();
   }, []);
 
   // Toggles current tool + button label
@@ -463,7 +457,7 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
-            <CImage id='previewImage' ref={previewImage} rounded thumbnail src={previewImage} />
+            <CImage id='previewImage' rounded thumbnail src={previewImage} />
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
