@@ -81,6 +81,11 @@ for (let ii = 0; ii < imageData.length; ii++) {
       burstPreview: imageDir + imageData[ii].burstJPEGName,
       bracketPreview: imageDir + imageData[ii].bracketJPEGName,
 
+      // And our YOLO annotated versions
+      YOLOPreview: imageDir + imageData[ii].YOLOName,
+      YOLOBurstPreview: imageDir + imageData[ii].burstYOLOName,
+      YOLOBracketPreview: imageDir + imageData[ii].bracketYOLOName,
+
       // Used for download files
       jpegFile: imageData[ii].jpegName,
       sensorRawFile: imageDir + imageData[ii].sensorRawFile,
@@ -151,6 +156,11 @@ const App = () => {
     return () => annotorious.destroy();
   }, []);
 
+  // Flip preview to show/hide YOLO results
+  const toggleYOLO = () => {
+
+  }
+
   // Toggles current tool + button label
   const toggleTool = () => {
     if (tool === 'rect') {
@@ -203,7 +213,10 @@ const App = () => {
     { headerName: 'ExposureTime', field: 'eTime', hide: true },
     { headerName: 'Pixel', field: 'pixel', hide: true },
     { headerName: 'Burst Preview', field: 'burstPreview', hide: true },
-    { headerName: 'Bracket Preview', field: 'bracketPreview', hide: true }
+    { headerName: 'Bracket Preview', field: 'bracketPreview', hide: true },
+    { headerName: 'YOLO Preview', field: 'YOLOPreview', hide: true },
+    { headerName: 'YOLO Burst Preview', field: 'YOLOBurstPreview', hide: true },
+    { headerName: 'YOLO Bracket Preview', field: 'YOLOBracketPreview', hide: true }
     // We don't currently provide the Raw for burst & bracket
     // TBD: Other burst & bracket frame numbers &/or f-Stops
   ])
@@ -211,6 +224,13 @@ const App = () => {
   const fSlider = useRef([]) // This will be the preview image element & Slider
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
+
+  // display modes for toggling
+  var captureType = {
+    Single: 'single',
+    Burst: 'burst',
+    Bracket: 'bracket'
+  }
 
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
@@ -225,6 +245,7 @@ const App = () => {
         pI.current.src = selectedRow.current.preview
         selectedImage.rgbData = selectedRow.current.previewImage
         setValue(1) // sets the number of frames slider
+        captureType = captureType.Single;
         break
 
       case 'buttonBurst':
@@ -232,6 +253,7 @@ const App = () => {
         pI.current.src = selectedRow.current.burstPreview
         selectedImage.rgbData = selectedRow.current.burstPreview
         setValue(5)
+        captureType = captureType.Burst;
         break
 
       case 'buttonBracket':
@@ -239,6 +261,28 @@ const App = () => {
         pI.current.src = selectedRow.current.bracketPreview
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
+        captureType = captureType.Bracket;
+        break
+      case 'buttonYOLO':
+        // Show /toggle YOLO annotations
+        // need to keep state on bracket/burst on/off
+        switch (captureType) {
+        case captureType.Single:
+          pI.current.src = selectedRow.current.YOLOPreview
+          selectedImage.rgbData = selectedRow.current.YOLOPreview
+          break
+        case captureType.Burst:
+          pI.current.src = selectedRow.current.YOLOBurstPreview
+          selectedImage.rgbData = selectedRow.current.YOLOBurstPreview
+          break
+        case captureType.CButtonGroupBracket:
+          pI.current.src = selectedRow.current.YOLOBracketPreview
+          selectedImage.rgbData = selectedRow.current.YOLOBracketPreview
+        break
+        default:
+          // Shouldn't happen
+          break
+        }
         break
       default:
         // Shouldn't happen
@@ -555,7 +599,7 @@ const App = () => {
         </CCol>
         <CCol xs={1}>
           {/* Put buttons here? */}
-          <CButton>'TBD'</CButton>
+          <CButton onClick={toggleYOLO}>YOLO</CButton>
         </CCol>
       </CRow>
 
