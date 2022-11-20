@@ -36,6 +36,7 @@ import { Annotorious } from '@recogito/annotorious';
 import '@recogito/annotorious/dist/annotorious.min.css';
 
 var anno = Annotorious.init({
+  // Since we are in REACT, not sure the image: tag does anything
   image: 'previewImage',
   readOnly: true,
   disableEditor: true
@@ -462,7 +463,7 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
-            <CImage id='previewImage' rounded thumbnail src={previewImage} />
+            <CImage id='previewImage' ref={previewImage} rounded thumbnail src={previewImage} />
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
