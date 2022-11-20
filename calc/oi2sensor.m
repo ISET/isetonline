@@ -8,9 +8,11 @@ function [outputFile] = oi2sensor(options)
 % As a result, it takes full file names to either .mat or .json files
 % and returns one as well.
 
-%
-% oiFiles is (for now) the data file(s) for an Optical Image
-% sensorFile is (for now) the data file for the desired sensor
+% Parameters:
+
+% 'oiFiles' is (for now) the data file(s) for an Optical Image
+% 'sensorFile' is (for now) the data file for the desired sensor
+% 'exposure time' is the desired shutter speed for the compute
 %
 
 % other options would be changed parameters to the sensor file
@@ -19,14 +21,26 @@ function [outputFile] = oi2sensor(options)
 
 % Should test for oiFiles as some type of array here
 arguments
-    options.oiFiles = 'sampleoi.mat';
+    options.oiFile = 'sampleoi.mat';
     options.sensorFile = 'ar0132atSensorRGB.mat';
+    options.exposuretime = [];
 end
 
-load(options.oiFiles, 'oi');
+load(options.oiFile, 'oi');
 sensor = sensorFromFile(options.sensorFile);
 
+% Modify shutter open time if the user asks
+if ~isempty(options.exposuretime)
+    sensor = sensorSet(sensor,'exposure time', options.exposuretime);
+end
+
+% generate our modified sensorImage
+% which when running on the web we need to put somewhere useful:)
+
 sensorImage = sensorCompute(sensor, oi);
+
+% below is partially to test to see if the app runs, but also might give us
+% a useful modified preview
 
 ip = ipCreate();
 ipImage = ipCompute(ip, sensorImage);
