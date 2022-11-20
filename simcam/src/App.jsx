@@ -48,6 +48,7 @@ import { Annotorious } from '@recogito/annotorious'
 // plugin to allow labels on shapes
 //import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
 import '@recogito/annotorious/dist/annotorious.min.css'
+import { breakpoints } from '@mui/system'
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -263,7 +264,10 @@ const YOLOMode = useRef(false);
     switch (event.target.id) {
       case 'buttonAE':
         // put back the default preview
-        pI.current.src = selectedRow.current.preview
+        if (YOLOMode.current) {
+          pI.current.src = selectedRow.current.YOLOPreview }
+        else {
+          pI.current.src = selectedRow.current.preview }
         selectedImage.rgbData = selectedRow.current.previewImage
         setValue(1) // sets the number of frames slider
         captureType.current = 'single'
@@ -271,7 +275,10 @@ const YOLOMode = useRef(false);
 
       case 'buttonBurst':
         // show the burst image
-        pI.current.src = selectedRow.current.burstPreview
+        if (YOLOMode.current) {
+          pI.current.src = selectedRow.current.YOLOBurstPreview }
+        else {
+          pI.current.src = selectedRow.current.burstPreview }
         selectedImage.rgbData = selectedRow.current.burstPreview
         setValue(5)
         captureType.current = 'burst'
@@ -279,7 +286,10 @@ const YOLOMode = useRef(false);
 
       case 'buttonBracket':
         // show the bracketed image
-        pI.current.src = selectedRow.current.bracketPreview
+        if (YOLOMode.current) {
+          pI.current.src = selectedRow.current.YOLOBracketPreview }
+        else {
+          pI.current.src = selectedRow.current.bracketPreview }
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
         captureType.current = 'bracket'
@@ -293,15 +303,12 @@ const YOLOMode = useRef(false);
           switch (captureType.current) {
             case 'single':
               pI.current.src = selectedRow.current.YOLOPreview
-              selectedImage.rgbData = selectedRow.current.YOLOPreview
               break
             case 'burst':
               pI.current.src = selectedRow.current.YOLOBurstPreview
-              selectedImage.rgbData = selectedRow.current.YOLOBurstPreview
               break
             case 'bracket':
               pI.current.src = selectedRow.current.YOLOBracketPreview
-              selectedImage.rgbData = selectedRow.current.YOLOBracketPreview
               break
             default:
               // Shouldn't happen
@@ -310,8 +317,20 @@ const YOLOMode = useRef(false);
         } else {
           YOLOMode.current = false
           ourButton.innerHTML = 'Show YOLO'
-          pI.current.src = selectedRow.current.preview
-          selectedImage.rgbData = selectedRow.current.preview
+          switch (captureType.current) {
+          case 'single':
+            pI.current.src = selectedRow.current.preview
+            break
+            case 'burst':
+              pI.current.src = selectedRow.current.burstPreview
+              break
+            case 'bracket':
+              pI.current.src = selectedRow.current.bracketPreview
+              break
+            default:
+              // shouldn't get here
+              break
+          }
         }
         break
       default:
