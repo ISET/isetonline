@@ -17,11 +17,16 @@ if ~isfolder(outputFolder)
 end
 
 % Need to make db optional, as not everyone will be set up for it.
-% Port number seems to wander a bit:)
-ourDB = db('dbServer','seedling','dbPort',49211);
+useDB = false; 
 
-% If we are also using Mongo create our collections first!
-ourDB.createSchema;
+% Port number seems to wander a bit:)
+if useDB
+    ourDB = db('dbServer','seedling','dbPort',49211); 
+    % If we are also using Mongo create our collections first!
+    ourDB.createSchema;
+end
+
+
 
 % Our webserver pulls metadata from a private folder
 privateDataFolder = fullfile(onlineRootPath,'simcam','src','data');
@@ -59,7 +64,7 @@ for ii = 1:numel(sensorFiles)
     fclose(fid);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
     % We want to write these to the sensor database also
-    ourDB.store(sensor, 'collection','sensor');
+    if useDB; ourDB.store(sensor, 'collection','sensor'); end
 
 end
 
@@ -77,7 +82,7 @@ for ii = 1:lensCount
     % Get the full path to load
     lensFile = fullfile(lensFiles(ii).folder, lensFileName);
     ourLens = jsonread(lensFile);
-    ourDB.store(ourLens, 'collection','lens');
+    if useDB; ourDB.store(ourLens, 'collection','lens'); end
 end
 
 %% TBD Export "Scenes"
@@ -168,8 +173,7 @@ for ii = 1:numel(oiFiles)
         % of what variants we want for that "sensorimage"
 
         % Default Auto-Exposure breaks with oncoming headlights, etc.
-        % So we're using Mean/.5 for now.
-        % We also use some variants
+        % Experimenting with others
         %aeMethod = 'mean';
         %aeMean = .5;
         aeMethod = 'specular';
@@ -210,7 +214,6 @@ for ii = 1:numel(oiFiles)
         % We use the fullfile for local write
         % and just the filename for web use
         % May need to get fancier with #frames in filename!
-
         ipJPEGName = [fName '-' sName '.jpg'];
         ipJPEGName_burst = [fName '-' sName '-burst.jpg'];
         ipJPEGName_bracket = [fName '-' sName '-bracket.jpg'];
@@ -221,6 +224,16 @@ for ii = 1:numel(oiFiles)
         ipLocalJPEG_burst = fullfile(outputFolder,'images',ipJPEGName_burst);
         ipLocalJPEG_bracket = fullfile(outputFolder,'images',ipJPEGName_bracket);
         ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
+
+        % Do the same for our YOLO version filenames
+        ipYOLOName = [fName '-' sName '.jpg'];
+        ipYOLOName_burst = [fName '-' sName '-burst.jpg'];
+        ipYOLOName_bracket = [fName '-' sName '-bracket.jpg'];
+        
+        % "Local" is our ISET filepath, not the website path
+        ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
+        ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
+        ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
 
         % Create a default IP so we can see some baseline image
         % This could of course be tweaked
@@ -253,6 +266,23 @@ for ii = 1:numel(oiFiles)
         burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst);
         bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket);
 
+        % We also want to save a YOLO-annotated version of each!
+        % doYOLO will run detector, but need to make it integrate bboxes
+         % Generate images to use for YOLO
+        img_for_YOLO = imread(outputFile);
+        img_for_YOLO_burst = imread(burstFile);
+        img_for_YOLO_bracket = imread(bracketFile);
+
+        % Use YOLO & get back annotated image
+        img_YOLO = doYOLO(img_for_YOLO);
+        img_YOLO_burst = doYOLO(img_for_YOLO_burst);
+        img_YOLO_bracket = doYOLO(img_for_YOLO_bracket);
+
+        % Write out our annotated image
+        imwrite(img_YOLO, ipLocalYOLO);
+        imwrite(img_YOLO_burst, ipLocalYOLO_burst);
+        imwrite(img_YOLO_bracket, ipLocalYOLO_bracket);
+        
         % we could also save without an IP if we want
         %sensorSaveImage(sensor, sensorJPEG  ,'rgb');
 
@@ -263,14 +293,15 @@ for ii = 1:numel(oiFiles)
 
         % We need to save the relative paths for the website to use
         sensor_ae.metadata.jpegName = ipJPEGName;
+        sensor_ae.metadata.YOLOName = ipYOLOName;
         sensor_ae.metadata.thumbnailName = ipThumbnailName;
+
         % we also have bracket & burst (& others)
         % how do we want to store / note them?
         sensor_ae.metadata.burstJPEGName = ipJPEGName_burst;
+        sensor_ae.metadata.burstYOLOName = ipYOLOName_burst;
         sensor_ae.metadata.bracketJPEGName = ipJPEGName_bracket;
-
-        sensor_ae.metadata.jpegName = ipJPEGName;
-        sensor_ae.metadata.thumbnailName = ipThumbnailName;
+        sensor_ae.metadata.bracketYOLOName = ipYOLOName_bracket;
 
         % Stash exposure time for reference
         sensor_ae.metadata.exposureTime = aeTime;
@@ -301,7 +332,7 @@ for ii = 1:numel(oiFiles)
         % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
         % but it can manage our metadata
         % by default use the assetDB
-        ourDB.store(sensor_ae.metadata,"collection","sensor");
+        if useDB; ourDB.store(sensor_ae.metadata,"collection","sensor"); end
 
         % We ONLY write out the metadata in the main .json
         % file to keep it of reasonable size
