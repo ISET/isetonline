@@ -226,9 +226,9 @@ for ii = 1:numel(oiFiles)
         ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
         % Do the same for our YOLO version filenames
-        ipYOLOName = [fName '-' sName '.jpg'];
-        ipYOLOName_burst = [fName '-' sName '-burst.jpg'];
-        ipYOLOName_bracket = [fName '-' sName '-bracket.jpg'];
+        ipYOLOName = [fName '-' sName '-YOLO.jpg'];
+        ipYOLOName_burst = [fName '-' sName 'YOLO-burst.jpg'];
+        ipYOLOName_bracket = [fName '-' sName 'YOLO-bracket.jpg'];
         
         % "Local" is our ISET filepath, not the website path
         ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
@@ -282,7 +282,7 @@ for ii = 1:numel(oiFiles)
         imwrite(img_YOLO, ipLocalYOLO);
         imwrite(img_YOLO_burst, ipLocalYOLO_burst);
         imwrite(img_YOLO_bracket, ipLocalYOLO_bracket);
-        
+
         % we could also save without an IP if we want
         %sensorSaveImage(sensor, sensorJPEG  ,'rgb');
 

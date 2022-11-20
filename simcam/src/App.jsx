@@ -253,7 +253,7 @@ const App = () => {
   // we change the preview and possibly also the number of frames
   const btnExposureListener = useCallback(event => {
     // display modes for toggling
-    var captureType = '';
+    var captureType = 'single';
 
     var YOLOMode = false;
 
@@ -283,7 +283,7 @@ const App = () => {
         pI.current.src = selectedRow.current.bracketPreview
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
-        captureType = 'Bracket'
+        captureType = 'bracket'
         break
       case 'buttonYOLO':
         // Show /toggle YOLO annotations
