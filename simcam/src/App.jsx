@@ -247,10 +247,11 @@ const YOLOMode = useRef(false);
   const btnComputeListener = useCallback(event =>{
     // test code for now
     const requestOptions = {
-      method: 'GET', // 'POST',
-      headers: { 'Content-Type': 'application/json' }
-      // Only for POST: body: JSON.stringify({ title: 'React POST Request Example' })
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title: 'React POST Request Example' })
     };
+    // Our test server
     fetch('http://localhost:3001/', requestOptions)
       .then(response => response.json())
       .then(data => this.setState({ postId: data.id }));
