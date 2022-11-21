@@ -659,8 +659,12 @@ const YOLOMode = useRef(false);
           </CRow>
         </CCol>
         <CCol xs={1}>
-          {/* Put buttons here? */}
-          <CButton id='buttonYOLO' onClick={btnExposureListener}>Show YOLO</CButton>
+          <h5>Labels:</h5>
+          {/* Label-related buttons */}
+          <CButtonGroup vertical >
+            <CButton id='buttonYOLO' variant="outline" onClick={btnExposureListener}>Show YOLO</CButton>
+            <CButton id='buttonGT' variant="outline" disabled onClick={btnExposureListener}>Ground Truth</CButton>
+          </CButtonGroup>
         </CCol>
       </CRow>
 
