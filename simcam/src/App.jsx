@@ -334,6 +334,11 @@ const YOLOMode = useRef(false);
     setValue(1) // always start with 1 frame AE, at least for now
     pI.current = document.getElementById('previewImage')
 
+    // We should clearly add a 'setter' to the Mode
+    YOLOMode.current = false
+    var ourButton = document.getElementById('buttonYOLO')
+    ourButton.innerHTML = 'Show YOLO'
+
     pI.current.src = event.data.preview
     selectedImage.rgbData = event.data.previewImage
     selectedRow.current = event.data
@@ -397,6 +402,12 @@ const YOLOMode = useRef(false);
     saveAs(process.env.PUBLIC_URL + dlPath, dlName)
   }, [])
 
+  // for now open the preview image in a new window
+  const previewClick = useCallback(event => {
+    console.log('CLICK CALLED');
+    window.open("http://twitter.com/saigowthamr");
+  }, [])
+  
   const expMarks = [
     {
       value: 1,
@@ -544,6 +555,10 @@ const YOLOMode = useRef(false);
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
+          <CButton 
+            style={{background:'none', border:'none'}}
+            onClick={previewClick}
+            >
             <CImage
               id='previewImage'
               ref={imgEl}
@@ -551,6 +566,7 @@ const YOLOMode = useRef(false);
               thumbnail
               src={previewImage}
             />
+          </CButton>
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
