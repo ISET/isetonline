@@ -245,7 +245,15 @@ const YOLOMode = useRef(false);
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event =>{
-
+    // test code for now
+    const requestOptions = {
+      method: 'GET', // 'POST',
+      headers: { 'Content-Type': 'application/json' }
+      // Only for POST: body: JSON.stringify({ title: 'React POST Request Example' })
+    };
+    fetch('http://localhost:3001/', requestOptions)
+      .then(response => response.json())
+      .then(data => this.setState({ postId: data.id }));
   }, [])
 
   // When the user changes the type of exposure calculation
