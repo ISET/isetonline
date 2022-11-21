@@ -17,6 +17,7 @@ import {
   CContainer,
   CButton,
   CButtonGroup,
+  CForm,
   CRow,
   CCol,
   CImage,
@@ -241,6 +242,11 @@ const YOLOMode = useRef(false);
   const fSlider = useRef([]) // This will be the preview image element & Slider
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
+
+  // This is where we can add ability to call our compiled Matlab code
+  const btnComputeListener = useCallback(event =>{
+
+  }, [])
 
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
@@ -665,6 +671,8 @@ const YOLOMode = useRef(false);
             <CButton id='buttonYOLO' variant="outline" onClick={btnExposureListener}>Show YOLO</CButton>
             <CButton id='buttonGT' variant="outline" disabled onClick={btnExposureListener}>Ground Truth</CButton>
           </CButtonGroup>
+          <h5>Compute:</h5>
+          <CButton id = 'buttonCompute' variant="outline" onClick={btnComputeListener}>TEST Only</CButton>
         </CCol>
       </CRow>
 
