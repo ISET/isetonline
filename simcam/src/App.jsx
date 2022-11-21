@@ -403,9 +403,10 @@ const YOLOMode = useRef(false);
   }, [])
 
   // for now open the preview image in a new window
+  // might want to do more interesting things later
   const previewClick = useCallback(event => {
-    console.log('CLICK CALLED');
-    window.open("http://twitter.com/saigowthamr");
+    var ourImage = document.getElementById('previewImage');
+    window.open(ourImage.src);
   }, [])
   
   const expMarks = [
