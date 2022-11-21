@@ -1,3 +1,5 @@
+// UNUSED CURRENTLY
+// JUST A SOURCE OF SOME SAMPLE CODE
 const express = require("express");
 const app = express();
 const cors = require("cors");
