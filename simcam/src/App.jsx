@@ -51,11 +51,13 @@ import { Annotorious } from '@recogito/annotorious'
 import '@recogito/annotorious/dist/annotorious.min.css'
 import { breakpoints } from '@mui/system'
 
+
 // Load our rendered sensor images
 // They are located in sub-folders under /public
 let dataDir = './data/'
 let imageDir = '/images/' // Should use /public by default?
 let oiDir = '/oi/'
+let sensorDir = dataDir + 'sensors/'
 
 let imageData = require(dataDir + 'metadata.json')
 
@@ -84,6 +86,9 @@ for (let ii = 0; ii < imageData.length; ii++) {
 
       lens: imageData[ii].opticsname,
       sensor: imageData[ii].sensorname,
+
+      // pre-load sensor objects
+      sensorObject: require(sensorDir + imageData[ii].sensorFile + '.json'),
 
       // Used to set the file for the preview window
       preview: imageDir + imageData[ii].jpegName,
@@ -242,17 +247,21 @@ const YOLOMode = useRef(false);
   const fSlider = useRef([]) // This will be the preview image element & Slider
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
+  const currentSensor = useRef('')
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event =>{
     // test code for now
+    // selectedRow should already have much of what we need
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ title: 'React POST Request Example' })
+      body: JSON.stringify({ sensor: 'React POST Request Example', 
+        oiFile: 'foo.mat', name: 'sensorfile'})
     };
+
     // Our test server
-    fetch('http://localhost:3001/', requestOptions)
+    fetch('http://seedling:3001/compute', requestOptions)
       .then(response => response.json())
       .then(data => this.setState({ postId: data.id }));
   }, [])
@@ -347,28 +356,33 @@ const YOLOMode = useRef(false);
   const rowClickedListener = useCallback(event => {
     //console.log('Row Clicked: \n', event)
     setValue(1) // always start with 1 frame AE, at least for now
+    selectedRow.current = event.data
     pI.current = document.getElementById('previewImage')
+
+    // load the selected sensor in case the user wants
+    // to modify its parameters and recompute
+    currentSensor.current = selectedRow.current.sensorObject;
+    console.log(currentSensor.current);    
 
     // We should clearly add a 'setter' to the Mode
     YOLOMode.current = false
     var ourButton = document.getElementById('buttonYOLO')
     ourButton.innerHTML = 'Show YOLO'
 
-    pI.current.src = event.data.preview
-    selectedImage.rgbData = event.data.previewImage
-    selectedRow.current = event.data
+    pI.current.src = selectedRow.current.preview
+    selectedImage.rgbData = selectedRow.current.previewImage
 
     // Change preview caption
     var pCaption, eTime, aeMethod
     pCaption = document.getElementById('previewCaption')
-    pCaption.textContent = event.data.jpegFile
+    pCaption.textContent = selectedRow.current.jpegFile
 
     // Update Image property table
     eTime = document.getElementById('eTime')
-    var exposureTime = event.data.eTime
+    var exposureTime = selectedRow.current.eTime
     eTime.textContent = exposureTime.toFixed(4) + ' seconds'
     aeMethod = document.getElementById('aeMethod')
-    aeMethod.textContent = event.data.aeMethod
+    aeMethod.textContent = selectedRow.current.aeMethod
 
     // Update Pixel property table
     var pWidth, pHeight, pConversionGain, pVoltageSwing
@@ -380,8 +394,8 @@ const YOLOMode = useRef(false);
       (event.data.pixel.height * 1000000).toFixed(2) + ' microns'
     pConversionGain = document.getElementById('pConversionGain')
     pVoltageSwing = document.getElementById('pVoltageSwing')
-    pConversionGain.textContent = event.data.pixel.conversionGain
-    pVoltageSwing.textContent = event.data.pixel.voltageSwing
+    pConversionGain.textContent = selectedRow.current.pixel.conversionGain
+    pVoltageSwing.textContent = selectedRow.current.pixel.voltageSwing
   }, [])
 
   // Handle download buttons
