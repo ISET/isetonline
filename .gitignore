@@ -6,6 +6,7 @@ simcam/public/oi
 # metadata
 simcam/src/data/metadata.json
 simcam/package-lock.json
+simcam/src/data/sensors
 
 # exported data
 dataprep/datafiles

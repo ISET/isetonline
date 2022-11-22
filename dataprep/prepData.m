@@ -46,8 +46,13 @@ sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
     'ar0132atSensorRCCC.mat', ...
     'NikonD100Sensor.mat'};
 
+% Currently we want to keep a copy of sensors in /public for user
+% download, and one is src/data for us to use for the UI as needed
 if ~isfolder(fullfile(outputFolder,'sensors'))
-    mkdir(fullfile(outputFolder,'sensors'))
+    mkdir(fullfile(outputFolder,'sensors'));
+end
+if ~isfolder(fullfile(privateDataFolder,'sensors'))
+    mkdir(fullfile(privateDataFolder,'sensors'));
 end
 
 % Write parameters for each sensor as a separate JSON file
@@ -56,13 +61,19 @@ for ii = 1:numel(sensorFiles)
     load(sensorFiles{ii}); % assume they are on our path
     % change suffix to json
     [~, sName, fSuffix] = fileparts(sensorFiles{ii});
-    jSensor = jsonencode(sensor);
     sFileName = fullfile(outputFolder,'sensors',[sName '.json']);
-    % Is there really not a simpler api?
-    fid = fopen(sFileName,'w');
-    fprintf(fid,'%s',jSensor);
-    fclose(fid);
+
+    % stash the name so we can load it into the web ui
+    sensor.sensorFileName = [sName '.json'];
     jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
+
+    % LEGACY? Is there really not a simpler api?
+    %jSensor = jsonencode(sensor);
+    %fid = fopen(sFileName,'w');
+    %fprintf(fid,'%s',jSensor);
+    %fclose(fid);
+    
     % We want to write these to the sensor database also
     if useDB; ourDB.store(sensor, 'collection','sensor'); end
 
@@ -72,9 +83,7 @@ end
 %
 lensRoot = isetRootPath;
 lensFiles = lensC.list('quiet', true, 'lensRoot', lensRoot);
-
 lensNames = {lensFiles.name};
-
 lensCount = numel(lensFiles);
 
 for ii = 1:lensCount
@@ -307,8 +316,10 @@ for ii = 1:numel(oiFiles)
         sensor_ae.metadata.exposureTime = aeTime;
         sensor_ae.metadata.aeMethod = aeMethod;
 
-        % Save OI & Raw sensor file locations
+        % Save OI & Original sensor file names
+        % for runtime compute
         sensor_ae.metadata.oiFile = [fName fSuffix];
+        sensor_ae.metadata.sensorFile = sName;
 
         % Start stashing pixel information
         sensor_ae.metadata.pixel = sensor_ae.pixel;
