@@ -14,6 +14,9 @@ const { spawn, spawnSync } = require('child_process');
 const oiCommand = '/usr/oi2sensor/application/run_oi2sensor.sh';
 const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
 
+// Directory where we'll put our generated sensor image
+const outputFolder = '../local/';
+
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
 app.use(bodyParser.json())
@@ -24,14 +27,23 @@ app.get('/', (req, res) => {
 })
 
 // Here is where we want to try to do something!
-// We can start by doing a simple GET to try a spawn
-app.get('/compute', (req, res) => {
+app.post('/compute', (req, res) => {
+
+    // set the parameters for oi2sensor
+    var oiFile = req.body.oiFile;
+    var sensorFile = req.body.sensorFile;
+    var exposureTime = req.body.exposureTime;
+
+    // code here if needed to map filename params to locations
+    // unless we always send full URLs
+
     console.log('Got Compute Request\n');
     const ls = spawnSync('ls', ['-lh', '.']);
     const oi = spawnSync('sh', [oiCommand, mcrRuntime]);
     console.log('Finished Compute Request\n');
 
-    res.send('Found:' + ls.stdout + ' and ' + oi.stdout);
+    // For GET? res.send('Found:' + ls.stdout + ' and ' + oi.stdout);
+    res.send("yes");
 
 })
 
