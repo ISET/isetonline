@@ -68,7 +68,7 @@ app.post('/compute', (req, res) => {
     // or have a way to predict what it will be
 
     // Simplest case would be oiFile, sensorFile, outputFile
-    outputFile = ''; // Need to set
+    outputFile = 'sensorImage.jpg'; // Need to set
 
     // Not sure what our params need to look like to work on command line
     var userOptions = [mcrRuntime, oiFile, sPath, outputFile];
