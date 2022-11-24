@@ -197,15 +197,20 @@ const App = () => {
 
   // pieces to try out a sensor editor
   const sensorEditor = useRef()
-  const [content, setContent] = useState({
+
+  // This sets the content for the sensor editor
+  // onChange: (updatedContent, previousContent, { contentErrors, patchResult }) => {
+    // content is an object { json: JSONValue } | { text: string }
+  //  console.log('onChange', { updatedContent, previousContent, contentErrors, patchResult })
+  //  content = updatedContent
+  //}
+  const [content, setContent] = useState(
+    {
     json: {
-      greeting: "Hello World",
-      color: "#ff3e00",
-      ok: true,
-      values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      name: "Select image to see sensor data"
     },
     text: undefined
-  });
+    });
 
   // let the grid know which columns and what data to use
   const [rowData] = useState(rows)
@@ -266,18 +271,22 @@ const App = () => {
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
   const currentSensor = useRef('')
+  const userSensor = useRef('')
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event => {
     // test code for now
-    // selectedRow should already have much of what we need
+
+    // Need to figure out how to get content back out of
+    // the sensor editor to use for this!
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sensor: 'React POST Request Example',
-        oiFile: 'foo.mat',
-        name: 'sensorfile'
+        sensor: userSensor.current,
+        oiFile: selectedRow.current.oiFile,
+        name: selectedRow.current.name
       })
     }
 
@@ -384,11 +393,15 @@ const App = () => {
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
     currentSensor.current = selectedRow.current.sensorObject
-    
-    sensorEditor.content = setContent({
+
+
+    setContent({
       json: currentSensor.current,
       text: undefined
-    }); 
+    });
+    // Set the baseline user sensor
+    userSensor.current = currentSensor.current;
+
     console.log(currentSensor.current)
 
     // We should clearly add a 'setter' to the Mode
@@ -614,9 +627,9 @@ const App = () => {
             </CCol>
           </CRow>
           <CRow>
-                {/* JSON Editor for sensor object */}
-    <div className="App">
-{/* If we want to use the raw json
+            {/* JSON Editor for sensor object */}
+            <div className="App">
+              {/* If we want to use the raw json
       <p>
         <label>
           <input
@@ -627,7 +640,7 @@ const App = () => {
           Show JSON editor
         </label>
       </p> */}
-{/* If we want a read-only option
+              {/* If we want a read-only option
       <p>
         <label>
           <input
@@ -639,28 +652,33 @@ const App = () => {
         </label>
       </p> */}
 
-      {showEditor && (
-        <>
-          <h2>Sensor Editor:</h2>
-          <div className="my-editor">
-            <SvelteJSONEditor 
-              id='sensorEditor'
-              ref={sensorEditor}
-              content={content}
-              readOnly={false}
-            />
-          </div>
-        </>
-      )}
+              {showEditor && (
+                <>
+                  <h2>Sensor Editor:  
+                  
+                  <CButton onClick={btnComputeListener}>
+                    Re-compute</CButton></h2>
+                  
+                  <div className="my-editor">
+                    <SvelteJSONEditor
+                      id='sensorID'
+                      ref={sensorEditor}
+                      content={content}
+                      readOnly={false}
+                      onChange={setContent}
+                    />
+                  </div>
+                </>
+              )}
 
-      {/* If we want to show contents
+              {/* If we want to show contents
       <>
         <h2>Contents</h2>
         <pre>
           <code>{JSON.stringify(content, null, 2)}</code>
         </pre>
       </> */}
-    </div>
+            </div>
 
           </CRow>
         </CCol>
