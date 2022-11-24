@@ -40,6 +40,11 @@ import {
 import Box from '@mui/material/Box'
 import Slider from '@mui/material/Slider'
 
+// JSON Editor
+import { PureComponent } from 'react';
+import { JSONEditor } from 'reactjs-json-editor';
+import 'reactjs-json-editor/css/style.css';
+
 // Additional components
 import { saveAs } from 'file-saver'
 // import { PopupComponent } from 'ag-grid-community'
@@ -50,6 +55,7 @@ import { Annotorious } from '@recogito/annotorious'
 //import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
 import '@recogito/annotorious/dist/annotorious.min.css'
 import { breakpoints } from '@mui/system'
+
 
 
 // Load our rendered sensor images
@@ -459,11 +465,29 @@ const YOLOMode = useRef(false);
     setValue(value)
   }
 
+
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
 
   return (
+
     <CContainer fluid>
+    {/* mess with our editor */}
+    <JSONEditor
+    value={{
+            aString: 'Some string',
+            aNumber: 123.45,
+            aLink: 'https://www.google.com',
+            aNull: null,
+            anUndefined: undefined,
+            object: {
+                anArray: [
+                    new Date(),
+                    { string: 'Some other string' }
+                ]
+            }
+        }}
+      />
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
         <CCol xs={1}>
