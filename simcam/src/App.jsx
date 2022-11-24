@@ -490,49 +490,6 @@ const App = () => {
 
   return (
     <CContainer fluid>
-    <div className="App">
-      <h1>svelte-jsoneditor in React</h1>
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            checked={showEditor}
-            onChange={() => setShowEditor(!showEditor)}
-          />{" "}
-          Show JSON editor
-        </label>
-      </p>
-      <p>
-        <label>
-          <input
-            type="checkbox"
-            checked={readOnly}
-            onChange={() => setReadOnly(!readOnly)}
-          />{" "}
-          Read only
-        </label>
-      </p>
-
-      {showEditor && (
-        <>
-          <h2>Editor</h2>
-          <div className="my-editor">
-            <SvelteJSONEditor
-              content={content}
-              readOnly={readOnly}
-              onChange={setContent}
-            />
-          </div>
-        </>
-      )}
-
-      <>
-        <h2>Contents</h2>
-        <pre>
-          <code>{JSON.stringify(content, null, 2)}</code>
-        </pre>
-      </>
-    </div>
 
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
@@ -651,6 +608,55 @@ const App = () => {
                 </CTableBody>
               </CTable>
             </CCol>
+          </CRow>
+          <CRow>
+                {/* JSON Editor for sensor object */}
+    <div className="App">
+{/* If we want to use the raw json
+      <p>
+        <label>
+          <input
+            type="checkbox"
+            checked={showEditor}
+            onChange={() => setShowEditor(!showEditor)}
+          />{" "}
+          Show JSON editor
+        </label>
+      </p> */}
+{/* If we want a read-only option
+      <p>
+        <label>
+          <input
+            type="checkbox"
+            checked={readOnly}
+            onChange={() => setReadOnly(!readOnly)}
+          />{" "}
+          Read only
+        </label>
+      </p> */}
+
+      {showEditor && (
+        <>
+          <h2>Sensor Editor:</h2>
+          <div className="my-editor">
+            <SvelteJSONEditor
+              content={content}
+              readOnly={false}
+              onChange={setContent}
+            />
+          </div>
+        </>
+      )}
+
+      {/* If we want to show contents
+      <>
+        <h2>Contents</h2>
+        <pre>
+          <code>{JSON.stringify(content, null, 2)}</code>
+        </pre>
+      </> */}
+    </div>
+
           </CRow>
         </CCol>
         <CCol xs={4}>
