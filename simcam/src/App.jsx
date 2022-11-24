@@ -134,10 +134,6 @@ const App = () => {
   // Ref to the image DOM element
   const imgEl = useRef()
 
-  const setSensorValue = (valueObject) => {
-    console.log('GOT TO SET SENSOR VALUE');
-  }
-
   // The current Annotorious instance
   const [anno, setAnno] = useState()
 
@@ -198,6 +194,18 @@ const App = () => {
 
   const gridRef = useRef()
   const expSlider = useRef()
+
+  // pieces to try out a sensor editor
+  const sensorEditor = useRef()
+  const [content, setContent] = useState({
+    json: {
+      greeting: "Hello World",
+      color: "#ff3e00",
+      ok: true,
+      values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+    },
+    text: undefined
+  });
 
   // let the grid know which columns and what data to use
   const [rowData] = useState(rows)
@@ -376,6 +384,16 @@ const App = () => {
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
     currentSensor.current = selectedRow.current.sensorObject
+    
+    sensorEditor.content = setContent({
+      json: {
+        greeting: "UPDATED @@ Hello World",
+        color: "#ff3e00",
+        ok: true,
+        values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
+      },
+      text: undefined
+    }); // load into our sensor editor
     console.log(currentSensor.current)
 
     // We should clearly add a 'setter' to the Mode
@@ -475,15 +493,6 @@ const App = () => {
 
   const [showEditor, setShowEditor] = useState(true);
   const [readOnly, setReadOnly] = useState(false);
-  const [content, setContent] = useState({
-    json: {
-      greeting: "Hello World",
-      color: "#ff3e00",
-      ok: true,
-      values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-    },
-    text: undefined
-  });
 
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
@@ -639,10 +648,11 @@ const App = () => {
         <>
           <h2>Sensor Editor:</h2>
           <div className="my-editor">
-            <SvelteJSONEditor
+            <SvelteJSONEditor 
+              id='sensorEditor'
+              ref={sensorEditor}
               content={content}
               readOnly={false}
-              onChange={setContent}
             />
           </div>
         </>
