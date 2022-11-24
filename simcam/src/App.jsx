@@ -271,15 +271,16 @@ const App = () => {
   const selectedRow = useRef([]) // for use later when we need to download
   const pI = useRef('')
   const currentSensor = useRef('')
-  const userSensor = useRef('')
+  const [userSensor, setUserSensor] = useState('')
+
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event => {
     // test code for now
 
-    // Need to figure out how to get content back out of
-    // the sensor editor to use for this!
-    
+    // get content from the sensor editor to use for this
+    setUserSensor(currentSensor.current);
+
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -400,7 +401,7 @@ const App = () => {
       text: undefined
     });
     // Set the baseline user sensor
-    userSensor.current = currentSensor.current;
+    setUserSensor(currentSensor.current);
 
     console.log(currentSensor.current)
 
