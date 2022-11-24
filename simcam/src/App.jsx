@@ -386,14 +386,9 @@ const App = () => {
     currentSensor.current = selectedRow.current.sensorObject
     
     sensorEditor.content = setContent({
-      json: {
-        greeting: "UPDATED @@ Hello World",
-        color: "#ff3e00",
-        ok: true,
-        values: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15]
-      },
+      json: currentSensor.current,
       text: undefined
-    }); // load into our sensor editor
+    }); 
     console.log(currentSensor.current)
 
     // We should clearly add a 'setter' to the Mode
