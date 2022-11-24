@@ -41,9 +41,8 @@ import Box from '@mui/material/Box'
 import Slider from '@mui/material/Slider'
 
 // JSON Editor
-import { PureComponent } from 'react';
-import { JSONEditor } from 'reactjs-json-editor';
-import 'reactjs-json-editor/css/style.css';
+import JSONInput from 'react-json-editor-ajrm';
+import locale    from 'react-json-editor-ajrm/locale/en';
 
 // Additional components
 import { saveAs } from 'file-saver'
@@ -55,8 +54,6 @@ import { Annotorious } from '@recogito/annotorious'
 //import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
 import '@recogito/annotorious/dist/annotorious.min.css'
 import { breakpoints } from '@mui/system'
-
-
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -137,6 +134,10 @@ const App = () => {
   // Ref to the image DOM element
   const imgEl = useRef()
 
+  const setSensorValue = (valueObject) => {
+    console.log('GOT TO SET SENSOR VALUE');
+  }
+
   // The current Annotorious instance
   const [anno, setAnno] = useState()
 
@@ -180,7 +181,6 @@ const App = () => {
     return () => annotorious.destroy()
   }, [])
 
- 
   // Toggles current tool + button label
   const toggleTool = () => {
     if (tool === 'rect') {
@@ -192,10 +192,10 @@ const App = () => {
     }
   }
 
-      // display modes for toggling
-const captureType = useRef('single');
-const YOLOMode = useRef(false);
-  
+  // display modes for toggling
+  const captureType = useRef('single')
+  const YOLOMode = useRef(false)
+
   const gridRef = useRef()
   const expSlider = useRef()
 
@@ -226,8 +226,12 @@ const YOLOMode = useRef(false);
       filter: true,
       tooltipField: 'Filter and sort by lens'
     },
-    { headerName: 'Sensor', field: 'sensor', filter: true,
-      tooltipField: 'Filter and sort by sensor' },
+    {
+      headerName: 'Sensor',
+      field: 'sensor',
+      filter: true,
+      tooltipField: 'Filter and sort by sensor'
+    },
     // Hidden fields for addtional info
     { headerName: 'Preview', field: 'preview', hide: true },
     { headerName: 'jpegName', field: 'jpegName', hide: true },
@@ -256,26 +260,28 @@ const YOLOMode = useRef(false);
   const currentSensor = useRef('')
 
   // This is where we can add ability to call our compiled Matlab code
-  const btnComputeListener = useCallback(event =>{
+  const btnComputeListener = useCallback(event => {
     // test code for now
     // selectedRow should already have much of what we need
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ sensor: 'React POST Request Example', 
-        oiFile: 'foo.mat', name: 'sensorfile'})
-    };
+      body: JSON.stringify({
+        sensor: 'React POST Request Example',
+        oiFile: 'foo.mat',
+        name: 'sensorfile'
+      })
+    }
 
     // Our test server
     fetch('http://seedling:3001/compute', requestOptions)
       .then(response => response.json())
-      .then(data => this.setState({ postId: data.id }));
+      .then(data => this.setState({ postId: data.id }))
   }, [])
 
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
   const btnExposureListener = useCallback(event => {
-
     pI.current = document.getElementById('previewImage')
     fSlider.current = document.getElementById('frameSlider')
     var ourButton = document.getElementById(event.target.id)
@@ -285,9 +291,10 @@ const YOLOMode = useRef(false);
       case 'buttonAE':
         // put back the default preview
         if (YOLOMode.current) {
-          pI.current.src = selectedRow.current.YOLOPreview }
-        else {
-          pI.current.src = selectedRow.current.preview }
+          pI.current.src = selectedRow.current.YOLOPreview
+        } else {
+          pI.current.src = selectedRow.current.preview
+        }
         selectedImage.rgbData = selectedRow.current.previewImage
         setValue(1) // sets the number of frames slider
         captureType.current = 'single'
@@ -296,9 +303,10 @@ const YOLOMode = useRef(false);
       case 'buttonBurst':
         // show the burst image
         if (YOLOMode.current) {
-          pI.current.src = selectedRow.current.YOLOBurstPreview }
-        else {
-          pI.current.src = selectedRow.current.burstPreview }
+          pI.current.src = selectedRow.current.YOLOBurstPreview
+        } else {
+          pI.current.src = selectedRow.current.burstPreview
+        }
         selectedImage.rgbData = selectedRow.current.burstPreview
         setValue(5)
         captureType.current = 'burst'
@@ -307,9 +315,10 @@ const YOLOMode = useRef(false);
       case 'buttonBracket':
         // show the bracketed image
         if (YOLOMode.current) {
-          pI.current.src = selectedRow.current.YOLOBracketPreview }
-        else {
-          pI.current.src = selectedRow.current.bracketPreview }
+          pI.current.src = selectedRow.current.YOLOBracketPreview
+        } else {
+          pI.current.src = selectedRow.current.bracketPreview
+        }
         selectedImage.rgbData = selectedRow.current.bracketPreview
         setValue(3)
         captureType.current = 'bracket'
@@ -317,7 +326,6 @@ const YOLOMode = useRef(false);
       case 'buttonYOLO':
         // Show /toggle YOLO annotations
         if (YOLOMode.current === false) {
-          
           YOLOMode.current = true
           ourButton.innerHTML = 'Hide YOLO'
           switch (captureType.current) {
@@ -338,9 +346,9 @@ const YOLOMode = useRef(false);
           YOLOMode.current = false
           ourButton.innerHTML = 'Show YOLO'
           switch (captureType.current) {
-          case 'single':
-            pI.current.src = selectedRow.current.preview
-            break
+            case 'single':
+              pI.current.src = selectedRow.current.preview
+              break
             case 'burst':
               pI.current.src = selectedRow.current.burstPreview
               break
@@ -367,8 +375,8 @@ const YOLOMode = useRef(false);
 
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
-    currentSensor.current = selectedRow.current.sensorObject;
-    console.log(currentSensor.current);    
+    currentSensor.current = selectedRow.current.sensorObject
+    console.log(currentSensor.current)
 
     // We should clearly add a 'setter' to the Mode
     YOLOMode.current = false
@@ -440,10 +448,10 @@ const YOLOMode = useRef(false);
   // for now open the preview image in a new window
   // might want to do more interesting things later
   const previewClick = useCallback(event => {
-    var ourImage = document.getElementById('previewImage');
-    window.open(ourImage.src);
+    var ourImage = document.getElementById('previewImage')
+    window.open(ourImage.src)
   }, [])
-  
+
   const expMarks = [
     {
       value: 1,
@@ -469,25 +477,28 @@ const YOLOMode = useRef(false);
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
 
-  return (
+  const dummy = {
+    aString: 'Some sensor string',
+    aNumber: 123.45,
+    aLink: 'https://www.google.com',
+    aNull: null,
+    anUndefined: undefined,
+    object: {
+      anArray: [new Date(), { string: 'Some other string' }]
+    }
+  }
 
+  return (
     <CContainer fluid>
-    {/* mess with our editor */}
-    <JSONEditor
-    value={{
-            aString: 'Some string',
-            aNumber: 123.45,
-            aLink: 'https://www.google.com',
-            aNull: null,
-            anUndefined: undefined,
-            object: {
-                anArray: [
-                    new Date(),
-                    { string: 'Some other string' }
-                ]
-            }
-        }}
-      />
+      {/* mess with our editor -- trouble getting out of read*/}
+      <JSONInput
+        id          = 'a_unique_id'
+        placeholder = { dummy }
+        locale      = { locale }
+        height      = '550px'
+        onChange    = {setSensorValue}
+    />
+
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
         <CCol xs={1}>
@@ -609,18 +620,18 @@ const YOLOMode = useRef(false);
         </CCol>
         <CCol xs={4}>
           <CRow className='align-items-center'>
-          <CButton 
-            style={{background:'none', border:'none'}}
-            onClick={previewClick}
+            <CButton
+              style={{ background: 'none', border: 'none' }}
+              onClick={previewClick}
             >
-            <CImage
-              id='previewImage'
-              ref={imgEl}
-              rounded
-              thumbnail
-              src={previewImage}
-            />
-          </CButton>
+              <CImage
+                id='previewImage'
+                ref={imgEl}
+                rounded
+                thumbnail
+                src={previewImage}
+              />
+            </CButton>
           </CRow>
           <CRow className='align-items-center'>
             <h5>Preview of Selected Sensor Image:</h5>
@@ -714,12 +725,31 @@ const YOLOMode = useRef(false);
         <CCol xs={1}>
           <h5>Labels:</h5>
           {/* Label-related buttons */}
-          <CButtonGroup vertical >
-            <CButton id='buttonYOLO' variant="outline" onClick={btnExposureListener}>Show YOLO</CButton>
-            <CButton id='buttonGT' variant="outline" disabled onClick={btnExposureListener}>Ground Truth</CButton>
+          <CButtonGroup vertical>
+            <CButton
+              id='buttonYOLO'
+              variant='outline'
+              onClick={btnExposureListener}
+            >
+              Show YOLO
+            </CButton>
+            <CButton
+              id='buttonGT'
+              variant='outline'
+              disabled
+              onClick={btnExposureListener}
+            >
+              Ground Truth
+            </CButton>
           </CButtonGroup>
           <h5>Compute:</h5>
-          <CButton id = 'buttonCompute' variant="outline" onClick={btnComputeListener}>TEST Only</CButton>
+          <CButton
+            id='buttonCompute'
+            variant='outline'
+            onClick={btnComputeListener}
+          >
+            TEST Only
+          </CButton>
         </CCol>
       </CRow>
 
