@@ -154,3 +154,8 @@ calc/oi2sensor/
 
 # static build files are unfortunately too large to push
 simcam/build/
+simcam/server/custom/AR0132AT-RCCC MOD.json
+simcam/server/custom/AR0132AT-RGB MOD.json
+simcam/server/custom/IMX363 MOD.json
+simcam/server/custom/IMX363 with mod.json
+simcam/server/custom/IMX363_with_mod.json

@@ -21,7 +21,7 @@ const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
 
 // Directory where we'll put our generated sensor image
 var outputFolder = '../local/';
-var customFolder = '/custom/'; // for uploaded objects
+var customFolder = './custom/'; // for uploaded objects
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
@@ -48,10 +48,14 @@ app.post('/compute', (req, res) => {
 
     // We need to write the sensor object
     // into a file for passing as a param to oi2sensor.
-
     sPath = customFolder + sensor.name + '.json';
     console.log('Path is: ' + sPath)
     fs.writeFileSync(sPath, JSON.stringify(sensor));
+
+    // having trouble finding the custom folder in Matlab?
+    altSPath = "/usr/Stanford_University/oi2sensor/application" + sensor.name + '.json';
+    console.log('Alt Path is: ' + altSPath)
+    fs.writeFileSync(altSPath, JSON.stringify(sensor));
 
     // code here if needed to map filename params to locations
     // unless we always send full URLs
@@ -71,7 +75,7 @@ app.post('/compute', (req, res) => {
     outputFile = 'sensorImage.jpg'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [mcrRuntime, oiFile, sPath, outputFile];
+    var userOptions = [mcrRuntime, oiFile, altSPath, outputFile];
     console.log('User Options: ' + userOptions);
     const oi = spawnSync('sh', [oiCommand, userOptions]);
     console.log('Finished Compute Request\n');
