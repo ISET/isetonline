@@ -28,7 +28,6 @@
     "react-json-editor-ajrm": "^2.5.13",
     "react-scripts": "^5.0.1",
     "react-tooltip": "^4.4.0",
-    "reactjs-json-editor": "^0.1.2",
     "vanilla-jsoneditor": "^0.10.2"
   },
   "scripts": {

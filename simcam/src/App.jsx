@@ -279,7 +279,8 @@ const App = () => {
     // test code for now
 
     // get content from the sensor editor to use for this
-    setUserSensor(currentSensor.current);
+    //var ourEdit = document.getElementById('sensorID')
+    //setUserSensor(ourEdit.get);
 
     const requestOptions = {
       method: 'POST',
@@ -395,11 +396,16 @@ const App = () => {
     // to modify its parameters and recompute
     currentSensor.current = selectedRow.current.sensorObject
 
+    function updateUserSensor(newContent) {
+      setUserSensor(newContent);
+      return(newContent); // not used but might need a return to be a function?
+    }
 
-    setContent({
+    var newContent = setContent({
       json: currentSensor.current,
       text: undefined
     });
+
     // Set the baseline user sensor
     setUserSensor(currentSensor.current);
 
@@ -831,4 +837,4 @@ const App = () => {
   )
 }
 
-export default App
+export default updateUserSensor
