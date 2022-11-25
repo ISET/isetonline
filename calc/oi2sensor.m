@@ -10,28 +10,30 @@ function [outputFile] = oi2sensor(options)
 
 % Parameters:
 
-% 'oiFiles' is (for now) the data file(s) for an Optical Image
-% 'sensorFile' is (for now) the data file for the desired sensor
-% 'exposure time' is the desired shutter speed for the compute
+% 'oiFile' is the data file for an Optical Image
+% 'sensorFile' is the .json data file for the desired sensor & settings
+% 'outputFile' is where the computed data should be stored
+% TBD: Other bits of output, like an RGB version for viewing?
 %
 
-% other options would be changed parameters to the sensor file
-% _unless_ those are already written in to a modified sensor file?
-%
+% ISSUE: What can we pass as params? Can we string together
+%        kind of a varargin() with keywords, or do we need 
+%        to make everything positional on the command line
+%        Maybe there is a magic parameter "bundle" we can create?
 
-% Should test for oiFiles as some type of array here
 arguments
     options.oiFile = 'sampleoi.mat';
     options.sensorFile = 'ar0132atSensorRGB.mat';
-    options.exposuretime = [];
+    options.outputFile = '';
 end
 
 load(options.oiFile, 'oi');
-sensor = sensorFromFile(options.sensorFile);
 
-% Modify shutter open time if the user asks
-if ~isempty(options.exposuretime)
-    sensor = sensorSet(sensor,'exposure time', options.exposuretime);
+% sensorFile may be a json struct already
+if contains(options.sensorFile, '.json')
+    sensor = jsonread(options.sensorFile);
+else
+    sensor = sensorFromFile(options.sensorFile);
 end
 
 % generate our modified sensorImage
@@ -46,6 +48,7 @@ ip = ipCreate();
 ipImage = ipCompute(ip, sensorImage);
 
 % ipWindow(ipImage);
+% can we return a filename on the web, or do we need to have a fixed output?
 outputFile = ipSaveImage(ipImage, 'sensorRGB.png');
 
 end
