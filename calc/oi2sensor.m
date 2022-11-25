@@ -28,11 +28,12 @@ arguments
 end
 
 load(options.oiFile, 'oi');
-sensor = sensorFromFile(options.sensorFile);
 
-% Modify shutter open time if the user asks
-if ~isempty(options.exposuretime)
-    sensor = sensorSet(sensor,'exposure time', options.exposuretime);
+% sensorFile may be a json struct already
+if contains(options.sensorFile, '.json')
+    sensor = jsonread(options.sensorFile);
+else
+    sensor = sensorFromFile(options.sensorFile);
 end
 
 % generate our modified sensorImage
