@@ -74,6 +74,8 @@ let selectedImage = {
   oi: []
 }
 
+
+
 var rows
 for (let ii = 0; ii < imageData.length; ii++) {
   // Read image objects into grid rows
@@ -129,8 +131,18 @@ for (let ii = 0; ii < imageData.length; ii++) {
   }
 }
 
+var userSensorContent = '';
+function updateUserSensor(newContent) {
+  // argh. Hard to call into our App to set things
+  // maybe it can call out?
+  // setUserSensor(newContent);
+  userSensorContent = newContent;
+  return(newContent); // not used 
+}
+
 const App = () => {
-  // BOILERPLATE ONLY Support for annotations:
+
+    
   // Ref to the image DOM element
   const imgEl = useRef()
 
@@ -286,8 +298,8 @@ const App = () => {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        sensor: userSensor.current,
-        oiFile: selectedRow.current.oiFile,
+        sensor: userSensorContent,
+        oiFile: selectedRow.current.oiName,
         name: selectedRow.current.name
       })
     }
@@ -395,11 +407,6 @@ const App = () => {
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
     currentSensor.current = selectedRow.current.sensorObject
-
-    function updateUserSensor(newContent) {
-      setUserSensor(newContent);
-      return(newContent); // not used but might need a return to be a function?
-    }
 
     var newContent = setContent({
       json: currentSensor.current,
@@ -837,4 +844,4 @@ const App = () => {
   )
 }
 
-export default updateUserSensor
+export  {App, updateUserSensor}

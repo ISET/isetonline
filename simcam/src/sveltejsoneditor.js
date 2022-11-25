@@ -1,6 +1,7 @@
 import { JSONEditor } from "vanilla-jsoneditor";
 import { useEffect, useRef } from "react";
-import { updateUserSensor } from './App';
+import './App';
+import { updateUserSensor } from "./App";
 import "./sveltejsoneditor.css";
 
 let content = {
