@@ -16,11 +16,10 @@ const apiPort = 3001
 // Command we want to run as a baseline
 // Matlab wizard is pretty limited in file paths
 // but if needed I'm sure we can dig into parameters to change
-const oiCommand = '/usr/oi2sensor/application/run_oi2sensor.sh';
+const oiCommand = '/usr/Stanford University/oi2sensor/application/run_oi2sensor.sh';
 const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
-
-// Directory where we'll put our generated sensor image
-var outputFolder = '../local/';
+// Directories where we'll put our generated sensor image
+const outputFolder = '/volume1/web/isetonline/simcam/public/images/'; // need a place client can reach
 var customFolder = './custom/'; // for uploaded objects
 
 app.use(bodyParser.urlencoded({ extended: true }))
@@ -53,7 +52,7 @@ app.post('/compute', (req, res) => {
     fs.writeFileSync(sPath, JSON.stringify(sensor));
 
     // having trouble finding the custom folder in Matlab?
-    altSPath = "/usr/Stanford_University/oi2sensor/application" + sensor.name + '.json';
+    altSPath = "/usr/Stanford_University/oi2sensor/application/" + sensor.name + '.json';
     console.log('Alt Path is: ' + altSPath)
     fs.writeFileSync(altSPath, JSON.stringify(sensor));
 
@@ -72,7 +71,7 @@ app.post('/compute', (req, res) => {
     // or have a way to predict what it will be
 
     // Simplest case would be oiFile, sensorFile, outputFile
-    outputFile = 'sensorImage.jpg'; // Need to set
+    outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
     var userOptions = [mcrRuntime, oiFile, altSPath, outputFile];
