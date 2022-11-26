@@ -17,6 +17,15 @@ data/oi
 # our mongoDB (for now at least
 data/db
 
+# don't want to try to repo the redist files
+calc/oi2sensor/
+
+# static build files are unfortunately too large to push
+simcam/build/
+
+# user custom data
+simcam/server/custom
+
 # matlab temp files
 *.asv
 
@@ -149,8 +158,4 @@ dist
 .yarn/install-state.gz
 .pnp.*
 
-# don't want to try to repo the redist files
-calc/oi2sensor/
 
-# static build files are unfortunately too large to push
-simcam/build/
