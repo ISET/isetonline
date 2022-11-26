@@ -24,7 +24,7 @@ function [outputFile] = oi2sensor(options)
 arguments
     options.oiFile = 'sampleoi.mat';
     options.sensorFile = 'ar0132atSensorRGB.mat';
-    options.outputFile = '';
+    options.outputFile = 'custom_image.png';
 end
 
 load(options.oiFile, 'oi');
@@ -47,9 +47,9 @@ sensorImage = sensorCompute(sensor, oi);
 ip = ipCreate();
 ipImage = ipCompute(ip, sensorImage);
 
-% ipWindow(ipImage);
-% can we return a filename on the web, or do we need to have a fixed output?
-outputFile = ipSaveImage(ipImage, 'sensorRGB.png');
+% We use the output file name we've been passed
+outputFile = options.outputFile;
+ipSaveImage(ipImage, outputFile);
 
 end
 

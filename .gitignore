@@ -8,6 +8,8 @@ simcam/src/data/metadata.json
 simcam/package-lock.json
 simcam/src/data/sensors
 
+simcam/server/custom
+
 # exported data
 dataprep/datafiles
 
