@@ -74,7 +74,7 @@ app.post('/compute', (req, res) => {
     outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [mcrRuntime, oiFile, altSPath, outputFile];
+    var userOptions = [mcrRuntime, 'oiFile', oiFile, 'sensorFile', altSPath, 'outputFile', outputFile];
     console.log('User Options: ' + userOptions);
     const oi = spawnSync('sh', [oiCommand, userOptions]);
     console.log('Finished Compute Request\n');
