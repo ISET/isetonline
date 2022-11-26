@@ -304,11 +304,19 @@ const App = () => {
       })
     }
 
+    var responseText = '';
     // Our test server
-    fetch('http://seedling:3001/compute', requestOptions)
-      .then(response => response.json())
-      .then(data => this.setState({ postId: data.id }))
-  }, [])
+    var testServer = 'http://seedling:3001'
+
+    fetch(testServer + '/compute', requestOptions)
+      .then(response => response.text())
+      .then(rText => console.log("Response is: " + rText))
+    }, [])
+
+    // show our re-calced image 
+    window.open('http://seedling:3001' + '/images/sensorImage.png')
+
+  //  console.log('Response is: ' + responseText)
 
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames

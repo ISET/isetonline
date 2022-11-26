@@ -44,7 +44,7 @@ sensorImage = sensorCompute(sensor, oi);
 % below is partially to test to see if the app runs, but also might give us
 % a useful modified preview
 
-ip = ipCreate();
+ip = ipCreate('ourIP', sensor);
 ipImage = ipCompute(ip, sensorImage);
 
 % We use the output file name we've been passed
