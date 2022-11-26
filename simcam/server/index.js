@@ -7,7 +7,7 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const app = express()
 const fs = require('fs')
-const { spawn, spawnSync } = require('child_process');
+const { spawn, spawnSync, execSync } = require('child_process');
 
 // As a reference this works from the command line:
 //  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
@@ -81,13 +81,17 @@ app.post('/compute', (req, res) => {
     outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [' ' + mcrRuntime, ' ' + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' ' + '\'sensorFile\'' + ' ' + altSPath + ' ' +  '\'outputFile\'' + ' ' + outputFile];
+    var userOptions = [' ' + mcrRuntime +  ' ' + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' ' + '\'sensorFile\'' + ' ' + altSPath + ' ' +  '\'outputFile\'' + ' ' + outputFile];
     console.log('User Command: ' + oiCommand);
     console.log('User Options: ' + userOptions);
 
-    const oi = spawnSync('sh', [oiCommand, userOptions]);
+    launchCmd = oiCommand + ' ' + userOptions;
+    console.log('Launch command: ' + launchCmd)
+    execSync(launchCmd);
+    // const oi = spawnSync(oiCommand, userOptions);
+
     console.log('Finished Compute Request\n');
-    console.log('With oi: ' + oi);
+    // console.log('With oi: ' + oi);
 
     // For GET? res.send('Found:' + ls.stdout + ' and ' + oi.stdout);
     res.send("yes");
