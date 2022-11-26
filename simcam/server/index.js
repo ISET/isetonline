@@ -16,11 +16,12 @@ const apiPort = 3001
 // Command we want to run as a baseline
 // Matlab wizard is pretty limited in file paths
 // but if needed I'm sure we can dig into parameters to change
-const oiCommand = '/usr/Stanford University/oi2sensor/application/run_oi2sensor.sh';
+const oiCommand = '/usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh';
 const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
 // Directories where we'll put our generated sensor image
 const outputFolder = '/volume1/web/isetonline/simcam/public/images/'; // need a place client can reach
 var customFolder = './custom/'; // for uploaded objects
+const oiFolder = "/volume1/web/oi/";
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
@@ -74,10 +75,13 @@ app.post('/compute', (req, res) => {
     outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [mcrRuntime, '\'oiFile\'', oiFile, '\'sensorFile\'', altSPath, '\'outputFile\'', outputFile];
+    var userOptions = [mcrRuntime, '\'oiFile\'', oiFolder + oiFile, '\'sensorFile\'', altSPath, '\'outputFile\'', outputFile];
+    console.log('User Command: ' + oiCommand);
     console.log('User Options: ' + userOptions);
+
     const oi = spawnSync('sh', [oiCommand, userOptions]);
     console.log('Finished Compute Request\n');
+    console.log('With oi: ' + oi);
 
     // For GET? res.send('Found:' + ls.stdout + ' and ' + oi.stdout);
     res.send("yes");
