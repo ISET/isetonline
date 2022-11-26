@@ -9,6 +9,12 @@ const app = express()
 const fs = require('fs')
 const { spawn, spawnSync } = require('child_process');
 
+// As a reference this works from the command line:
+//  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
+//  /usr/local/MATLAB/MATLAB_Runtime/v911/ 'oiFile' /volume1/web/oi/oi_001.mat 
+// 'sensorFile' /usr/Stanford_University/oi2sensor/application/AR0132AT-RGB_test.json  
+// 'outputFile' /volume1/web/isetonline/simcam/public/images/sensorImage.png
+
 // pick an un-used port for now
 // should probably integrate with our client code on single port
 const apiPort = 3001
@@ -75,7 +81,7 @@ app.post('/compute', (req, res) => {
     outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [mcrRuntime, '\'oiFile\'', oiFolder + oiFile, '\'sensorFile\'', altSPath, '\'outputFile\'', outputFile];
+    var userOptions = [' ' + mcrRuntime, ' ' + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' ' + '\'sensorFile\'' + ' ' + altSPath + ' ' +  '\'outputFile\'' + ' ' + outputFile];
     console.log('User Command: ' + oiCommand);
     console.log('User Options: ' + userOptions);
 
