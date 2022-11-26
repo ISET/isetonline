@@ -25,7 +25,7 @@ const apiPort = 3001
 const oiCommand = '/usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh';
 const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
 // Directories where we'll put our generated sensor image
-const outputFolder = '/volume1/web/isetonline/simcam/public/images/'; // need a place client can reach
+const outputFolder = '/volume1/web/isetonline/simcam/server/public/images/'; // need a place client can reach
 var customFolder = './custom/'; // for uploaded objects
 const oiFolder = "/volume1/web/oi/";
 
@@ -40,6 +40,9 @@ app.get('/', (req, res) => {
 app.get('/compute', (req, res) => {
     res.send('COMPUTE Hello World!')
 })
+
+// Serve resulting images
+app.use(express.static('public'))
 
 // Here is where we want to try to do something!
 app.post('/compute', (req, res) => {
