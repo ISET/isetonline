@@ -7,7 +7,13 @@ const bodyParser = require('body-parser')
 const cors = require('cors')
 const app = express()
 const fs = require('fs')
-const { spawn, spawnSync } = require('child_process');
+const { spawn, spawnSync, execSync } = require('child_process');
+
+// As a reference this works from the command line:
+//  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
+//  /usr/local/MATLAB/MATLAB_Runtime/v911/ 'oiFile' /volume1/web/oi/oi_001.mat 
+// 'sensorFile' /usr/Stanford_University/oi2sensor/application/AR0132AT-RGB_test.json  
+// 'outputFile' /volume1/web/isetonline/simcam/public/images/sensorImage.png
 
 // pick an un-used port for now
 // should probably integrate with our client code on single port
@@ -16,12 +22,12 @@ const apiPort = 3001
 // Command we want to run as a baseline
 // Matlab wizard is pretty limited in file paths
 // but if needed I'm sure we can dig into parameters to change
-const oiCommand = '/usr/oi2sensor/application/run_oi2sensor.sh';
+const oiCommand = '/usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh';
 const mcrRuntime = '/usr/local/MATLAB/MATLAB_Runtime/v911/';
-
-// Directory where we'll put our generated sensor image
-var outputFolder = '../local/';
-var customFolder = '/custom/'; // for uploaded objects
+// Directories where we'll put our generated sensor image
+const outputFolder = '/volume1/web/isetonline/simcam/public/images/'; // need a place client can reach
+var customFolder = './custom/'; // for uploaded objects
+const oiFolder = "/volume1/web/oi/";
 
 app.use(bodyParser.urlencoded({ extended: true }))
 app.use(cors())
@@ -48,10 +54,14 @@ app.post('/compute', (req, res) => {
 
     // We need to write the sensor object
     // into a file for passing as a param to oi2sensor.
-
     sPath = customFolder + sensor.name + '.json';
     console.log('Path is: ' + sPath)
     fs.writeFileSync(sPath, JSON.stringify(sensor));
+
+    // having trouble finding the custom folder in Matlab?
+    altSPath = "/usr/Stanford_University/oi2sensor/application/" + sensor.name + '.json';
+    console.log('Alt Path is: ' + altSPath)
+    fs.writeFileSync(altSPath, JSON.stringify(sensor));
 
     // code here if needed to map filename params to locations
     // unless we always send full URLs
@@ -68,13 +78,20 @@ app.post('/compute', (req, res) => {
     // or have a way to predict what it will be
 
     // Simplest case would be oiFile, sensorFile, outputFile
-    outputFile = 'sensorImage.jpg'; // Need to set
+    outputFile = outputFolder + 'sensorImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [mcrRuntime, oiFile, sPath, outputFile];
+    var userOptions = [' ' + mcrRuntime +  ' ' + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' ' + '\'sensorFile\'' + ' ' + altSPath + ' ' +  '\'outputFile\'' + ' ' + outputFile];
+    console.log('User Command: ' + oiCommand);
     console.log('User Options: ' + userOptions);
-    const oi = spawnSync('sh', [oiCommand, userOptions]);
+
+    launchCmd = oiCommand + ' ' + userOptions;
+    console.log('Launch command: ' + launchCmd)
+    execSync(launchCmd);
+    // const oi = spawnSync(oiCommand, userOptions);
+
     console.log('Finished Compute Request\n');
+    // console.log('With oi: ' + oi);
 
     // For GET? res.send('Found:' + ls.stdout + ' and ' + oi.stdout);
     res.send("yes");
