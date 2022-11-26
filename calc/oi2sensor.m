@@ -48,7 +48,7 @@ ip = ipCreate();
 ipImage = ipCompute(ip, sensorImage);
 
 % We use the output file name we've been passed
-ipSaveImage(ipImage, outputFile);
+ipSaveImage(ipImage, option.outputFile);
 
 end
 
