@@ -211,12 +211,9 @@ const App = () => {
   const sensorEditor = useRef()
 
   // This sets the content for the sensor editor
-  // onChange: (updatedContent, previousContent, { contentErrors, patchResult }) => {
-    // content is an object { json: JSONValue } | { text: string }
-  //  console.log('onChange', { updatedContent, previousContent, contentErrors, patchResult })
-  //  content = updatedContent
-  //}
-  const [content, setContent] = useState(
+  // THIS ONE IS A TEMPLATE AND SET BEFORE ROW CLICK
+
+    const [content, setContent] = useState(
     {
     json: {
       name: "Select image to see sensor data"
@@ -414,12 +411,20 @@ const App = () => {
 
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
-    currentSensor.current = selectedRow.current.sensorObject
-
-    var newContent = setContent({
-      json: currentSensor.current,
-      text: undefined
-    });
+    var factorySensorFile = selectedRow.current.sensorObject.sensorFileName
+    var dataPrepSensorFile = factorySensorFile.replace('.json','-Baseline.json');
+    // Fetch Function   
+    fetch("/sensors/" + dataPrepSensorFile).then(
+      function(res){
+      return res.json()
+    }).then(function(data){
+    // store Data in State Data Variable
+      setContent(data)
+    }).catch(
+      function(err){
+        console.log(err, ' error')
+      }
+    )
 
     // Set the baseline user sensor
     setUserSensor(currentSensor.current);
