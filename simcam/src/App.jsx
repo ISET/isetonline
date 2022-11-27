@@ -314,7 +314,7 @@ const App = () => {
       .then(useFile => {
         var cI = document.getElementById('computedImage');
         // we actually don't use the filename yet
-        cI.src = 'http://seedling:3001' + '/images/sensorImage.png'})
+        cI.src = testServer + '/images/sensorImage.png'})
 
   }, [])
 
