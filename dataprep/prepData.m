@@ -248,7 +248,7 @@ for ii = 1:numel(oiFiles)
         % This could of course be tweaked
         ip_ae = ipCreate('ourIP',sensor_ae);
         % For RCCC we need to set the IP differently
-        if isequal(sensor_ae.name, 'AR0132AT-RCCC')
+        if contains(sensor_ae.name, 'RCCC')
             ip_ae.demosaic.method = 'analog rccc'; end
         ip_ae = ipCompute(ip_ae, sensor_ae);
 

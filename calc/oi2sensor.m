@@ -59,6 +59,10 @@ sensorImage = sensorCompute(sensor, oi);
 % a useful modified preview
 
 ip = ipCreate('ourIP', sensor);
+% For RCCC we need to set the IP differently
+if contains(sensor.name, 'RCCC')
+    ip.demosaic.method = 'analog rccc'; end
+
 ipImage = ipCompute(ip, sensorImage);
 
 % We use the output file name we've been passed

@@ -419,7 +419,10 @@ const App = () => {
       return res.json()
     }).then(function(data){
     // store Data in State Data Variable
-      setContent(data)
+      setContent({
+        json: data,
+        text: undefined
+        })
     }).catch(
       function(err){
         console.log(err, ' error')
