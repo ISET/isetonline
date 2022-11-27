@@ -43,6 +43,8 @@ app.get('/compute', (req, res) => {
 
 // Serve resulting images
 app.use(express.static('public'))
+app.use(express.static('public/images'))
+app.use(express.static('images'))
 
 // Here is where we want to try to do something!
 app.post('/compute', (req, res) => {
