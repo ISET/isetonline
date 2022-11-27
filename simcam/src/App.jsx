@@ -664,7 +664,7 @@ const App = () => {
           <CRow>
             <CCol>
               {/* JSON Editor for sensor object */}
-              <div className="App">
+              <div className="App" style={{width: 300}}>
                 {/* If we want to use the raw json
       <p>
         <label>
@@ -695,7 +695,7 @@ const App = () => {
                       <CButton onClick={btnComputeListener}>
                         Re-compute</CButton></h2>
 
-                    <div className="my-editor">
+                    <div className="my-editor" style={{width: 300}}>
                       <SvelteJSONEditor
                         id='sensorID'
                         ref={sensorEditor}
@@ -716,7 +716,7 @@ const App = () => {
       </> */}
               </div>
             </CCol>
-            <CCol> {/* put re-computed preview here for now*/}
+            <CCol style={{width: 300}}> {/* put re-computed preview here for now*/}
               <CImage
                 id='computedImage'
                 ref={computedEl}
