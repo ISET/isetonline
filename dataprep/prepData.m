@@ -67,12 +67,6 @@ for ii = 1:numel(sensorFiles)
     sensor.sensorFileName = [sName '.json'];
     jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
     jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
-
-    % LEGACY? Is there really not a simpler api?
-    %jSensor = jsonencode(sensor);
-    %fid = fopen(sFileName,'w');
-    %fprintf(fid,'%s',jSensor);
-    %fclose(fid);
     
     % We want to write these to the sensor database also
     if useDB; ourDB.store(sensor, 'collection','sensor'); end
@@ -210,6 +204,12 @@ for ii = 1:numel(oiFiles)
         sensor_burst = sensorSet(sensor_burst, 'exposure method', 'burst');
         sensor_bracket = sensorSet(sensor,'exp time',bracketTimes);
 
+        % Here is where we have sensor(s) that have our modified
+        % defaults, but have not processed an OI,
+        % so we want to write them out for use in our Sensor Editor
+        sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
+        jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
+
         % See how long this takes in case we want
         % to allow users to do it in real-time on our server
         tic;
@@ -248,7 +248,7 @@ for ii = 1:numel(oiFiles)
         % This could of course be tweaked
         ip_ae = ipCreate('ourIP',sensor_ae);
         % For RCCC we need to set the IP differently
-        if isequal(sensor_ae.name, 'AR0132AT-RCCC')
+        if contains(sensor_ae.name, 'RCCC')
             ip_ae.demosaic.method = 'analog rccc'; end
         ip_ae = ipCompute(ip_ae, sensor_ae);
 

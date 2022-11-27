@@ -17,7 +17,7 @@ function [outputFile] = oi2sensor(options)
 %
 
 % ISSUE: What can we pass as params? Can we string together
-%        kind of a varargin() with keywords, or do we need 
+%        kind of a varargin() with keywords, or do we need
 %        to make everything positional on the command line
 %        Maybe there is a magic parameter "bundle" we can create?
 
@@ -36,6 +36,20 @@ else
     sensor = sensorFromFile(options.sensorFile);
 end
 
+%% Modify sensor params to try to match what we did in default
+
+% At least for now, scale sensor to match the FOV
+hFOV = oiGet(oi,'hfov');
+sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
+
+% Default Auto-Exposure breaks with oncoming headlights, etc.
+% Experimenting with others
+%aeMethod = 'mean';
+%aeMean = .5;
+aeMethod = 'specular';
+aeLevels = .8;
+aeTime = autoExposure(oi,sensor, aeLevels, aeMethod);
+
 % generate our modified sensorImage
 % which when running on the web we need to put somewhere useful:)
 
@@ -44,7 +58,11 @@ sensorImage = sensorCompute(sensor, oi);
 % below is partially to test to see if the app runs, but also might give us
 % a useful modified preview
 
-ip = ipCreate();
+ip = ipCreate('ourIP', sensor);
+% For RCCC we need to set the IP differently
+if contains(sensor.name, 'RCCC')
+    ip.demosaic.method = 'analog rccc'; end
+
 ipImage = ipCompute(ip, sensorImage);
 
 % We use the output file name we've been passed

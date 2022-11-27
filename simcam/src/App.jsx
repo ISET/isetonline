@@ -66,6 +66,7 @@ let imageData = require(dataDir + 'metadata.json')
 
 let SU_Logo = '/glyphs/Stanford_Logo.png'
 let previewImage = SU_Logo // imageDir + imageData[0].jpegName
+let computedImage = SU_Logo // imageDir + imageData[0].jpegName
 
 // When the user selects a row, we will set the data files for possible download
 let selectedImage = {
@@ -137,14 +138,15 @@ function updateUserSensor(newContent) {
   // maybe it can call out?
   // setUserSensor(newContent);
   userSensorContent = newContent;
-  return(newContent); // not used 
+  return (newContent); // not used 
 }
 
 const App = () => {
 
-    
+
   // Ref to the image DOM element
   const imgEl = useRef()
+  const computedEl = useRef()
 
   // The current Annotorious instance
   const [anno, setAnno] = useState()
@@ -211,17 +213,14 @@ const App = () => {
   const sensorEditor = useRef()
 
   // This sets the content for the sensor editor
-  // onChange: (updatedContent, previousContent, { contentErrors, patchResult }) => {
-    // content is an object { json: JSONValue } | { text: string }
-  //  console.log('onChange', { updatedContent, previousContent, contentErrors, patchResult })
-  //  content = updatedContent
-  //}
+  // THIS ONE IS A TEMPLATE AND SET BEFORE ROW CLICK
+
   const [content, setContent] = useState(
     {
-    json: {
-      name: "Select image to see sensor data"
-    },
-    text: undefined
+      json: {
+        name: "Select image to see sensor data"
+      },
+      text: undefined
     });
 
   // let the grid know which columns and what data to use
@@ -304,11 +303,22 @@ const App = () => {
       })
     }
 
+    var responseText = '';
     // Our test server
-    fetch('http://seedling:3001/compute', requestOptions)
-      .then(response => response.json())
-      .then(data => this.setState({ postId: data.id }))
+    var testServer = 'http://seedling:3001'
+
+    fetch(testServer + '/compute', requestOptions)
+      .then(response => response.text())
+      .then(rText => console.log("Response is: " + rText))
+      // show our re-calced image 
+      .then(useFile => {
+        var cI = document.getElementById('computedImage');
+        // we actually don't use the filename yet
+        cI.src = testServer + '/images/sensorImage.png'})
+
   }, [])
+
+
 
   // When the user changes the type of exposure calculation
   // we change the preview and possibly also the number of frames
@@ -406,12 +416,23 @@ const App = () => {
 
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
-    currentSensor.current = selectedRow.current.sensorObject
-
-    var newContent = setContent({
-      json: currentSensor.current,
-      text: undefined
-    });
+    var factorySensorFile = selectedRow.current.sensorObject.sensorFileName
+    var dataPrepSensorFile = factorySensorFile.replace('.json', '-Baseline.json');
+    // Fetch Function   
+    fetch("/sensors/" + dataPrepSensorFile).then(
+      function (res) {
+        return res.json()
+      }).then(function (data) {
+        // store Data in State Data Variable
+        setContent({
+          json: data,
+          text: undefined
+        })
+      }).catch(
+        function (err) {
+          console.log(err, ' error')
+        }
+      )
 
     // Set the baseline user sensor
     setUserSensor(currentSensor.current);
@@ -602,7 +623,7 @@ const App = () => {
                 </CTableBody>
               </CTable>
             </CCol>
-            {/* For now next row is Pixel props */}
+            {/* For now next column is Pixel props */}
             <CCol>
               <CTable>
                 <CTableHead>
@@ -641,9 +662,10 @@ const App = () => {
             </CCol>
           </CRow>
           <CRow>
-            {/* JSON Editor for sensor object */}
-            <div className="App">
-              {/* If we want to use the raw json
+            <CCol>
+              {/* JSON Editor for sensor object */}
+              <div className="App">
+                {/* If we want to use the raw json
       <p>
         <label>
           <input
@@ -654,7 +676,7 @@ const App = () => {
           Show JSON editor
         </label>
       </p> */}
-              {/* If we want a read-only option
+                {/* If we want a read-only option
       <p>
         <label>
           <input
@@ -666,34 +688,43 @@ const App = () => {
         </label>
       </p> */}
 
-              {showEditor && (
-                <>
-                  <h2>Sensor Editor:  
-                  
-                  <CButton onClick={btnComputeListener}>
-                    Re-compute</CButton></h2>
-                  
-                  <div className="my-editor">
-                    <SvelteJSONEditor
-                      id='sensorID'
-                      ref={sensorEditor}
-                      content={content}
-                      readOnly={false}
-                      onChange={setContent}
-                    />
-                  </div>
-                </>
-              )}
+                {showEditor && (
+                  <>
+                    <h2>Sensor Editor:
 
-              {/* If we want to show contents
+                      <CButton onClick={btnComputeListener}>
+                        Re-compute</CButton></h2>
+
+                    <div className="my-editor">
+                      <SvelteJSONEditor
+                        id='sensorID'
+                        ref={sensorEditor}
+                        content={content}
+                        readOnly={false}
+                        onChange={setContent}
+                      />
+                    </div>
+                  </>
+                )}
+
+                {/* If we want to show contents
       <>
         <h2>Contents</h2>
         <pre>
           <code>{JSON.stringify(content, null, 2)}</code>
         </pre>
       </> */}
-            </div>
-
+              </div>
+            </CCol>
+            <CCol> {/* put re-computed preview here for now*/}
+              <CImage
+                id='computedImage'
+                ref={computedEl}
+                rounded
+                thumbnail
+                src={computedImage}
+              />
+            </CCol>
           </CRow>
         </CCol>
         <CCol xs={4}>
@@ -844,4 +875,4 @@ const App = () => {
   )
 }
 
-export  {App, updateUserSensor}
+export { App, updateUserSensor }
