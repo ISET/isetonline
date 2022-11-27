@@ -214,7 +214,6 @@ const App = () => {
 
   // This sets the content for the sensor editor
   // THIS ONE IS A TEMPLATE AND SET BEFORE ROW CLICK
-
   const [content, setContent] = useState(
     {
       json: {
@@ -223,7 +222,10 @@ const App = () => {
       text: undefined
     });
 
-  // let the grid know which columns and what data to use
+    const [computeText, setComputeText] = useState(
+      'Compute...');
+
+      // let the grid know which columns and what data to use
   const [rowData] = useState(rows)
 
   // Each Column Definition results in one Column.
@@ -291,8 +293,7 @@ const App = () => {
 
     // get content from the sensor editor to use for this
     //var ourEdit = document.getElementById('sensorID')
-    //setUserSensor(ourEdit.get);
-
+    setComputeText("Computing...")
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -314,7 +315,10 @@ const App = () => {
       .then(useFile => {
         var cI = document.getElementById('computedImage');
         // we actually don't use the filename yet
-        cI.src = testServer + '/images/sensorImage.png'})
+        cI.src = testServer + '/images/sensorImage.png'
+        setComputeText("Re-compute")
+      })
+    
 
   }, [])
 
@@ -693,7 +697,7 @@ const App = () => {
                     <h2>Sensor Editor:
 
                       <CButton onClick={btnComputeListener}>
-                        Re-compute</CButton></h2>
+                        {computeText}</CButton></h2>
 
                     <div className="my-editor" style={{width: 300}}>
                       <SvelteJSONEditor
