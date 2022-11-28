@@ -299,7 +299,9 @@ const App = () => {
     // get content from the sensor editor to use for this
     //var ourEdit = document.getElementById('sensorID')
     setComputeText("Computing...")
-    cI.current.src = SU_Logo;
+    // create a new timestamp     
+    var timestamp = new Date().getTime();      
+    cI.current.src = SU_Logo + '?t=' + timestamp;
     
     const requestOptions = {
       method: 'POST',
@@ -321,7 +323,8 @@ const App = () => {
       .then(rText => console.log("Response is: " + rText))
       // show our re-calced image 
       .then(useFile => {
-        cI.current.src = testServer + '/images/sensorImage.png'
+        timestamp = new Date().getTime();      
+        cI.current.src = testServer + '/images/sensorImage.png' + '?t=' + timestamp;
         setComputeText("Re-compute")
       })
     
