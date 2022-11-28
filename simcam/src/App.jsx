@@ -305,8 +305,9 @@ const App = () => {
     }
 
     var responseText = '';
-    // Our test server
-    var testServer = 'http://seedling:3001'
+    // Our dev and test servers
+    var devServer = 'http://seedling:3001'
+    var testServer = 'http://isetonline.dscloud.me:3001'
 
     fetch(testServer + '/compute', requestOptions)
       .then(response => response.text())
