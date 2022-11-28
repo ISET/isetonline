@@ -282,18 +282,25 @@ const App = () => {
 
   const fSlider = useRef([]) // This will be the preview image element & Slider
   const selectedRow = useRef([]) // for use later when we need to download
+
+  // Image Previews
   const pI = useRef('')
+  const cI = useRef('')
+  
   const currentSensor = useRef('')
   const [userSensor, setUserSensor] = useState('')
 
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event => {
-    // test code for now
-
+    
+    cI.current = document.getElementById('computedImage')
+ 
     // get content from the sensor editor to use for this
     //var ourEdit = document.getElementById('sensorID')
     setComputeText("Computing...")
+    cI.current.src = SU_Logo;
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -314,9 +321,7 @@ const App = () => {
       .then(rText => console.log("Response is: " + rText))
       // show our re-calced image 
       .then(useFile => {
-        var cI = document.getElementById('computedImage');
-        // we actually don't use the filename yet
-        cI.src = testServer + '/images/sensorImage.png'
+        cI.current.src = testServer + '/images/sensorImage.png'
         setComputeText("Re-compute")
       })
     
@@ -724,7 +729,6 @@ const App = () => {
             <CCol style={{width: 300}}> {/* put re-computed preview here for now*/}
               <CImage
                 id='computedImage'
-                ref={computedEl}
                 rounded
                 thumbnail
                 src={computedImage}
