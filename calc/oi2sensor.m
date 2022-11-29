@@ -69,5 +69,7 @@ ipImage = ipCompute(ip, sensorImage);
 outputFile = options.outputFile;
 ipSaveImage(ipImage, outputFile);
 
+% Consider adding YOLO support here
+
 end
 

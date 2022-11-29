@@ -320,12 +320,13 @@ const App = () => {
 
     fetch(testServer + '/compute', requestOptions)
       .then(response => response.text())
-      .then(rText => console.log("Response is: " + rText))
+      .then(rText => {
+        console.log("Response is: " + rText);
+        setComputeText("Re-compute") })
       // show our re-calced image 
       .then(useFile => {
         timestamp = new Date().getTime();      
         cI.current.src = testServer + '/images/sensorImage.png' + '?t=' + timestamp;
-        setComputeText("Re-compute")
       })
     
 
