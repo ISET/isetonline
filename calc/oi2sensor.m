@@ -25,6 +25,7 @@ arguments
     options.oiFile = 'sampleoi.mat';
     options.sensorFile = 'ar0132atSensorRGB.mat';
     options.outputFile = 'custom_image.png';
+    options.yoloFile = '';
 end
 
 load(options.oiFile, 'oi');
@@ -70,6 +71,19 @@ outputFile = options.outputFile;
 ipSaveImage(ipImage, outputFile);
 
 % Consider adding YOLO support here
+if ~isempty(options.yoloFile)
+    img = imread(outputFile); % seems silly to re-read, but...
+    ourDetector = yolov4ObjectDetector();
+    
+    [bboxes, scores, labels] = detect(ourDetector, img);
+    % disp("Score is: " + scores);
+
+    % now build annotated image to return
+    annotatedImage = insertObjectAnnotation(img,'Rectangle',bboxes,labels);
+    imwrite(annotatedImage,options.yoloFile);
+
+end
+
 
 end
 
