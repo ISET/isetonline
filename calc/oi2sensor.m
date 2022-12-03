@@ -73,14 +73,24 @@ ipSaveImage(ipImage, outputFile);
 % Consider adding YOLO support here
 if ~isempty(options.yoloFile)
     img = imread(outputFile); % seems silly to re-read, but...
+    fprintf(" Read image back in.\n");
+
+    % NOT WORKING WHEN COMPILED, BUT NOT SURE WHERE IT FAILS
+    % NOTE: 2021b doesn't have YOLOv4
+    %    and so far 2022b doesn't let us run when compiled (?)
     ourDetector = yolov4ObjectDetector();
+    fprintf(" Got Detector.\n");
     
     [bboxes, scores, labels] = detect(ourDetector, img);
     % disp("Score is: " + scores);
+    fprintf(" Got Boxes.\n");
 
     % now build annotated image to return
     annotatedImage = insertObjectAnnotation(img,'Rectangle',bboxes,labels);
+    fprintf(" Annotated Image.\n");
+
     imwrite(annotatedImage,options.yoloFile);
+    fprintf(" Wrote annotated image.\n");
 
 end
 
