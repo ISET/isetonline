@@ -35,27 +35,30 @@ else
     indicator = ((scene_mesh <= (index+offset)) & (scene_mesh>=(index-offset)));
 end
 
-% Use coco api to find the bounding box?
-segmentation = MaskApi.encode(uint8(indicator));
-area = MaskApi.area(segmentation);
-
 xSpread  = sum(indicator);
 xIndices = find(xSpread > 0);
 ySpread  = sum(indicator,2);
 yIndices = find(ySpread > 0);
 
 if isempty(xIndices) || isempty(yIndices)
-    % No indices found, return
-    return;
+    segmentation = [0 1920 0 1080];
+else
+    bbox2d.xmin = min(xIndices);
+    bbox2d.xmax = max(xIndices);
+    bbox2d.ymin = min(yIndices);
+    bbox2d.ymax = max(yIndices);
+
+    % For now just try and use the Bounding Box as the Segmentation
+    segmentation = [bbox2d.xmin bbox2d.xmax bbox2d.ymin bbox2d.ymax];
+
 end
 
 % Set up the bounding box and determine size
-bbox2d.xmin = min(xIndices);
-bbox2d.xmax = max(xIndices);
-bbox2d.ymin = min(yIndices);
-bbox2d.ymax = max(yIndices);
 w = size(scene_mesh,2);
 h = size(scene_mesh,1);
+
+
+area = w * h;
 
 % Occlusions
 ccomp = bwconncomp(indicator);
@@ -66,11 +69,13 @@ else
 end
 
 % Truncations
-if (bbox2d.xmin == 1 || bbox2d.ymin == 1 || ...
-        bbox2d.xmax == w || bbox2d.ymax == h)
-    truncated = 1;
-else
-    truncated = 0;
+if ~isempty(bbox2d)
+    if (bbox2d.xmin == 1 || bbox2d.ymin == 1 || ...
+            bbox2d.xmax == w || bbox2d.ymax == h)
+        truncated = 1;
+    else
+        truncated = 0;
+    end
 end
 
 end

@@ -127,11 +127,16 @@ end
 %}
 
 %% TMP debug
-datasetFolder = '/acorn/data/iset/isetauto/Deveshs_assets/ISETScene_007_renderings';
+datasetRoot = 'Y:\data\iset\isetauto';
+useDataRoot = 'c:\iset\isetonline\coco-annotator\datasets\auto\';
+% on Mux
+%datasetRoot = '/acorn/data/iset/isetauto/';
+
+datasetFolder = fullfile(datasetRoot,'Deveshs_assets/ISETScene_003_renderings');
 
 sceneNames = dir([datasetFolder,'/*_instanceID.exr']);
 
-outputFolder = '/acorn/data/iset/isetauto/dataset/nighttime_007';
+outputFolder = useDataRoot;
 
 if ~exist(outputFolder, 'dir'), mkdir(outputFolder);end
 % imageID = '20220328T155503';
@@ -146,7 +151,7 @@ for ss = 1:numel(sceneNames)
     instanceMap = piReadEXR(instanceMapFile, 'data type','instanceId');
 %     imwrite(uint16(instanceMap), sprintf('%s/segmentation/%s.png',datasetFolder,imageID));
     %     instanceMap = imread(sprintf('%s/segmentation/%s.png',datasetFolder,imageID));
-    objectslist = readlines(sprintf('/acorn/data/iset/isetauto/dataset/nighttime/additionalInfo/%s.txt',imageID));
+    objectslist = readlines(fullfile(datasetRoot,sprintf('dataset/nighttime/additionalInfo/%s.txt',imageID)));
     objectslist = objectslist(5:end);
     %     scene = piEXR2ISET(sprintf('/Users/zhenyi/Desktop/renderings/%s.exr',imageID),'label','radiance');
     %     scene = piAIdenoise(scene);
@@ -238,7 +243,7 @@ for ss = 1:numel(sceneNames)
             fprintf('No target found in %s.\n',imageID);
             continue;
         end
-        annotations{nBox} = struct('segmentation',segmentation,'area',area,'iscrowd',0,...
+        annotations{nBox} = struct('segmentation',[segmentation],'area',area,'iscrowd',0,...
             'image_id',str2double(imageID),'bbox',pos,'category_id',catId,'id',0,'ignore',0);
         fprintf('Class %s, instanceID: %d \n', label, ii);
         nBox = nBox+1;
@@ -275,9 +280,13 @@ data.annotations = annotations;
 
 clk = tic;
 annFile = fullfile(outputFolder, 'annotations.json');
+jsonwrite(annFile, data);
+
+%{
+    old way
 f=fopen(annFile,'w'); fwrite(f,gason(data)); fclose(f);
 fprintf('DONE (t=%0.2fs).\n',toc(clk));
-
+%}
 %% Test annotation
 %{
 cd(outputFolder);
