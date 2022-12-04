@@ -41,7 +41,7 @@ ySpread  = sum(indicator,2);
 yIndices = find(ySpread > 0);
 
 if isempty(xIndices) || isempty(yIndices)
-    segmentation = [0 1920 0 1080];
+    segmentation = [0 1920 1920 1080 1080 0 0 0];
 else
     bbox2d.xmin = min(xIndices);
     bbox2d.xmax = max(xIndices);
@@ -49,7 +49,8 @@ else
     bbox2d.ymax = max(yIndices);
 
     % For now just try and use the Bounding Box as the Segmentation
-    segmentation = [bbox2d.xmin bbox2d.xmax bbox2d.ymin bbox2d.ymax];
+    segmentation = [bbox2d.xmin bbox2d.ymin bbox2d.xmax bbox2d.ymin ...
+        bbox2d.xmax bbox2d.ymax bbox2d.xmin bbox2d.ymax];
 
 end
 

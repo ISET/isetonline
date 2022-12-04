@@ -19,6 +19,9 @@ data/oi
 # our mongoDB (for now at least
 data/db
 
+# large data we don't want in git for now
+local/
+
 # matlab temp files
 *.asv
 
