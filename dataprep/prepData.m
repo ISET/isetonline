@@ -175,15 +175,16 @@ if usePreComputedOI
         else
             load(oiDataFile);
         end
-        %%% WE NEED TO LOOP THROUGH THE SENSORS HERE
-        processSensors(oi);
+        % LOOP THROUGH THE SENSORS HERE
+        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB);
     end
 else
     for ii = 1:numel(oiComputed)
-        fName = oiComputed.name;
+        % not sure this is what we want for an fname?
+        fName = oiComputed{ii}.name;
         oi = oiComputed{ii};
-        %%% WE NEED TO LOOP THROUGH THE SENSORS HERE
-        processSensors(oi);
+        % LOOP THROUGH THE SENSORS HERE
+        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB);
     end
 end
 
@@ -193,9 +194,11 @@ end
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% For each OI process through all the sensors we have
-function foo = processSensors(oi)
+function imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB)
 oiBurst = oi;
-foo = oiBurst;
+
+% Not sure if this is right?
+fName = oi.name;
 
 % experiment with camera motion
 % for now each shift adds oi data to the oi
@@ -364,15 +367,16 @@ for iii = 1:numel(sensorFiles)
 
     % Save OI & Original sensor file names
     % for runtime compute
-    sensor_ae.metadata.oiFile = [fName fSuffix];
+
+    %%%% fSuffix not defined -- set to '.mat' for now
+    sensor_ae.metadata.oiFile = [fName '.mat'];
     sensor_ae.metadata.sensorFile = sName;
 
     % Start stashing pixel information
     sensor_ae.metadata.pixel = sensor_ae.pixel;
 
-    % WE ALSO WANT ILLUMINATION FROM THE OI
-    % FOR NOW We've stuck in some simple examples
-    sensor_ae.metadata.illumination = illumination;
+    % we might eventually get illumination
+    sensor_ae.metadata.illumination = '';
 
     % We don't want the full lensfile path
     if isfield(sensor_ae.metadata,'opticsname')

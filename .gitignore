@@ -16,6 +16,9 @@ dataprep/datafiles
 # our input data
 data/oi
 
+# auto dataset & data
+data/isetauto
+
 # our mongoDB (for now at least
 data/db
 
