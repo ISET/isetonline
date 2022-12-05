@@ -84,9 +84,14 @@ app.post('/compute', (req, res) => {
 
     // Simplest case would be oiFile, sensorFile, outputFile
     outputFile = outputFolder + 'sensorImage.png'; // Need to set
+    yoloFile = outputFolder + 'yoloImage.png'; // Need to set
 
     // Not sure what our params need to look like to work on command line
-    var userOptions = [' ' + mcrRuntime +  ' ' + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' ' + '\'sensorFile\'' + ' ' + altSPath + ' ' +  '\'outputFile\'' + ' ' + outputFile];
+    var userOptions = [' ' + mcrRuntime +  ' '
+     + '\'oiFile\'' + ' ' +  oiFolder + oiFile + ' '
+     + '\'sensorFile\'' + ' ' + altSPath
+     + ' ' +  '\'outputFile\'' + ' ' + outputFile +
+     + ' ' +  '\'yoloFile\'' + ' ' + yoloFile];
     console.log('User Command: ' + oiCommand);
     console.log('User Options: ' + userOptions);
 
