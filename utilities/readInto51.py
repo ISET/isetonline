@@ -13,10 +13,14 @@ import torchvision
 # dataset_type=fo.types.COCODetectionDataset, name="Night_3g",)
 
 # start with our first night time dataset (007 also exists)
-dataset_dir = 'c:/iset/isetonline/data/nighttime_003/'
+dataset_dir = 'c:/iset/isetonline/local/nighttime_003/'
+dataset_dir_yolo = 'c:/iset/isetonline/local/nighttime_003_yolo/'
 
 night_dataset_2 = fo.Dataset.from_dir(dataset_dir=dataset_dir,
-    dataset_type=fo.types.COCODetectionDataset, name='night_dataset_2')
+    dataset_type=fo.types.COCODetectionDataset)
+
+fo.Dataset.export(night_dataset_2,dataset_dir_yolo, dataset_type=
+    fo.types.YOLOv4Dataset)
 
 # Run the model on GPU if it is available
 device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
@@ -28,5 +32,5 @@ model.eval()
 
 print("Model ready")
 
-session = fo.launch_app(night_dataset_2, port=5051)
+session = fo.launch_app(night_dataset_2, port=5052)
 
