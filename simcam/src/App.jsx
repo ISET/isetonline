@@ -214,7 +214,6 @@ const App = () => {
 
   // This sets the content for the sensor editor
   // THIS ONE IS A TEMPLATE AND SET BEFORE ROW CLICK
-
   const [content, setContent] = useState(
     {
       json: {
@@ -223,7 +222,10 @@ const App = () => {
       text: undefined
     });
 
-  // let the grid know which columns and what data to use
+    const [computeText, setComputeText] = useState(
+      'Compute...');
+
+      // let the grid know which columns and what data to use
   const [rowData] = useState(rows)
 
   // Each Column Definition results in one Column.
@@ -280,19 +282,27 @@ const App = () => {
 
   const fSlider = useRef([]) // This will be the preview image element & Slider
   const selectedRow = useRef([]) // for use later when we need to download
+
+  // Image Previews
   const pI = useRef('')
+  const cI = useRef('')
+  
   const currentSensor = useRef('')
   const [userSensor, setUserSensor] = useState('')
 
 
   // This is where we can add ability to call our compiled Matlab code
   const btnComputeListener = useCallback(event => {
-    // test code for now
-
+    
+    cI.current = document.getElementById('computedImage')
+ 
     // get content from the sensor editor to use for this
     //var ourEdit = document.getElementById('sensorID')
-    //setUserSensor(ourEdit.get);
-
+    setComputeText("Computing...")
+    // create a new timestamp     
+    var timestamp = new Date().getTime();      
+    cI.current.src = SU_Logo + '?t=' + timestamp;
+    
     const requestOptions = {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -304,17 +314,21 @@ const App = () => {
     }
 
     var responseText = '';
-    // Our test server
-    var testServer = 'http://seedling:3001'
+    // Our dev and test servers
+    var devServer = 'http://seedling:3001'
+    var testServer = 'http://isetonline.dscloud.me:3001'
 
     fetch(testServer + '/compute', requestOptions)
       .then(response => response.text())
-      .then(rText => console.log("Response is: " + rText))
+      .then(rText => {
+        console.log("Response is: " + rText);
+        setComputeText("Re-compute") })
       // show our re-calced image 
       .then(useFile => {
-        var cI = document.getElementById('computedImage');
-        // we actually don't use the filename yet
-        cI.src = testServer + '/images/sensorImage.png'})
+        timestamp = new Date().getTime();      
+        cI.current.src = testServer + '/images/sensorImage.png' + '?t=' + timestamp;
+      })
+    
 
   }, [])
 
@@ -664,7 +678,7 @@ const App = () => {
           <CRow>
             <CCol>
               {/* JSON Editor for sensor object */}
-              <div className="App">
+              <div className="App" style={{width: 300}}>
                 {/* If we want to use the raw json
       <p>
         <label>
@@ -693,9 +707,9 @@ const App = () => {
                     <h2>Sensor Editor:
 
                       <CButton onClick={btnComputeListener}>
-                        Re-compute</CButton></h2>
+                        {computeText}</CButton></h2>
 
-                    <div className="my-editor">
+                    <div className="my-editor" style={{width: 300}}>
                       <SvelteJSONEditor
                         id='sensorID'
                         ref={sensorEditor}
@@ -716,10 +730,9 @@ const App = () => {
       </> */}
               </div>
             </CCol>
-            <CCol> {/* put re-computed preview here for now*/}
+            <CCol style={{width: 300}}> {/* put re-computed preview here for now*/}
               <CImage
                 id='computedImage'
-                ref={computedEl}
                 rounded
                 thumbnail
                 src={computedImage}
