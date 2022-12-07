@@ -91,17 +91,26 @@ for ii = 1:numel(objectslist)
 end
 
 %%
+%{
+% Since we aren't doing COCO, we might not need this?
 anno_uniqueID = randperm(100000,numel(annotations));
 for nn = 1:numel(annotations)
     annotations{nn}.id = anno_uniqueID(nn);
 end
-
 data.images = images;
 data.annotations = annotations;
 
 clk = tic;
 annFile = fullfile(outputFolder, 'annotations.json');
 jsonwrite(annFile, data);
+%}
+
+% Instead we want to return our JSON structure to our caller
+% So that they can embed it into an output file
+% and create an annotated version (unless we return that also)
+
+% Have to set contents of data
+return GTdata
 
 end
 
