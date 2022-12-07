@@ -29,102 +29,6 @@ categories{6} = struct('supercategory','vehicle','id',dataDict("bicycle"),'name'
 categories{7} = struct('supercategory','vehicle','id',dataDict("motorcycle"),'name','motorcycle');
 
 data.categories = categories;
-%{
-%% images
-dataset_dir = '/Volumes/SSDZhenyi/Ford Project/dataset/ford_dataset';
-imgList = dir(sprintf('%s/rgb/*.png',dataset_dir));
-%%
-% images = cell(size(imgList,1),1);
-nn_anno = 1;n_img = 1;
-% anno_uniqueID = randperm(n,k);
-for ii = 1:numel(imgList)
-    if strncmp(imgList(ii).name, '._',2)
-        continue;
-    end
-    imgName = erase(imgList(ii).name,{'.png'});
-    imgId   = erase(imgList(ii).name,{'.png','T'});% otherwise too long to save
-    imgId   = str2double(imgId(6:end));
-
-    newFilePath = fullfile(dataset_dir,'rgb',[sprintf('%d',imgId),'.png']);
-    if ~exist(newFilePath,'file')
-        thisImgOld = fullfile(dataset_dir,'rgb',imgList(ii).name);
-        newFilePath = fullfile(dataset_dir,'rgb',[sprintf('%d',imgId),'.png']);
-        movefile(thisImgOld,newFilePath);
-
-        thisImgOld = fullfile(dataset_dir,'depth',imgList(ii).name);
-        newFilePath = fullfile(dataset_dir,'depth',[sprintf('%d',imgId),'.png']);
-        movefile(thisImgOld,newFilePath);
-
-        thisImgOld = fullfile(dataset_dir,'segmentation',imgList(ii).name);
-        newFilePath = fullfile(dataset_dir,'segmentation',[sprintf('%d',imgId),'.png']);
-        movefile(thisImgOld,newFilePath);
-
-        thisFileOld = fullfile(dataset_dir,'additionalInfo',strrep(imgList(ii).name,'.png','.txt'));        
-        newFilePath = fullfile(dataset_dir,'additionalInfo',[sprintf('%d',imgId),'.txt']);
-        movefile(thisFileOld,newFilePath);
-    end
-    % image
-
-    Image_coco = load(sprintf('%s/%s_image.mat',dataset_dir,imgName),'Image_coco');
-
-    thisFileOld = sprintf('%s/%s_image.mat',dataset_dir,imgName);
-    newFilePath = sprintf('%s/%s_image.mat',dataset_dir,[sprintf('%d',imgId)]);
-    movefile(thisFileOld,newFilePath);
-
-    Image_coco = Image_coco.Image_coco;
-    Image_coco.file_name = sprintf('%d.png',imgId);
-    Image_coco.id = imgId;  % my mistake here, no need in the future;
-    images{n_img} = Image_coco;
-    
-    % annotation
-    Anno_coco = load(sprintf('%s/%s_anno.mat',dataset_dir,imgName),'Annotation_coco');
-    Anno_coco = Anno_coco.Annotation_coco;
-
-    for nn = 1:numel(Anno_coco)
-        Anno_coco{nn}.image_id = imgId;  % my mistake here, no need in the future;
-        if Anno_coco{nn}.category_id == 2
-            Anno_coco{nn}.category_id = 3;
-        end
-        annotations{nn_anno} = Anno_coco{nn};
-        nn_anno = nn_anno + 1;
-    end
-
-    n_img = n_img + 1;
-
-end
-% coco needs a random unique number for each annoation;
-anno_uniqueID = randperm(100000,numel(annotations));
-for nn = 1:numel(annotations)
-    annotations{nn}.id = anno_uniqueID(nn);
-end
-
-data.images = images;
-data.annotations = annotations;
-%%    
-clk = tic;
-annFile = fullfile(dataset_dir, 'annotations.json');
-f=fopen(annFile,'w'); fwrite(f,gason(data)); fclose(f);
-fprintf('DONE (t=%0.2fs).\n',toc(clk));
-%% Test
-cd(dataset_dir);
-annFile = 'annotations.json';
-coco=CocoApi(annFile);
-dataType = [];
-%% get all images containing given categories, select one at random
-catIds = coco.getCatIds('catNms',{'car','deer'});
-for ii = 1:numel(coco.data.images)
-    imgId  = coco.data.images(ii).id;
-    % load and display image
-    img = coco.loadImgs(imgId);
-    I = imread(sprintf('rgb/%s',img.file_name));
-    figure(1); imagesc(I); axis('image'); set(gca,'XTick',[],'YTick',[]);
-    fprintf('No.%d ImageId: %13d\n',ii,imgId);
-    % load and display annotations
-    annIds = coco.getAnnIds('imgIds',imgId,'catIds',catIds,'iscrowd',[]);
-    anns   = coco.loadAnns(annIds); coco.showAnns(anns);
-    pause();
-end
-%}
 
 %% TMP debug
 datasetRoot = 'Y:\data\iset\isetauto';
@@ -186,11 +90,6 @@ for ss = 1:numel(sceneNames)
 %     imshow(radiance);title('Bounding Box');
 
     [h,w,~] = size(instanceMap);
-    % write out object ID for segmentation map;
-    % seg_FID = fopen(fullfile(datasetFolder,'additionalInfo',[imageID,'.txt']),'w+');
-    % fprintf(seg_FID,'sceneName: %s\nSkymap: %s\nCameraType: %s\n',sceneName, ...
-    %     erase(sceneData.skymap,'.exr'), camera_type);
-    % fprintf(seg_FID,'Object ID:\n');
 %     Annotation_coco = [];
     for ii = 1:numel(objectslist)
         name = objectslist{ii};
@@ -204,7 +103,7 @@ for ss = 1:numel(sceneNames)
             label = 'Deer';
             catId = dataDict('deer');
         elseif contains(lower(name),['person','pedestrian'])
-            lable = 'Person';
+            label = 'Person';
             catId = dataDict('person');
         elseif contains(lower(name), 'bus')
             label = 'vehicle';
@@ -282,34 +181,3 @@ clk = tic;
 annFile = fullfile(outputFolder, 'annotations.json');
 jsonwrite(annFile, data);
 
-%{
-    old way
-f=fopen(annFile,'w'); fwrite(f,gason(data)); fclose(f);
-fprintf('DONE (t=%0.2fs).\n',toc(clk));
-%}
-%% Test annotation
-%{
-cd(outputFolder);
-%%
-dataFile = 'datasetParams.json';
-annFile = 'annotations.json';
-coco=CocoApi(annFile);
-dataType = [];
-% get all images containing given categories, select one at random
-catIds = coco.getCatIds('catNms',{'car'});
-for ii = 1:numel(coco.data.images)
-    imgId  = coco.data.images(ii).id;
-    % load and display image
-    img = coco.loadImgs(imgId);
-    I = imread(fullfile(outputFolder,img.file_name));
-    figure(1); imagesc(I); axis('image'); set(gca,'XTick',[],'YTick',[]);
-    fprintf('No.%d ImageId: %13d\n',ii,imgId);
-    % load and display annotations
-    annIds = coco.getAnnIds('imgIds',imgId,'catIds',catIds,'iscrowd',[]);
-    anns   = coco.loadAnns(annIds); coco.showAnns(anns);
-    pause();
-end
-%%
-%}
-
-%}
