@@ -41,11 +41,9 @@ end
 
 %% Export sensor(s)
 % Provide data for the sensors used so people can work with it on their own
+% another:     'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
-    'ar0132atSensorrgb.mat', ...
-    'ar0132atSensorRGBW.mat', ...
-    'ar0132atSensorRCCC.mat', ...
-    'NikonD100Sensor.mat'};
+    'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
@@ -124,8 +122,8 @@ else
     sceneFolder = "y:\data\iset\isetauto\dataset\nighttime_003\";
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
-    % Limit how many scenes we use for now, as they are expensive
-    numScenes = min(3, numel(sceneFileEntries));
+    % Limit how many scenes we use for testing to speed things up
+    numScenes = min(6, numel(sceneFileEntries));
 
     sceneFileNames = '';
     for ii = 1:numScenes
@@ -195,7 +193,6 @@ jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% For each OI process through all the sensors we have
 function imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB)
-oiBurst = oi;
 
 % Not sure if this is right?
 fName = oi.name;
@@ -205,6 +202,7 @@ fName = oi.name;
 % for expediency we're doing this once per OI, although ideally
 % we'd recalc for each sensor.
 
+oiBurst = oi;
 % Pick a large amount for testing
 oiBurst = oiCameraMotion(oiBurst, 'amount', ...
     {[0 .05], [0 .1], [0 .15], [0 .2]});
@@ -219,6 +217,8 @@ for iii = 1:numel(sensorFiles)
     % to match the FOV
     hFOV = oiGet(oi,'hfov');
     sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
+    
+
 
     %% Now we have an OI + Sensor
     % so at this point we should have a notion/function
