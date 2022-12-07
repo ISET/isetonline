@@ -13,6 +13,12 @@ arguments
     % others?
 end
 
+%% Categories
+catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
+catIds   = [0, 91, 2, 5, 7, 1, 3];
+dataDict = dictionary(catNames, catIds);
+
+
 instanceData = exrread(options.instanceFile); % DOUBLE CHECK
 
 end
