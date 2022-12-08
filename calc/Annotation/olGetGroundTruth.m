@@ -97,8 +97,10 @@ for ii = 1:numel(objectslist)
     end
 
     % Build our return JSON structure
+    % detector version returns: annotated_images, bboxes, scores
+    % but we have different info, of course
     GTData(objectIndex).label = label;
-    GTData(objectIndex).bbox = pos;
+    GTData(objectIndex).bbox2d = pos;
     GTData(objectIndex).catId = catId;
 
     objectIndex = objectIndex + 1;

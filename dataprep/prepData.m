@@ -124,9 +124,17 @@ else
     oiPinhole = oiCreate('pinhole');
 
     % Here is where we look for our scenes
-    % Need to sort out a way to make this more flexible
-    sceneFolder = "y:\data\iset\isetauto\dataset\nighttime_003\";
+    % TMP HACK with hard-coded paths
+    if ispc
+        datasetRoot = 'Y:\data\iset\isetauto';
+        sceneFolder = fullfile(datasetRoot, '\dataset\nighttime_003\');
+    else
+        % on Mux
+        datasetRoot = '/acorn/data/iset/isetauto/';
+        sceneFolder = fullfile(datasetRoot, '/dataset/nighttime_003/');
+    end
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
+    datasetFolder = fullfile(datasetRoot,'Deveshs_assets/ISETScene_003_renderings');
 
     % Limit how many scenes we use for testing to speed things up
     sceneNumberLimit = 6;
@@ -182,8 +190,13 @@ if usePreComputedOI
         else
             load(oiDataFile);
         end
+
+        % specify the files needed to extract Ground Truth
+        infoFiles.instanceFile = xxx;
+        infoFiles.additionalFile = xxx;
+
         % LOOP THROUGH THE SENSORS HERE
-        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB);
+        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, infoFiles, useDB);
     end
 else
     for ii = 1:numel(oiComputed)
@@ -205,7 +218,7 @@ end
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% For each OI process through all the sensors we have
-function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, useDB)
+function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB)
 
 % Not sure if this is right?
 fName = oi.name;
@@ -361,7 +374,8 @@ for iii = 1:numel(sensorFiles)
     img_for_GT_bracket = imread(bracketFile);
 
     % Use GT & get back annotated image
-    img_GT = doGT(img_for_GT);
+    img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
+        'additionalFile',infoFiles.additionalFile);
     img_GT_burst = doGT(img_for_GT_burst);
     img_GT_bracket = doGT(img_for_GT_bracket);
 
