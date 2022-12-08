@@ -367,10 +367,15 @@ for iii = 1:numel(sensorFiles)
     img_for_YOLO_bracket = imread(bracketFile);
 
     % Use YOLO & get back annotated image
-    % ALSO GET YOLO METADATA SO WE CAN WRITE IT OUT!
-    img_YOLO = doYOLO(img_for_YOLO);
-    img_YOLO_burst = doYOLO(img_for_YOLO_burst);
-    img_YOLO_bracket = doYOLO(img_for_YOLO_bracket);
+    % FIGURE OUT HOW TO WRITE OUT YOLO DATA
+    [img_YOLO, bboxes, scores, labels] = doYOLO(img_for_YOLO);
+    yoloJSON.bboxes = bboxes;
+    yoloJSON.scores = scores;
+    yoloJSON.labels = labels;
+
+    % Don't know if we need to write these version out separately?
+    [img_YOLO_burst, bboxes, scores, labels] = doYOLO(img_for_YOLO_burst);
+    [img_YOLO_bracket, bboxes, scores, labels] = doYOLO(img_for_YOLO_bracket);
 
     % Write out our annotated image
     imwrite(img_YOLO, ipLocalYOLO);
