@@ -18,6 +18,9 @@ end
 
 % Need to make db optional, as not everyone will be set up for it.
 useDB = false;
+
+% We can either process pre-computed optical images
+% or synthetic scenes that have been rendered through a pinhole by PBRT
 usePreComputedOI = false;
 
 % Port number seems to wander a bit:)
@@ -283,6 +286,16 @@ for iii = 1:numel(sensorFiles)
     ipLocalJPEG_bracket = fullfile(outputFolder,'images',ipJPEGName_bracket);
     ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
+    % Do the same for our Ground Truth filenames
+    ipGTName = [fName '-' sName '-GT.jpg'];
+    ipYOLOName_burst = [fName '-' sName 'GT-burst.jpg'];
+    ipYOLOName_bracket = [fName '-' sName 'YOLO-bracket.jpg'];
+
+    % "Local" is our ISET filepath, not the website path
+    ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+    ipLocalGT_burst = fullfile(outputFolder,'images',ipGTName_burst);
+    ipLocalGT_bracket = fullfile(outputFolder,'images',ipGTName_bracket);
+
     % Do the same for our YOLO version filenames
     ipYOLOName = [fName '-' sName '-YOLO.jpg'];
     ipYOLOName_burst = [fName '-' sName 'YOLO-burst.jpg'];
@@ -324,6 +337,24 @@ for iii = 1:numel(sensorFiles)
     burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst);
     bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket);
 
+    % We also want to save a GT-annotated version of each!
+    % "doGT" will run detector, but need to make it integrate bboxes
+    % Generate images to use for GT
+    img_for_GT = imread(outputFile);
+    img_for_GT_burst = imread(burstFile);
+    img_for_GT_bracket = imread(bracketFile);
+
+    % Use YOLO & get back annotated image
+    img_GT = doGT(img_for_GT);
+    img_GT_burst = doGT(img_for_GT_burst);
+    img_GT_bracket = doGT(img_for_GT_bracket);
+
+    % Write out our annotated image
+    imwrite(img_GT, ipLocalGT);
+    imwrite(img_GT_burst, ipLocalGT_burst);
+    imwrite(img_GT_bracket, ipLocalGT_bracket);
+
+    
     % We also want to save a YOLO-annotated version of each!
     % doYOLO will run detector, but need to make it integrate bboxes
     % Generate images to use for YOLO
