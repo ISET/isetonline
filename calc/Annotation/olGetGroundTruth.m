@@ -74,6 +74,7 @@ for ii = 1:numel(objectslist)
     else % WE NEED TO ADD OUR OTHER CATEGORIES HERE!
         continue;
     end
+    
     [occluded, ~, bbox2d, segmentation, area] = piAnnotationGet(instanceMap,ii,0);
     if isempty(bbox2d), continue;end % no location
 
@@ -108,6 +109,7 @@ for ii = 1:numel(objectslist)
     %}
 
 % CONVERSION STOPPED HERE< REST NEEDS WORK
+%{
     % We could write out GT version of image (or even YOLO version) here
     % Or just pass an image back to our caller?
     imgName = sprintf('%d.png',str2double(imageID));
@@ -115,22 +117,7 @@ for ii = 1:numel(objectslist)
     images{nImage} = struct('file_name',imgName,'height',h,'width',w,'id',str2double(imageID));
     nImage = nImage + 1;
 end
-
-%%
-%{
-% Since we aren't doing COCO, we might not need this?
-anno_uniqueID = randperm(100000,numel(annotations));
-for nn = 1:numel(annotations)
-    annotations{nn}.id = anno_uniqueID(nn);
-end
-data.images = images;
-data.annotations = annotations;
-
-clk = tic;
-annFile = fullfile(outputFolder, 'annotations.json');
-jsonwrite(annFile, data);
 %}
-
 % Instead we want to return our JSON structure to our caller
 % So that they can embed it into an output file
 % and create an annotated version (unless we return that also)

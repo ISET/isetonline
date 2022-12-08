@@ -287,9 +287,14 @@ for iii = 1:numel(sensorFiles)
     ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
     % Do the same for our Ground Truth filenames
+    % QUESTION: It makes sense to do YOLO on the sensor-rendered image
+    %   but Ground Truth is based on the original PBRT render
+    %   so if we use it, then try to show it over a sensor-rendered image
+    %   then will it all line up? Or do we just show a single GT vesion?
+
     ipGTName = [fName '-' sName '-GT.jpg'];
-    ipYOLOName_burst = [fName '-' sName 'GT-burst.jpg'];
-    ipYOLOName_bracket = [fName '-' sName 'YOLO-bracket.jpg'];
+    ipGTName_burst = [fName '-' sName 'GT-burst.jpg'];
+    ipGTName_bracket = [fName '-' sName 'GT-bracket.jpg'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalGT = fullfile(outputFolder,'images',ipGTName);
@@ -344,16 +349,15 @@ for iii = 1:numel(sensorFiles)
     img_for_GT_burst = imread(burstFile);
     img_for_GT_bracket = imread(bracketFile);
 
-    % Use YOLO & get back annotated image
+    % Use GT & get back annotated image
     img_GT = doGT(img_for_GT);
     img_GT_burst = doGT(img_for_GT_burst);
     img_GT_bracket = doGT(img_for_GT_bracket);
 
-    % Write out our annotated image
+    % Write out our GT annotated image
     imwrite(img_GT, ipLocalGT);
     imwrite(img_GT_burst, ipLocalGT_burst);
     imwrite(img_GT_bracket, ipLocalGT_bracket);
-
     
     % We also want to save a YOLO-annotated version of each!
     % doYOLO will run detector, but need to make it integrate bboxes
@@ -363,6 +367,7 @@ for iii = 1:numel(sensorFiles)
     img_for_YOLO_bracket = imread(bracketFile);
 
     % Use YOLO & get back annotated image
+    % ALSO GET YOLO METADATA SO WE CAN WRITE IT OUT!
     img_YOLO = doYOLO(img_for_YOLO);
     img_YOLO_burst = doYOLO(img_for_YOLO_burst);
     img_YOLO_bracket = doYOLO(img_for_YOLO_bracket);
@@ -382,14 +387,17 @@ for iii = 1:numel(sensorFiles)
 
     % We need to save the relative paths for the website to use
     sensor_ae.metadata.jpegName = ipJPEGName;
+    sensor_ae.metadata.GTName = ipGTName;
     sensor_ae.metadata.YOLOName = ipYOLOName;
     sensor_ae.metadata.thumbnailName = ipThumbnailName;
 
     % we also have bracket & burst (& others)
     % how do we want to store / note them?
     sensor_ae.metadata.burstJPEGName = ipJPEGName_burst;
+    sensor_ae.metadata.burstGTName = ipGTName_burst;
     sensor_ae.metadata.burstYOLOName = ipYOLOName_burst;
     sensor_ae.metadata.bracketJPEGName = ipJPEGName_bracket;
+    sensor_ae.metadata.bracketGTName = ipGTName_bracket;
     sensor_ae.metadata.bracketYOLOName = ipYOLOName_bracket;
 
     % Stash exposure time for reference
