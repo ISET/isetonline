@@ -191,17 +191,21 @@ else
         fName = oiComputed{ii}.name;
         oi = oiComputed{ii};
         % LOOP THROUGH THE SENSORS HERE
-        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB);
+        % baseMetadata should be generic info to add to per-image data
+        baseMetadata = '';
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, useDB);
+        imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 end
 
-% We can write metadata as one file -- but since it is only
+% We can write metadata as one file to make it faster to read 
+% -- but since it is only
 % read by our code, we place it in the code folder tree
 % instead of the public data folder
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% For each OI process through all the sensors we have
-function imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, useDB)
+function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, useDB)
 
 % Not sure if this is right?
 fName = oi.name;
@@ -265,6 +269,7 @@ for iii = 1:numel(sensorFiles)
     % Here is where we have sensor(s) that have our modified
     % defaults, but have not processed an OI,
     % so we want to write them out for use in our Sensor Editor
+    sensor_ae.metadata = baseMetadata; % initialize with generic valuse
     sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
@@ -451,6 +456,6 @@ for iii = 1:numel(sensorFiles)
     % Each time so dataPrep needs to run a complete batch
     % We might want to add an "Update" option that only
     % adds and updates?
-    imageMetadataArray = [imageMetadataArray sensor_ae.metadata];
+    imageMetadata = sensor_ae.metadata;
 end
 end
