@@ -122,11 +122,15 @@ if usePreComputedOI
         'oi_003.mat', 'oi_004.mat', 'oi_005.mat', 'oi_006.mat'};
 else
     oiPinhole = oiCreate('pinhole');
+
+    % Here is where we look for our scenes
+    % Need to sort out a way to make this more flexible
     sceneFolder = "y:\data\iset\isetauto\dataset\nighttime_003\";
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % Limit how many scenes we use for testing to speed things up
-    numScenes = min(6, numel(sceneFileEntries));
+    sceneNumberLimit = 6;
+    numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
     for ii = 1:numScenes
@@ -142,7 +146,9 @@ else
 
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
+        % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
         oiComputed{ii} = oiCompute(ourScene.scene, oiPinhole); %#ok<SAGROW>
+        oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW> 
     end
 
 end

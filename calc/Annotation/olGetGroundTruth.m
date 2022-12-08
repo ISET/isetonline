@@ -4,6 +4,8 @@ function [GTData] = olGetGroundTruth(options)
 
 % Currently needs the _instanceID.exr file, and
 %   the instanceid.txt file
+%   (the dataset param file would be nice, but hopefully we
+%    can get that data included in our .mat file
 
 % Also assumes we only care about certain classes & know their IDs
 
