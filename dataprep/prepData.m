@@ -127,14 +127,24 @@ else
     % TMP HACK with hard-coded paths
     if ispc
         datasetRoot = 'Y:\data\iset\isetauto';
-        sceneFolder = fullfile(datasetRoot, '\dataset\nighttime_003\');
     else
         % on Mux
         datasetRoot = '/acorn/data/iset/isetauto/';
-        sceneFolder = fullfile(datasetRoot, '/dataset/nighttime_003/');
     end
+    sceneFolder = fullfile(datasetRoot, 'dataset', 'nighttime_003');
+    infoFolder = fullfile(datasetRoot,'dataset','nighttime','additionalInfo');
+
+    % These are the composite scene files made by mixing
+    % illumination sources and showing through a pinhole
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
-    datasetFolder = fullfile(datasetRoot,'Deveshs_assets/ISETScene_003_renderings');
+
+    % Rendering folder has the .mat files for the Scenes that can be summed
+    datasetFolder = fullfile(datasetRoot,'Deveshs_assets','ISETScene_003_renderings');
+
+    % OLD file paths
+    %     % These are our instanceFiles
+    %sceneNames = dir([datasetFolder,'/*_instanceID.exr']);
+
 
     % Limit how many scenes we use for testing to speed things up
     sceneNumberLimit = 6;
@@ -202,11 +212,22 @@ else
     for ii = 1:numel(oiComputed)
         % not sure this is what we want for an fname?
         fName = oiComputed{ii}.name;
+
+        % I think that fName = imageID?
+        imageID = fName;
+
         oi = oiComputed{ii};
         % LOOP THROUGH THE SENSORS HERE
         % baseMetadata should be generic info to add to per-image data
         baseMetadata = '';
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, useDB);
+        
+        % specify the files needed to extract Ground Truth
+        infoFiles.instanceFile = fullfile(datasetFolder, ...
+            sprintf('%s_instanceID.exr', imageID));
+        infoFiles.additionalFile = fullfile(infoFolder, ...
+            sprintf('%s.txt',imageID));
+
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 end
