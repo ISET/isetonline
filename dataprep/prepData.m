@@ -121,7 +121,7 @@ if usePreComputedOI
     oiFiles = {'oi_001.mat', 'oi_002.mat',  ...
         'oi_003.mat', 'oi_004.mat', 'oi_005.mat', 'oi_006.mat'};
 else
-    oiPinhole = oiCreate('pinhole');
+    oiDefault = oiCreate('shift invariant');
 
     % Here is where we look for our scenes
     % TMP HACK with hard-coded paths
@@ -141,13 +141,8 @@ else
     % Rendering folder has the .mat files for the Scenes that can be summed
     datasetFolder = fullfile(datasetRoot,'Deveshs_assets','ISETScene_003_renderings');
 
-    % OLD file paths
-    %     % These are our instanceFiles
-    %sceneNames = dir([datasetFolder,'/*_instanceID.exr']);
-
-
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 6;
+    sceneNumberLimit = 2;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -158,14 +153,11 @@ else
     % Now we'll make oi's by iterating through our scenes
     oiFiles = {};
 
-    % we need some optics here. Probably not this, but for a default
-    optics = opticsSet(optics,'model','shiftinvariant');
-    oiPinhole = oiSet(oiPinhole,'optics',optics);
-
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
-        oiComputed{ii} = oiCompute(ourScene.scene, oiPinhole); %#ok<SAGROW>
+        oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
+        
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW> 
     end
 
@@ -210,10 +202,8 @@ if usePreComputedOI
     end
 else
     for ii = 1:numel(oiComputed)
-        % not sure this is what we want for an fname?
-        fName = oiComputed{ii}.name;
-
-        % I think that fName = imageID?
+        % This is where the scene ID is available
+        fName = erase(sceneFileEntries(ii).name,'.mat');
         imageID = fName;
 
         oi = oiComputed{ii};
@@ -261,10 +251,11 @@ for iii = 1:numel(sensorFiles)
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
     % At least for now, scale sensor
-    % to match the FOV
-    hFOV = oiGet(oi,'hfov');
-    sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
-    
+    % to match the FOV -- IF we have a focal length
+    if ~isequaln(oiGet(oi,'focalLength'),NaN())
+        hFOV = oiGet(oi,'hfov');
+        sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
+    end
 
 
     %% Now we have an OI + Sensor
@@ -273,10 +264,10 @@ for iii = 1:numel(sensorFiles)
 
     % Default Auto-Exposure breaks with oncoming headlights, etc.
     % Experimenting with others
-    %aeMethod = 'mean';
-    %aeMean = .5;
-    aeMethod = 'specular';
-    aeLevels = .8;
+    aeMethod = 'mean';
+    aeLevels = .5;
+    %aeMethod = 'specular';
+    %aeLevels = .8;
     aeTime = autoExposure(oi,sensor, aeLevels, aeMethod);
     aeMethod = 'hdr';
     aeHDRTime  = autoExposure(oi,sensor,aeLevels,aeMethod,'numframes',7);
@@ -397,8 +388,10 @@ for iii = 1:numel(sensorFiles)
     % Use GT & get back annotated image
     img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
         'additionalFile',infoFiles.additionalFile);
-    img_GT_burst = doGT(img_for_GT_burst);
-    img_GT_bracket = doGT(img_for_GT_bracket);
+    img_GT_burst = doGT(img_for_GT_burst,'instanceFile',infoFiles.instanceFile, ...
+        'additionalFile',infoFiles.additionalFile);
+    img_GT_bracket = doGT(img_for_GT_bracket,'instanceFile',infoFiles.instanceFile, ...
+        'additionalFile',infoFiles.additionalFile);
 
     % Write out our GT annotated image
     imwrite(img_GT, ipLocalGT);
