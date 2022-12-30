@@ -21,6 +21,7 @@ useDB = false;
 
 % We can either process pre-computed optical images
 % or synthetic scenes that have been rendered through a pinhole by PBRT
+% that Zhenyi is having Denesh render
 usePreComputedOI = false;
 
 % Port number seems to wander a bit:)
@@ -142,13 +143,21 @@ else
     datasetFolder = fullfile(datasetRoot,'Deveshs_assets','ISETScene_003_renderings');
 
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 2;
+    sceneNumberLimit = 3;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
-    for ii = 1:numScenes
-        sceneFileNames{ii} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name); %#ok<SAGROW>
+    % pick every 10th scene for now
+    % but make sure they are still numbered right!
+    jj = 1;
+    for ii = 1:10:numScenes*10
+        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name); %#ok<SAGROW>
+        jj = jj+1;
     end
+
+    % This is where the scene ID is available
+    fName = erase(sceneFileEntries(ii).name,'.mat');
+    imageID = fName;
 
     % Now we'll make oi's by iterating through our scenes
     oiFiles = {};
@@ -157,8 +166,8 @@ else
         ourScene = load(sceneFileNames{ii}, 'scene');
         % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
         oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
-        
-        oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW> 
+
+        oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
     end
 
 end
@@ -194,11 +203,13 @@ if usePreComputedOI
         end
 
         % specify the files needed to extract Ground Truth
-        infoFiles.instanceFile = xxx;
-        infoFiles.additionalFile = xxx;
+        infoFiles.instanceFile = '';
+        infoFiles.additionalFile = '';
 
         % LOOP THROUGH THE SENSORS HERE
-        imageMetadataArray = processSensors(oi, sensorFiles, outputFolder, imageMetadataArray, infoFiles, useDB);
+        % we use basemetadata for other render case, but not here?
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, useDB);
+        imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 else
     for ii = 1:numel(oiComputed)
@@ -210,7 +221,7 @@ else
         % LOOP THROUGH THE SENSORS HERE
         % baseMetadata should be generic info to add to per-image data
         baseMetadata = '';
-        
+
         % specify the files needed to extract Ground Truth
         infoFiles.instanceFile = fullfile(datasetFolder, ...
             sprintf('%s_instanceID.exr', imageID));
@@ -222,7 +233,7 @@ else
     end
 end
 
-% We can write metadata as one file to make it faster to read 
+% We can write metadata as one file to make it faster to read
 % -- but since it is only
 % read by our code, we place it in the code folder tree
 % instead of the public data folder
@@ -231,8 +242,15 @@ jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 %% For each OI process through all the sensors we have
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB)
 
-% Not sure if this is right?
-fName = oi.name;
+% not sure if this is right. Could also need to be empty
+imageMetadata = baseMetadata;
+
+% Kind of lame as our test OIs don't really have good metadata
+if ~isstrprop(oi.name(1),'alpha')
+    fName = oi.name(1:10); % root scene name in our initial test data
+else
+    fName = oi.name;
+end
 
 % experiment with camera motion
 % for now each shift adds oi data to the oi
@@ -294,7 +312,7 @@ for iii = 1:numel(sensorFiles)
     % Here is where we have sensor(s) that have our modified
     % defaults, but have not processed an OI,
     % so we want to write them out for use in our Sensor Editor
-    sensor_ae.metadata = baseMetadata; % initialize with generic valuse
+    sensor_ae.metadata = baseMetadata; % initialize with generic value
     sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
@@ -386,18 +404,19 @@ for iii = 1:numel(sensorFiles)
     img_for_GT_bracket = imread(bracketFile);
 
     % Use GT & get back annotated image
-    img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
-        'additionalFile',infoFiles.additionalFile);
-    img_GT_burst = doGT(img_for_GT_burst,'instanceFile',infoFiles.instanceFile, ...
-        'additionalFile',infoFiles.additionalFile);
-    img_GT_bracket = doGT(img_for_GT_bracket,'instanceFile',infoFiles.instanceFile, ...
-        'additionalFile',infoFiles.additionalFile);
+    if ~isempty(infoFiles.instanceFile)
+        img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
+            'additionalFile',infoFiles.additionalFile);
+        img_GT_burst = doGT(img_for_GT_burst,'instanceFile',infoFiles.instanceFile, ...
+            'additionalFile',infoFiles.additionalFile);
+        img_GT_bracket = doGT(img_for_GT_bracket,'instanceFile',infoFiles.instanceFile, ...
+            'additionalFile',infoFiles.additionalFile);
 
-    % Write out our GT annotated image
-    imwrite(img_GT, ipLocalGT);
-    imwrite(img_GT_burst, ipLocalGT_burst);
-    imwrite(img_GT_bracket, ipLocalGT_bracket);
-    
+        % Write out our GT annotated image
+        imwrite(img_GT, ipLocalGT);
+        imwrite(img_GT_burst, ipLocalGT_burst);
+        imwrite(img_GT_bracket, ipLocalGT_bracket);
+    end
     % We also want to save a YOLO-annotated version of each!
     % doYOLO will run detector, but need to make it integrate bboxes
     % Generate images to use for YOLO
@@ -484,6 +503,8 @@ for iii = 1:numel(sensorFiles)
     % Each time so dataPrep needs to run a complete batch
     % We might want to add an "Update" option that only
     % adds and updates?
-    imageMetadata = sensor_ae.metadata;
+
+    % Need to accumulate all sensor data
+    imageMetadata = [imageMetadata sensor_ae.metadata];
 end
 end
