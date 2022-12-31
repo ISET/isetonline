@@ -1,3 +1,4 @@
+import "core-js/stable";
 import 'devextreme/dist/css/dx.light.css';
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 // not used yet:
@@ -46,7 +47,9 @@ import Box from '@mui/material/Box'
 import Slider from '@mui/material/Slider'
 
 // JSON Editor
-import SvelteJSONEditor from "./sveltejsoneditor";
+// Has an issue with .js for ESM, so commenting
+// out in this branch
+// import SvelteJSONEditor from "./sveltejsoneditor";
 import "./styles.css";
 
 // Additional components
@@ -62,6 +65,10 @@ import { breakpoints } from '@mui/system'
 
 // DevExtreme DataGrid inits
 import { createStore } from 'devextreme-aspnet-data-nojquery';
+
+// DevExtreme Init Stuff -- says it needs polyfill
+// const MongoClient = require("mongodb").MongoClient;
+// const query = require("devextreme-query-mongodb");
 
 // FIX!
 const serviceUrl = 'https://mydomain.com/MyDataService';
@@ -740,6 +747,7 @@ const App = () => {
                         {computeText}</CButton></h2>
 
                     <div className="my-editor" style={{width: 300}}>
+                     {/*
                       <SvelteJSONEditor
                         id='sensorID'
                         ref={sensorEditor}
@@ -747,6 +755,7 @@ const App = () => {
                         readOnly={false}
                         onChange={setContent}
                       />
+                      */}
                     </div>
                   </>
                 )}
