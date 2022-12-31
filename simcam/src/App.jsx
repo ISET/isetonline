@@ -1,7 +1,11 @@
+import 'devextreme/dist/css/dx.light.css';
 import React, { useState, useRef, useCallback, useEffect } from 'react'
 // not used yet:
 // import { useEffect, useMemo } from 'react'
 import 'react-dom'
+
+// DevExtreme Components
+import Button from 'devextreme-react/button';
 
 import { AgGridReact } from 'ag-grid-react' // the AG Grid React Component
 // import MyStatusPanel from './myStatusPanel.jsx';
@@ -551,12 +555,21 @@ const App = () => {
   const [showEditor, setShowEditor] = useState(true);
   const [readOnly, setReadOnly] = useState(false);
 
+  const sayHelloWorld = () => {
+    alert('Hello world!')
+  }
+
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
 
   return (
     <CContainer fluid>
-
+    <CRow>
+            <Button
+                text="Click me"
+                onClick={sayHelloWorld}
+            />
+            </CRow>
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
         <CCol xs={1}>
@@ -886,6 +899,6 @@ const App = () => {
       </CFooter>
     </CContainer>
   )
+  
 }
-
 export { App, updateUserSensor }
