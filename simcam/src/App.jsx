@@ -6,6 +6,7 @@ import 'react-dom'
 
 // DevExtreme Components
 import Button from 'devextreme-react/button';
+import DataGrid from 'devextreme-react/data-grid';
 
 import { AgGridReact } from 'ag-grid-react' // the AG Grid React Component
 // import MyStatusPanel from './myStatusPanel.jsx';
@@ -66,6 +67,8 @@ let imageDir = '/images/' // Should use /public by default?
 let oiDir = '/oi/'
 let sensorDir = dataDir + 'sensors/'
 
+// Seems to look for it on the public side?
+let jsonUrl = 'metadata.json'
 let imageData = require(dataDir + 'metadata.json')
 
 let SU_Logo = '/glyphs/Stanford_Logo.png'
@@ -565,10 +568,10 @@ const App = () => {
   return (
     <CContainer fluid>
     <CRow>
-            <Button
-                text="Click me"
-                onClick={sayHelloWorld}
-            />
+    <DataGrid id="dataGrid" dataSource = {jsonUrl}>
+                {/* Configuration goes here */}
+                
+            </DataGrid>
             </CRow>
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
