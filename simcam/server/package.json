@@ -11,9 +11,11 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
+    "babel-polyfill": "^6.26.0",
     "body-parser": "^1.20.1",
     "child_process": "^1.0.2",
     "cors": "^2.8.5",
+    "devextreme-query-mongodb": "^2.0.15",
     "express": "^4.18.2",
     "mongodb": "^4.10.0",
     "mongoose": "^6.7.2"

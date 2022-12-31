@@ -589,10 +589,11 @@ const App = () => {
   return (
     <CContainer fluid>
     <CRow>
-    <DataGrid id="dataGrid" dataSource = {jsonUrl}>
-                {/* Configuration goes here */}
-                
+    <DataGrid
+                dataSource={remoteDataSource}>
+                <RemoteOperations groupPaging={true} />
             </DataGrid>
+            
             </CRow>
       {/* Row 1 is our Header & README*/}
       <CRow className='justify-content-start'>
