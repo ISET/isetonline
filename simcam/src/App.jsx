@@ -6,7 +6,7 @@ import 'react-dom'
 
 // DevExtreme Components
 import Button from 'devextreme-react/button';
-import DataGrid from 'devextreme-react/data-grid';
+import DataGrid, {RemoteOperations} from 'devextreme-react/data-grid';
 
 import { AgGridReact } from 'ag-grid-react' // the AG Grid React Component
 // import MyStatusPanel from './myStatusPanel.jsx';
@@ -59,6 +59,20 @@ import { Annotorious } from '@recogito/annotorious'
 //import { ShapeLabelsFormatter } from '@recogito/annotorious-shape-labels';
 import '@recogito/annotorious/dist/annotorious.min.css'
 import { breakpoints } from '@mui/system'
+
+// DevExtreme DataGrid inits
+import { createStore } from 'devextreme-aspnet-data-nojquery';
+
+// FIX!
+const serviceUrl = 'https://mydomain.com/MyDataService';
+ 
+const remoteDataSource = createStore({
+    key: 'ID',
+    loadUrl: serviceUrl + '/GetAction',
+    insertUrl: serviceUrl + '/InsertAction',
+    updateUrl: serviceUrl + '/UpdateAction',
+    deleteUrl: serviceUrl + '/DeleteAction'
+});
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public

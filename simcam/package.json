@@ -17,6 +17,9 @@
     "ag-grid-react": "^28.1.1",
     "bootstrap": "^5.2.1",
     "cors": "^2.8.5",
+    "devextreme": "^22.2.3",
+    "devextreme-aspnet-data-nojquery": "^2.9.0",
+    "devextreme-react": "^22.2.3",
     "dotenv": "^16.0.3",
     "express": "^4.18.2",
     "file-saver": "^2.0.5",
@@ -28,9 +31,7 @@
     "react-json-editor-ajrm": "^2.5.13",
     "react-scripts": "^5.0.1",
     "react-tooltip": "^4.4.0",
-    "vanilla-jsoneditor": "^0.10.2",
-    "devextreme": "^22.2.3",
-    "devextreme-react": "^22.2.3"
+    "vanilla-jsoneditor": "^0.10.2"
   },
   "scripts": {
     "start": "react-scripts start",
