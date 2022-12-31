@@ -8,6 +8,11 @@ const cors = require('cors')
 const app = express()
 const fs = require('fs')
 const { spawn, spawnSync, execSync } = require('child_process');
+require("regenerator-runtime/runtime");
+
+// Start adding DevExtreme <-> mongoDB code
+const MongoClient = require("mongodb").MongoClient;
+const query = require("devextreme-query-mongodb");
 
 // As a reference this works from the command line:
 //  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
