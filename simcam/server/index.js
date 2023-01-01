@@ -43,8 +43,9 @@ const testCollection = "lens";
 app.get('/', (req, res) => {
     connectDB();
     // Async
-    listCollection('lens');
-    res.send("Hello, world  <br>" + itemList);
+    console.log("NEW LISTING HERE!")
+    listCollection('lens').then(console.log);
+    //res.send("Hello, world  <br>" + itemList);
 })
 
 app.get('/compute', (req, res) => {

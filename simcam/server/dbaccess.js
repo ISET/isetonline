@@ -84,9 +84,11 @@ async function listCollection(collectionName){
         for (let ii = 0;  ii < result.length; ii++){
             itemList[ii] = result[ii];
         }
-        // return itemList;
         client.close();
+        return result;
+        
     });
+
 }
 
 // itemList shouldn't need to be here once we figure out promises
