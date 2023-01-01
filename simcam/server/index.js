@@ -11,7 +11,7 @@ const { spawn, spawnSync, execSync } = require('child_process');
 require("regenerator-runtime/runtime");
 
 // Import mongodb connection code
-const { queryData } = require('./dbaccess.js')
+const { getData, connectDB } = require('./dbaccess.js')
 
 // As a reference this works from the command line:
 //  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
@@ -38,9 +38,11 @@ app.use(cors())
 app.use(bodyParser.json())
 
 // Trivial test to see if we are running
+const testCollection = "lens";
 app.get('/', (req, res) => {
     res.send('Hello World!')
-    queryData(); // Should send to console
+    // connectDB();
+    getData(testCollection, req, res); // Should send to console
 })
 
 app.get('/compute', (req, res) => {
