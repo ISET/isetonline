@@ -53,7 +53,7 @@ async function getData(testCollection, req, res) {
 
 // EXAMPLE CODE PASTED HERE TO CHECK SYNTAX
 async function queryData() {
-    MongoClient.connect("mongodb://localhost:27017/testdatabase", (err, db) => {
+    MongoClient.connect("mongodb://localhost:27017/testdatabase", async (err, db) => {
       const results = await query(db.collection("values"), {
         // This is the loadOptions object - pass in any valid parameters
         take: 10,
