@@ -3,21 +3,15 @@
 // David Cardinal, Stanford University, 2023
 // 
 
-// Just add '-legacy' to my mongodb import
 const MongoClient = require("mongodb").MongoClient;
-// const MongoClient = require("mongodb-legacy").MongoClient;
 const mongodb = require('mongodb')
-// const mongodb = require('mongodb-legacy')
-const query = require("devextreme-query-mongodb");
-// const client = new MongoClient()
-// const db = client.db();
-// const collection = db.collection('pets');
 
-const getOptions = require('devextreme-query-mongodb/options').getOptions;
+// Currently not using devExtreme
+// const query = require("devextreme-query-mongodb");
+// const getOptions = require('devextreme-query-mongodb/options').getOptions;
 
 // test db
 const mongoUri = "mongodb://seedling:49153/iset";
-
 
 function handleError(res, reason, message, code) {
     console.error('ERROR: ' + reason);
@@ -60,7 +54,7 @@ async function connectDB() {
 try {
     client.connect();
     await listDatabases(client);
-    await listCollection('lens');
+    // await listCollection('lens');
 
 } catch (e) {
     console.error(e);
@@ -79,13 +73,15 @@ async function listDatabases(client){
 };
 
 async function listCollection(collectionName){
+    var itemList = '';
     ourDB = client.db('iset');
-    var result = ourDB.collection(collectionName).find({}).toArray(function(err, result) {
+    ourDB.collection(collectionName).find({}).toArray(function(err, result) {
         if (err) throw err;
+        itemList = result; // since result is local I think
         console.log(result);
         client.close();
     });
-    return result;
+    return itemList;
 }
 
 module.exports = { getData, connectDB, listCollection }
