@@ -42,11 +42,17 @@ app.use(bodyParser.json())
 const testCollection = "lens";
 app.get('/', (req, res) => {
     connectDB();
-    // Async
-    console.log("NEW LISTING HERE!")
-    listCollection('lens').then(console.log);
+    // Not Async anymore
+    console.log("NEW LISTING HERE!");
+    items = getItems('lens');
+    console.log(items.json); // Only if async: .then(console.log);
     //res.send("Hello, world  <br>" + itemList);
 })
+
+async function getItems(collection) {
+    ourItemPromise = await listCollection(collection);
+    console.log(ourItemPromise); //return ourItemPromise.then(console.log);
+}
 
 app.get('/compute', (req, res) => {
     res.send('COMPUTE Hello World!')

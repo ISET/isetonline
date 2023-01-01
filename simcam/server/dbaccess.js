@@ -4,6 +4,7 @@
 // 
 
 const MongoClient = require("mongodb").MongoClient;
+const { resolve } = require("core-js/fn/promise");
 const mongodb = require('mongodb')
 
 // Currently not using devExtreme
@@ -72,24 +73,29 @@ async function listDatabases(client){
     databasesList.databases.forEach(db => console.log(` - ${db.name}`));
 };
 
+// try making this non-async so we can do a regular return
+// Can be async again if we start to worry about multi-user & GUI perf
 var itemList = [];
 async function listCollection(collectionName){
-    ourDB = await client.db('iset');
-    await ourDB.collection(collectionName).find({}).toArray(function(err, result) {
+    const ourDB = await client.db('iset');
+    const result = await ourDB.collection(collectionName).find({}).toArray(function(err, result) {
         if (err) throw err;
 
         console.log(result);
-
+        
         // try to create item list
-        for (let ii = 0;  ii < result.length; ii++){
-            itemList[ii] = result[ii];
-        }
+        // for (let ii = 0;  ii < result.length; ii++){
+        //    itemList[ii] = result[ii];
+        // }
         client.close();
         return result;
         
     });
 
 }
+
+listCollection().then(result => console.log(result)).catch(err => console.log(err));
+
 
 // itemList shouldn't need to be here once we figure out promises
 module.exports = { getData, connectDB, listCollection, itemList }
