@@ -4,14 +4,15 @@
 // 
 
 // Just add '-legacy' to my mongodb import
-const MongoClient = require("mongodb-legacy").MongoClient;
+const MongoClient = require("mongodb").MongoClient;
+// const MongoClient = require("mongodb-legacy").MongoClient;
+const mongodb = require('mongodb')
+// const mongodb = require('mongodb-legacy')
 const query = require("devextreme-query-mongodb");
 // const client = new MongoClient()
 // const db = client.db();
 // const collection = db.collection('pets');
 
-const mongodb = require('mongodb-legacy')
-// const MongoClient = require("mongodb").MongoClient;
 const getOptions = require('devextreme-query-mongodb/options').getOptions;
 
 // test db
@@ -51,36 +52,29 @@ async function getData(testCollection, req, res) {
     }
 }
 
-// EXAMPLE CODE PASTED HERE TO CHECK SYNTAX
-async function queryData() {
-    MongoClient.connect("mongodb://localhost:27017/testdatabase", async (err, db) => {
-      const results = await query(db.collection("values"), {
-        // This is the loadOptions object - pass in any valid parameters
-        take: 10,
-        filter: [ "intval", ">", 47 ],
-        sort: [ { selector: "intval", desc: true }]
-      });
-  
-      // Now "results" contains an array of ten or fewer documents from the
-      // "values" collection that have intval > 47, sorted descendingly by intval.
-    });
-  }
-  
-function connectDB() {
-    mongodb.MongoClient.connect(mongoUri, function (err, database) {
-        if (err) {
-            console.error(err);
-            process.exit(1);
-        } else {
-            console.log('Database connection ready');
-        }
-    })
+var client;
 
+async function connectDB() {
+    client = new MongoClient(mongoUri)
+
+try {
+    client.connect();
+    await listDatabases(client);
+} catch (e) {
+    console.error(e);
+}
     //app.get('/countries', function(req, res) {
     //  getData(database.collection('countries'), req, res);
     //});
 
 }
+
+async function listDatabases(client){
+    databasesList = await client.db().admin().listDatabases();
+ 
+    console.log("Databases:");
+    databasesList.databases.forEach(db => console.log(` - ${db.name}`));
+};
 
 
 module.exports = { getData, connectDB }

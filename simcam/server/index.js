@@ -2,6 +2,7 @@
 // D. Cardinal, Stanford University, 2022
 // Part of the Wandell / Vistalab project to make the world a better place
 
+
 const express = require('express')
 const bodyParser = require('body-parser')
 const cors = require('cors')
@@ -41,8 +42,8 @@ app.use(bodyParser.json())
 const testCollection = "lens";
 app.get('/', (req, res) => {
     res.send('Hello World!')
-    // connectDB();
-    getData(testCollection, req, res); // Should send to console
+    connectDB();
+    //getData(testCollection, req, res); // Should send to console
 })
 
 app.get('/compute', (req, res) => {
