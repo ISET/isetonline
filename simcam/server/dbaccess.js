@@ -72,16 +72,22 @@ async function listDatabases(client){
     databasesList.databases.forEach(db => console.log(` - ${db.name}`));
 };
 
+var itemList = [];
 async function listCollection(collectionName){
-    var itemList = '';
-    ourDB = client.db('iset');
-    ourDB.collection(collectionName).find({}).toArray(function(err, result) {
+    ourDB = await client.db('iset');
+    await ourDB.collection(collectionName).find({}).toArray(function(err, result) {
         if (err) throw err;
-        itemList = result; // since result is local I think
+
         console.log(result);
+
+        // try to create item list
+        for (let ii = 0;  ii < result.length; ii++){
+            itemList[ii] = result[ii];
+        }
+        // return itemList;
         client.close();
     });
-    return itemList;
 }
 
-module.exports = { getData, connectDB, listCollection }
+// itemList shouldn't need to be here once we figure out promises
+module.exports = { getData, connectDB, listCollection, itemList }
