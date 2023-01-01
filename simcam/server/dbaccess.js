@@ -60,6 +60,8 @@ async function connectDB() {
 try {
     client.connect();
     await listDatabases(client);
+    await listCollection('lens');
+
 } catch (e) {
     console.error(e);
 }
@@ -76,5 +78,14 @@ async function listDatabases(client){
     databasesList.databases.forEach(db => console.log(` - ${db.name}`));
 };
 
+async function listCollection(collectionName){
+    ourDB = client.db('iset');
+    var result = ourDB.collection(collectionName).find({}).toArray(function(err, result) {
+        if (err) throw err;
+        console.log(result);
+        client.close();
+    });
+    return result;
+}
 
-module.exports = { getData, connectDB }
+module.exports = { getData, connectDB, listCollection }
