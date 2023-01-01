@@ -49,12 +49,13 @@ async function getData(testCollection, req, res) {
 
 var client;
 
-async function connectDB() {
+// make sync, as we can't do much until open!
+function connectDB() {
     client = new MongoClient(mongoUri)
 
 try {
     client.connect();
-    await listDatabases(client);
+    listDatabases(client);
     // await listCollection('lens');
 
 } catch (e) {
@@ -94,8 +95,9 @@ async function listCollection(collectionName){
 
 }
 
-listCollection().then(result => console.log(result)).catch(err => console.log(err));
-
+function getCollection(collectionName) {
+    return listCollection(collectionName).then(result => console.log(result)).catch(err => console.log(err));
+}
 
 // itemList shouldn't need to be here once we figure out promises
-module.exports = { getData, connectDB, listCollection, itemList }
+module.exports = { getData, connectDB, getCollection, itemList }

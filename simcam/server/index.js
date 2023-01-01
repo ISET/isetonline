@@ -12,7 +12,7 @@ const { spawn, spawnSync, execSync } = require('child_process');
 require("regenerator-runtime/runtime");
 
 // Import mongodb connection code
-const { getData, connectDB, listCollection, itemList } = require('./dbaccess.js')
+const { getData, connectDB, getCollection, itemList } = require('./dbaccess.js')
 
 // As a reference this works from the command line:
 //  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
@@ -50,7 +50,7 @@ app.get('/', (req, res) => {
 })
 
 async function getItems(collection) {
-    ourItemPromise = await listCollection(collection);
+    ourItemPromise = await getCollection(collection);
     console.log(ourItemPromise); //return ourItemPromise.then(console.log);
 }
 
