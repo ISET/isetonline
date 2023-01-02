@@ -12,7 +12,7 @@ const { spawn, spawnSync, execSync } = require('child_process');
 require("regenerator-runtime/runtime");
 
 // Import mongodb connection code
-const { getData, connectDB, getCollection, itemList } = require('./dbaccess.js')
+const { getData, connectDB, listCollection, itemList } = require('./dbaccess.js')
 
 // As a reference this works from the command line:
 //  sh /usr/Stanford_University/oi2sensor/application/run_oi2sensor.sh 
@@ -40,18 +40,25 @@ app.use(bodyParser.json())
 
 // Trivial test to see if we are running
 const testCollection = "lens";
+
+// we want to do this once
+connectDB();
+
 app.get('/', (req, res) => {
-    connectDB();
     // Not Async anymore
     console.log("NEW LISTING HERE!");
-    items = getItems('lens');
+    var items = getItems("lens");
     console.log(items.json); // Only if async: .then(console.log);
     //res.send("Hello, world  <br>" + itemList);
 })
 
 async function getItems(collection) {
-    ourItemPromise = await getCollection(collection);
-    console.log(ourItemPromise); //return ourItemPromise.then(console.log);
+    await listCollection(collection).then(result => {
+        console.log(result); //return ourItemPromise.then(console.log);
+        return result;
+    }).catch (err =>{
+        console.log(err);
+    });
 }
 
 app.get('/compute', (req, res) => {

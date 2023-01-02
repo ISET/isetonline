@@ -5,7 +5,7 @@
 
 const MongoClient = require("mongodb").MongoClient;
 const { resolve } = require("core-js/fn/promise");
-const mongodb = require('mongodb')
+const mongodb = require('mongodb');
 
 // Currently not using devExtreme
 // const query = require("devextreme-query-mongodb");
@@ -48,6 +48,7 @@ async function getData(testCollection, req, res) {
 }
 
 var client;
+var ourDB;
 
 // make sync, as we can't do much until open!
 function connectDB() {
@@ -55,8 +56,9 @@ function connectDB() {
 
 try {
     client.connect();
+    ourDB = client.db('iset');
     listDatabases(client);
-    // await listCollection('lens');
+    listCollections(ourDB);
 
 } catch (e) {
     console.error(e);
@@ -68,18 +70,24 @@ try {
 }
 
 async function listDatabases(client){
-    databasesList = await client.db().admin().listDatabases();
+    var databasesList = await client.db().admin().listDatabases();
  
     console.log("Databases:");
     databasesList.databases.forEach(db => console.log(` - ${db.name}`));
+};
+
+async function listCollections(aDB){
+    var collectionList = await aDB.listCollections();
+ 
+    console.log("Collections:");
+    collectionList.forEach(coll => console.log(` - ${coll.name}`));
 };
 
 // try making this non-async so we can do a regular return
 // Can be async again if we start to worry about multi-user & GUI perf
 var itemList = [];
 async function listCollection(collectionName){
-    const ourDB = await client.db('iset');
-    const result = await ourDB.collection(collectionName).find({}).toArray(function(err, result) {
+    await ourDB.collection(collectionName).find({}).toArray(function(err, result) {
         if (err) throw err;
 
         console.log(result);
@@ -88,7 +96,7 @@ async function listCollection(collectionName){
         // for (let ii = 0;  ii < result.length; ii++){
         //    itemList[ii] = result[ii];
         // }
-        client.close();
+        // client.close();
         return result;
         
     });
@@ -100,4 +108,4 @@ function getCollection(collectionName) {
 }
 
 // itemList shouldn't need to be here once we figure out promises
-module.exports = { getData, connectDB, getCollection, itemList }
+module.exports = { getData, connectDB, listCollection, itemList }
