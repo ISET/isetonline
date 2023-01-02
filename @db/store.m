@@ -16,7 +16,7 @@ else
     isetDB = db();
 end
 
-% need to add update logic
+% need to add update logic & type specific keys and such
 insert(obj.connection,options.collection,isetObj);
 status = 0;
 

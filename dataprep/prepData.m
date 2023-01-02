@@ -1,12 +1,19 @@
-% Render & Export objects for use in "oi2sensor" / oiOnline
+% Render & Export objects for use in "oi2sensor" / ISETOnline
+%
+% Currently supports either pre-computed OIs, or scenes generated
+% using PBRT & re-processed for multiple illuminants. These
+% are designed to be used by ISETOnline
+%
+% Optionally can store in a mongoDB set of collections, in addition
+% to the file system
 %
 % D. Cardinal, Stanford University, 2022
 %
+
 %% Set output folder
 % I'm not sure where we want the data to go ultimately.
 % As it will wind up in the website and/or a db
 % We don't want it in our path or github (it wouldn't fit)
-%
 
 % This is the place where our Web app expects to find web-accessible
 % Data files when running our dev environment locally. For production
@@ -35,7 +42,6 @@ else
 end
 
 
-
 % Our webserver pulls metadata from a private folder
 privateDataFolder = fullfile(onlineRootPath,'simcam','src','data');
 if ~isfolder(privateDataFolder)
@@ -47,52 +53,11 @@ end
 % but not re-rendering the actual sensor images. TBD
 
 %% Export sensor(s)
-% Provide data for the sensors used so people can work with it on their own
-% another:     'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
-sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
-    'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
-
-% Currently we want to keep a copy of sensors in /public for user
-% download, and one is src/data for us to use for the UI as needed
-if ~isfolder(fullfile(outputFolder,'sensors'))
-    mkdir(fullfile(outputFolder,'sensors'));
-end
-if ~isfolder(fullfile(privateDataFolder,'sensors'))
-    mkdir(fullfile(privateDataFolder,'sensors'));
-end
-
-% Write parameters for each sensor as a separate JSON file
-% For those who want to do other calculations
-for ii = 1:numel(sensorFiles)
-    load(sensorFiles{ii}); % assume they are on our path
-    % change suffix to json
-    [~, sName, fSuffix] = fileparts(sensorFiles{ii});
-    sFileName = fullfile(outputFolder,'sensors',[sName '.json']);
-
-    % stash the name so we can load it into the web ui
-    sensor.sensorFileName = [sName '.json'];
-    jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
-    jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
-
-    % We want to write these to the sensor database also
-    if useDB; ourDB.store(sensor, 'collection','sensor'); end
-
-end
+% Provide data for sensors so people can work with it on their own
+exportSensors(outputFolder, privateDataFolder, ourDB);
 
 %% Export Lenses
-%
-lensRoot = isetRootPath;
-lensFiles = lensC.list('quiet', true, 'lensRoot', lensRoot);
-lensNames = {lensFiles.name};
-lensCount = numel(lensFiles);
-
-for ii = 1:lensCount
-    lensFileName = lensFiles(ii).name;
-    % Get the full path to load
-    lensFile = fullfile(lensFiles(ii).folder, lensFileName);
-    ourLens = jsonread(lensFile);
-    if useDB; ourDB.store(ourLens, 'collection','lens'); end
-end
+exportLenses(outputFolder, privateDataFolder, ourDB)
 
 %% TBD Export "Scenes"
 % Our scenes won't typically be ISET scenes.
@@ -154,7 +119,7 @@ else
     % but make sure they are still numbered right!
     jj = 1;
     for ii = 1:10:numScenes*10
-        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name); 
+        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
         jj = jj+1;
     end
 
@@ -187,7 +152,7 @@ if ~isfolder(fullfile(outputFolder,'images'))
     mkdir(fullfile(outputFolder,'images'))
 end
 
-% Originally we looped through oiFiles, 
+% Originally we looped through oiFiles,
 % but for metric scenes we will generate them
 % from the .mat Scene objects Zhenyi creates from the .exr files
 
@@ -501,7 +466,7 @@ for iii = 1:numel(sensorFiles)
     % but it can manage our metadata
     % by default use the assetDB
     if ~isempty(ourDB)
-        ourDB.store(sensor_ae.metadata,"collection","sensor"); 
+        ourDB.store(sensor_ae.metadata,"collection","sensor");
     end
 
     % We ONLY write out the metadata in the main .json
@@ -513,5 +478,54 @@ for iii = 1:numel(sensorFiles)
 
     % Need to accumulate all sensor data
     imageMetadata = [imageMetadata sensor_ae.metadata];
+
 end
+end
+% Export lenses to fils for our users
+function exportLenses(~, ~, ourDB)
+lensRoot = isetRootPath;
+lensFiles = lensC.list('quiet', true, 'lensRoot', lensRoot);
+lensCount = numel(lensFiles);
+
+for ii = 1:lensCount
+    lensFileName = lensFiles(ii).name;
+    % Get the full path to load
+    lensFile = fullfile(lensFiles(ii).folder, lensFileName);
+    ourLens = jsonread(lensFile);
+    if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lens'); end
+end
+end
+
+function exportSensors(outputFolder, privateDataFolder, ourDB)
+% 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
+sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
+    'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
+
+% Currently we want to keep a copy of sensors in /public for user
+% download, and one is src/data for us to use for the UI as needed
+if ~isfolder(fullfile(outputFolder,'sensors'))
+    mkdir(fullfile(outputFolder,'sensors'));
+end
+if ~isfolder(fullfile(privateDataFolder,'sensors'))
+    mkdir(fullfile(privateDataFolder,'sensors'));
+end
+
+% Write parameters for each sensor as a separate JSON file
+% For those who want to do other calculations
+for ii = 1:numel(sensorFiles)
+    load(sensorFiles{ii}); % assume they are on our path
+    % change suffix to json
+    [~, sName, fSuffix] = fileparts(sensorFiles{ii});
+    sFileName = fullfile(outputFolder,'sensors',[sName '.json']);
+
+    % stash the name so we can load it into the web ui
+    sensor.sensorFileName = [sName '.json'];
+    jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
+
+    % We want to write these to the sensor database also
+    if ~isempty(ourDB); ourDB.store(sensor, 'collection','sensor'); end
+
+end
+
 end
