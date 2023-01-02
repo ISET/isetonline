@@ -25,10 +25,13 @@ useDB = true; % false;
 usePreComputedOI = false;
 
 % Port number seems to wander a bit:)
+
 if useDB
     ourDB = db('dbServer','seedling','dbPort',49153);
     % If we are also using Mongo create our collections first!
     ourDB.createSchema;
+else
+    ourDB = []; % don't save to a database
 end
 
 
@@ -151,7 +154,7 @@ else
     % but make sure they are still numbered right!
     jj = 1;
     for ii = 1:10:numScenes*10
-        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name); %#ok<SAGROW>
+        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name); 
         jj = jj+1;
     end
 
@@ -184,8 +187,9 @@ if ~isfolder(fullfile(outputFolder,'images'))
     mkdir(fullfile(outputFolder,'images'))
 end
 
-% typically we loop through oiFiles, but if we have synthetic scenes
-% then we need to generate those.
+% Originally we looped through oiFiles, 
+% but for metric scenes we will generate them
+% from the .mat Scene objects Zhenyi creates from the .exr files
 
 if usePreComputedOI
     for ii = 1:numel(oiFiles)
@@ -208,7 +212,7 @@ if usePreComputedOI
 
         % LOOP THROUGH THE SENSORS HERE
         % we use basemetadata for other render case, but not here?
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, useDB);
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, ourDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 else
@@ -228,7 +232,7 @@ else
         infoFiles.additionalFile = fullfile(infoFolder, ...
             sprintf('%s.txt',imageID));
 
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB);
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 end
@@ -241,7 +245,7 @@ jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
-function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB)
+function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB)
 
 % not sure if this is right. Could also need to be empty
 imageMetadata = baseMetadata;
@@ -496,7 +500,9 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     % by default use the assetDB
-    if useDB; ourDB.store(sensor_ae.metadata,"collection","sensor"); end
+    if ~isempty(ourDB)
+        ourDB.store(sensor_ae.metadata,"collection","sensor"); 
+    end
 
     % We ONLY write out the metadata in the main .json
     % file to keep it of reasonable size
