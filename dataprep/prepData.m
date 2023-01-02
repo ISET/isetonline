@@ -59,12 +59,6 @@ exportSensors(outputFolder, privateDataFolder, ourDB);
 %% Export Lenses
 exportLenses(outputFolder, privateDataFolder, ourDB)
 
-%% TBD Export "Scenes"
-% Our scenes won't typically be ISET scenes.
-% Instead they will be recipes usable by the
-% Vistalab version of PBRT and by ISET3d.
-% But we could export them for download
-
 %% ... Eventually see if we can modify illumination ...
 % And potentially download information about it?
 % Or maybe this all comes in the variants on the recipes?
@@ -79,14 +73,13 @@ exportLenses(outputFolder, privateDataFolder, ourDB)
 % is small enough to be kept in a single file & used for filtering
 imageMetadataArray = [];
 
-% For now we have the OI folder in our Matlab path
-% As we add a large number we might want to enumerate a data folder
-% Or even get them from a database
-
 % We can either start with pre-computed optical images that
 % have been through lenses, or synthetic scenes through a pinhole
 % that we'll render through "another" pinhole for now
 if usePreComputedOI
+    % For now we have the OI folder in our Matlab path
+    % As we add a large number we might want to enumerate a data folder
+    % Or even get them from a database
     oiFiles = {'oi_001.mat', 'oi_002.mat',  ...
         'oi_003.mat', 'oi_004.mat', 'oi_005.mat', 'oi_006.mat'};
 else
@@ -130,17 +123,24 @@ else
     % Now we'll make oi's by iterating through our scenes
     oiFiles = {};
 
+    % our scenes are pre-rendered .exr files for various illuminants
+    % that have been combined into ISETcam scenes for evaluation
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
+
+        % In our case we render the scene through our default 
+        % (shift-invariant) optics so that we have an OI to work with
         % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
         oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
 
+        % Get rid of the oi border for better viewing
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
     end
 
 end
 
-% Loop through OIs and render them with our sensors
+% Either way we now have a set of optical images that we can
+% Loop through and render them with our sensors
 % and with whatever variants (burst, bracket, ...) we want
 if ~isfolder(fullfile(outputFolder,'oi'))
     mkdir(fullfile(outputFolder,'oi'))
@@ -151,10 +151,6 @@ end
 if ~isfolder(fullfile(outputFolder,'images'))
     mkdir(fullfile(outputFolder,'images'))
 end
-
-% Originally we looped through oiFiles,
-% but for metric scenes we will generate them
-% from the .mat Scene objects Zhenyi creates from the .exr files
 
 if usePreComputedOI
     for ii = 1:numel(oiFiles)
@@ -181,14 +177,18 @@ if usePreComputedOI
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 else
+    % Originally we looped through oiFiles,
+    % but for metric scenes we will generate them
+    % from the .mat Scene objects Zhenyi creates from the .exr files
     for ii = 1:numel(oiComputed)
         % This is where the scene ID is available
         fName = erase(sceneFileEntries(ii).name,'.mat');
         imageID = fName;
 
         oi = oiComputed{ii};
-        % LOOP THROUGH THE SENSORS HERE
+
         % baseMetadata should be generic info to add to per-image data
+        % once we figure out what that is
         baseMetadata = '';
 
         % specify the files needed to extract Ground Truth
@@ -197,14 +197,15 @@ else
         infoFiles.additionalFile = fullfile(infoFolder, ...
             sprintf('%s.txt',imageID));
 
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB);
+        % LOOP THROUGH THE SENSORS HERE
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
+            baseMetadata, infoFiles, ourDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 end
 
 % We can write metadata as one file to make it faster to read
-% -- but since it is only
-% read by our code, we place it in the code folder tree
+% Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
@@ -212,10 +213,10 @@ jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 %% For each OI process through all the sensors we have
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB)
 
-% not sure if this is right. Could also need to be empty
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
+% So we pick the leading characters which are the unique ID so far
 if ~isstrprop(oi.name(1),'alpha')
     fName = oi.name(1:10); % root scene name in our initial test data
 else
@@ -228,9 +229,10 @@ end
 % we'd recalc for each sensor.
 
 oiBurst = oi;
+% Turn off camera motion for now, as it is confusing people:)
 % Pick a large amount for testing
-oiBurst = oiCameraMotion(oiBurst, 'amount', ...
-    {[0 .05], [0 .1], [0 .15], [0 .2]});
+%oiBurst = oiCameraMotion(oiBurst, 'amount', ...
+%    {[0 .05], [0 .1], [0 .15], [0 .2]});
 
 % Loop through our sensors:
 for iii = 1:numel(sensorFiles)
@@ -238,13 +240,10 @@ for iii = 1:numel(sensorFiles)
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
-    % At least for now, scale sensor
-    % to match the FOV -- IF we have a focal length
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
     end
-
 
     %% Now we have an OI + Sensor
     % so at this point we should have a notion/function
@@ -266,9 +265,8 @@ for iii = 1:numel(sensorFiles)
     % For static images with no fancy AI,
     % I think a "mini-HDR" is actually equivalent
     % to doing simple burst calculations
-    burstFrames = 5;
+    burstFrames = 3;
     burstTimes = repelem(aeTime/burstFrames, burstFrames);
-    numFrames = 3; % should we allow for 3 or 5?
 
     bracketStops = 3; % for now
     bracketTimes = [aeTime/(3*bracketStops), ...
@@ -464,9 +462,8 @@ for iii = 1:numel(sensorFiles)
 
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
-    % by default use the assetDB
     if ~isempty(ourDB)
-        ourDB.store(sensor_ae.metadata,"collection","sensor");
+        ourDB.store(sensor_ae.metadata,"collection","sensorImage");
     end
 
     % We ONLY write out the metadata in the main .json
