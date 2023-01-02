@@ -239,6 +239,7 @@ end
 % instead of the public data folder
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
+%% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, useDB)
 

@@ -4,7 +4,7 @@
 // 
 
 const MongoClient = require("mongodb").MongoClient;
-const { resolve } = require("core-js/fn/promise");
+// const { resolve } = require("core-js/fn/promise");
 const mongodb = require('mongodb');
 
 // Currently not using devExtreme
@@ -26,6 +26,7 @@ function getQueryOptions(req) {
     });
 }
 
+// this function is just for use in code snippets
 async function getData(testCollection, req, res) {
     try {
         const options = getQueryOptions(req);
@@ -92,20 +93,10 @@ async function listCollection(collectionName){
 
         console.log(result);
         
-        // try to create item list
-        // for (let ii = 0;  ii < result.length; ii++){
-        //    itemList[ii] = result[ii];
-        // }
-        // client.close();
         return result;
         
     });
 
 }
 
-function getCollection(collectionName) {
-    return listCollection(collectionName).then(result => console.log(result)).catch(err => console.log(err));
-}
-
-// itemList shouldn't need to be here once we figure out promises
-module.exports = { getData, connectDB, listCollection, itemList }
+module.exports = { getData, connectDB, listCollection }
