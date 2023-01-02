@@ -54,7 +54,7 @@ app.get('/', (req, res) => {
 
 async function getItems(collection) {
     await listCollection(collection).then(result => {
-        console.log(result); //return ourItemPromise.then(console.log);
+        console.log(result); 
         return result;
     }).catch (err =>{
         console.log(err);
