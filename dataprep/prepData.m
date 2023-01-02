@@ -17,7 +17,7 @@ if ~isfolder(outputFolder)
 end
 
 % Need to make db optional, as not everyone will be set up for it.
-useDB = false;
+useDB = true; % false;
 
 % We can either process pre-computed optical images
 % or synthetic scenes that have been rendered through a pinhole by PBRT
@@ -26,7 +26,7 @@ usePreComputedOI = false;
 
 % Port number seems to wander a bit:)
 if useDB
-    ourDB = db('dbServer','seedling','dbPort',49211);
+    ourDB = db('dbServer','seedling','dbPort',49153);
     % If we are also using Mongo create our collections first!
     ourDB.createSchema;
 end
