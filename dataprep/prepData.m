@@ -127,7 +127,7 @@ else
     % that have been combined into ISETcam scenes for evaluation
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
-
+        ourScene.metadata.sceneID = fName; % best we can do for now
         % In our case we render the scene through our default 
         % (shift-invariant) optics so that we have an OI to work with
         % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
@@ -135,6 +135,8 @@ else
 
         % Get rid of the oi border for better viewing
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
+        oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
+
     end
 
 end
