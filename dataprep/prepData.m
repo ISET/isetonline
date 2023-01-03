@@ -284,6 +284,9 @@ for iii = 1:numel(sensorFiles)
     % so we want to write them out for use in our Sensor Editor
     sensor_ae.metadata = baseMetadata; % initialize with generic value
     sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
+
+    % Get the sceneID
+    sensor_ae.metadata.sceneID = oi.metadata.sceneID; % snag original scene ID
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
     % See how long this takes in case we want
