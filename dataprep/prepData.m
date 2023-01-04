@@ -214,7 +214,11 @@ else
         % LOOP THROUGH THE SENSORS HERE
         imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
             baseMetadata, infoFiles, ourDB);
-        imageMetadataArray = [imageMetadataArray imageMetadata];
+
+        % Not all sensorimages will have the same
+        % metadata fields, so we need to put them in a cell struct
+
+        imageMetadataArray{ii} = imageMetadata;
     end
 end
 
