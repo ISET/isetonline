@@ -22,6 +22,8 @@ arguments
     % others?
 end
 
+GTData = []; % make sure we return a value
+
 %% Categories that we support currently (out of the 80 or so total)
 %    One reason not to support them all is some like tree & rock
 %    would "just get in the way"

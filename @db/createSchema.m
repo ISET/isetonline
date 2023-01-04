@@ -17,13 +17,14 @@ switch obj.dbServer
     otherwise
         % we can only create collections from Matlab, not indices
         % so those have to get done another way
-        try
+        collectionNames = {'scene', 'sensor', 'lens',...
+            'oi','sensorimage'};
+        for ii = 1:numel(collectionNames)
+            try
             % use try block in case they exist and we get an error
-            createCollection(obj.connection, 'scene');
-            createCollection(obj.connection, 'sensor');
-            createCollection(obj.connection, 'lens');
-            createCollection(obj.connection, 'oi');
-            createCollection(obj.connection, 'sensorImage');
-        catch
+            createCollection(obj.connection, collectionNames{ii});
+            catch
+                %warning("Problems creating schema");
+            end
         end
 end

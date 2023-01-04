@@ -54,7 +54,7 @@ end
 
 %% Export sensor(s)
 % Provide data for sensors so people can work with it on their own
-exportSensors(outputFolder, privateDataFolder, ourDB);
+sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB);
 
 %% Export Lenses
 exportLenses(outputFolder, privateDataFolder, ourDB)
@@ -91,30 +91,37 @@ else
         % Live Root:
         % datasetRoot = 'Y:\data\iset\isetauto';
         % Test Root:
-        datasetRoot = 'V:\data\iset\isetauto\skymap_scale10\';
+        iaDataRoot = 'v:\data\iset\isetauto';
+        datasetRoot = fullfile(iaDataRoot, 'dataset');
+        % example instance file
+        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
+        sceneSet = 'nighttime_006';
+        instanceSet = 'ISETScene_006';
+        % Rendering folder has the .mat files for the Scenes that can be summed
+        datasetFolder = fullfile(iaDataRoot,'Deveshs_assets',[instanceSet '_renderings']);
+
     else
         % on Mux
         datasetRoot = '/acorn/data/iset/isetauto/';
+        sceneSet = 'nighttime_006';
+        % needs to be set:
+        datasetFolder = '';
+
     end
-    sceneFolder = fullfile(datasetRoot, 'dataset', 'nighttime_006');
-    infoFolder = fullfile(datasetRoot,'dataset','nighttime','additionalInfo');
+    sceneFolder = fullfile(datasetRoot, 'skymap_scale10', sceneSet);
+    infoFolder = fullfile(datasetRoot,'nighttime','additionalInfo');
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
-
-    % Rendering folder has the .mat files for the Scenes that can be summed
-    datasetFolder = fullfile(datasetRoot,'Deveshs_assets','ISETScene_003_renderings');
 
     % Limit how many scenes we use for testing to speed things up
     sceneNumberLimit = 3;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
-    % pick every 10th scene for now
-    % but make sure they are still numbered right!
     jj = 1;
-    for ii = 1:10:numScenes*10
+    for ii = 1:numScenes
         sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
         jj = jj+1;
     end
@@ -197,6 +204,8 @@ else
         baseMetadata = '';
 
         % specify the files needed to extract Ground Truth
+        % Example:
+        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
         infoFiles.instanceFile = fullfile(datasetFolder, ...
             sprintf('%s_instanceID.exr', imageID));
         infoFiles.additionalFile = fullfile(infoFolder, ...
@@ -239,9 +248,11 @@ oiBurst = oi;
 %oiBurst = oiCameraMotion(oiBurst, 'amount', ...
 %    {[0 .05], [0 .1], [0 .15], [0 .2]});
 
-% Loop through our sensors:
+% Loop through our sensors: (ideally with parfor)
 for iii = 1:numel(sensorFiles)
-    load(sensorFiles{iii}); % assume they are on our path
+    % parfor wants us to assign load to a variable
+    sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
+    sensor = sensorWrapper.sensor;
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
@@ -262,7 +273,8 @@ for iii = 1:numel(sensorFiles)
     %aeLevels = .8;
     aeTime = autoExposure(oi,sensor, aeLevels, aeMethod);
     aeMethod = 'hdr';
-    aeHDRTime  = autoExposure(oi,sensor,aeLevels,aeMethod,'numframes',7);
+    % Un-used, for now
+    %aeHDRTime  = autoExposure(oi,sensor,aeLevels,aeMethod,'numframes',7);
 
     % Now derive bracket & burst times:
     % These are hacked for now to get things working.
@@ -403,9 +415,12 @@ for iii = 1:numel(sensorFiles)
     % Use YOLO & get back annotated image
     % FIGURE OUT HOW TO WRITE OUT YOLO DATA
     [img_YOLO, bboxes, scores, labels] = doYOLO(img_for_YOLO);
-    yoloJSON.bboxes = bboxes;
-    yoloJSON.scores = scores;
-    yoloJSON.labels = labels;
+
+    % yoloJSON needs to be fixed for parfor, and
+    % we're not currently using it, so comment out
+    %yoloJSON.bboxes = bboxes;
+    %yoloJSON.scores = scores;
+    %yoloJSON.labels = labels;
 
     % Don't know if we need to write these version out separately?
     [img_YOLO_burst, bboxes, scores, labels] = doYOLO(img_for_YOLO_burst);
@@ -471,7 +486,7 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     if ~isempty(ourDB)
-        ourDB.store(sensor_ae.metadata,"collection","sensorImage");
+        ourDB.store(sensor_ae.metadata,"collection","sensorimage");
     end
 
     % We ONLY write out the metadata in the main .json
@@ -482,7 +497,7 @@ for iii = 1:numel(sensorFiles)
     % adds and updates?
 
     % Need to accumulate all sensor data
-    imageMetadata = [imageMetadata sensor_ae.metadata];
+    imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW> 
 
 end
 end
@@ -501,7 +516,7 @@ for ii = 1:lensCount
 end
 end
 
-function exportSensors(outputFolder, privateDataFolder, ourDB)
+function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
     'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
