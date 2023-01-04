@@ -225,6 +225,8 @@ end
 % We can write metadata as one file to make it faster to read
 % Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
+% imageMetaDataArray is a cell Array, so we wind up with a sort of empty
+% top level right now??
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
