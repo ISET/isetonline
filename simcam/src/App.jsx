@@ -88,9 +88,8 @@ let imageDir = '/images/' // Should use /public by default?
 let oiDir = '/oi/'
 let sensorDir = dataDir + 'sensors/'
 
-// Seems to look for it on the public side?
 let jsonUrl = 'metadata.json'
-let imageData = require(dataDir + 'metadata.json')
+let imageMetaData = require(dataDir + 'metadata.json')
 
 let SU_Logo = '/glyphs/Stanford_Logo.png'
 let previewImage = SU_Logo // imageDir + imageData[0].jpegName
@@ -104,8 +103,10 @@ let selectedImage = {
 }
 
 
-
+// get sensorimage data from the metadata.json file.
+// however, it is a map/collection, so we need to index into it first.
 var rows
+imageData = imageMetaData[1]; // hope this works:)
 for (let ii = 0; ii < imageData.length; ii++) {
   // Read image objects into grid rows
   // Some visible, some hidden for other uses
