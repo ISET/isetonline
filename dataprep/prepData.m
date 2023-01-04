@@ -88,12 +88,15 @@ else
     % Here is where we look for our scenes
     % TMP HACK with hard-coded paths
     if ispc
-        datasetRoot = 'Y:\data\iset\isetauto';
+        % Live Root:
+        % datasetRoot = 'Y:\data\iset\isetauto';
+        % Test Root:
+        datasetRoot = 'V:\data\iset\isetauto\skymap_scale10\';
     else
         % on Mux
         datasetRoot = '/acorn/data/iset/isetauto/';
     end
-    sceneFolder = fullfile(datasetRoot, 'dataset', 'nighttime_003');
+    sceneFolder = fullfile(datasetRoot, 'dataset', 'nighttime_006');
     infoFolder = fullfile(datasetRoot,'dataset','nighttime','additionalInfo');
 
     % These are the composite scene files made by mixing
