@@ -116,7 +116,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 3;
+    sceneNumberLimit = 300;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -135,7 +135,8 @@ else
 
     % our scenes are pre-rendered .exr files for various illuminants
     % that have been combined into ISETcam scenes for evaluation
-    for ii = 1:numScenes
+    % Good place to try parfor
+    parfor ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene.metadata.sceneID = fName; % best we can do for now
         % In our case we render the scene through our default 
@@ -191,7 +192,7 @@ if usePreComputedOI
 else
     % Originally we looped through oiFiles,
     % but for metric scenes we will generate them
-    % from the .mat Scene objects Zhenyi creates from the .exr files
+    % from the .mat Scene objects created from .exr files
     for ii = 1:numel(oiComputed)
         % This is where the scene ID is available
         fName = erase(sceneFileEntries(ii).name,'.mat');
@@ -255,6 +256,7 @@ oiBurst = oi;
 %    {[0 .05], [0 .1], [0 .15], [0 .2]});
 
 % Loop through our sensors: (ideally with parfor)
+% But that may have issues
 for iii = 1:numel(sensorFiles)
     % parfor wants us to assign load to a variable
     sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
