@@ -16,6 +16,7 @@ function [GTData] = olGetGroundTruth(options)
 arguments
     options.instanceFile = '';
     options.addtionalFile = '';
+    options.offset = 0; % I think how many lines we skip in info file
     % Used to be:
     % fullfile(datasetRoot,sprintf('dataset/nighttime/additionalInfo/%s.txt',imageID))
 
@@ -79,7 +80,7 @@ for ii = 1:numel(objectslist)
         continue;
     end
     
-    [occluded, ~, bbox2d, segmentation, area] = piAnnotationGet(instanceMap,ii,0);
+    [occluded, ~, bbox2d, segmentation, area] = piAnnotationGet(instanceMap,ii,options.offset);
     if isempty(bbox2d), continue;end % no location
 
     % Convert bbox format as needed (x, y, width, height)
@@ -91,7 +92,7 @@ for ii = 1:numel(objectslist)
     if pos(3)<10 || pos(4)<10
         continue
     end
-    if pos(4)<500 && pos(3)>960
+    if pos(4)>500 && pos(3)>960
         continue
     end
     if area <= 0 % Not sure how this can happen if we have height & width

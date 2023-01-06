@@ -15,14 +15,15 @@ GTData = olGetGroundTruth('addtionalFile',options.additionalFile, ...
 % labels, so we convert formats here
 
 % first check to see if we got data back
-% not sure why we don't always get something
+% Fix that we're not getting 
 if ~isempty(GTData)
-    bboxes = GTData(1:end).bbox2d;
-    labels = GTData(1:end).label;
     scores = ones(size(GTData));
-
-    % now build annotated image to return
-    annotatedImage = insertObjectAnnotation(img,'Rectangle',bboxes,labels);
+    annotatedImage = img;
+    for ii = 1:numel(GTData)
+        % now build annotated image to return
+        annotatedImage = insertObjectAnnotation(annotatedImage,'Rectangle', ...
+        GTData(ii).bbox2d,GTData(ii).label);
+    end
 else
     annotatedImage = img;
 end

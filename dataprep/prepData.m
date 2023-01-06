@@ -10,6 +10,11 @@
 % D. Cardinal, Stanford University, 2022
 %
 
+%% TBFixed: We wind up with COCO annotations for full 1080p
+%  But images that are smaller. Need to sort that out
+%%
+
+
 %% Set output folder
 % I'm not sure where we want the data to go ultimately.
 % As it will wind up in the website and/or a db
@@ -34,7 +39,8 @@ usePreComputedOI = false;
 % Port number seems to wander a bit:)
 
 if useDB
-    ourDB = db('dbServer','seedling','dbPort',49153);
+    portNumber = 49154; % this changes, need to figure out why
+    ourDB = db('dbServer','seedling','dbPort',portNumber);
     % If we are also using Mongo create our collections first!
     ourDB.createSchema;
 else
@@ -116,7 +122,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 300;
+    sceneNumberLimit = 3;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
