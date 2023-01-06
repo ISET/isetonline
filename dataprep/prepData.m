@@ -14,6 +14,8 @@
 %  But images that are smaller. Need to sort that out
 %%
 
+% NOTE: Currently we create each sensor with the ISETCam resolution,
+%       but that is not the same as the actual resolution of the products
 
 %% Set output folder
 % I'm not sure where we want the data to go ultimately.
@@ -406,15 +408,18 @@ for iii = 1:numel(sensorFiles)
     % We also want to save a GT-annotated version of each!
     % "doGT" will run detector, but need to make it integrate bboxes
     % Generate images to use for GT, with size matching scene
-    sceneRez = ip_ae.metadata.sceneSize;
     img_for_GT = imread(outputFile);
-    imresize(img_for_GT, sceneRez);
 
     img_for_GT_burst = imread(burstFile);
-    imresize(img_for_GT, sceneRez);
 
     img_for_GT_bracket = imread(bracketFile);
-    imresize(img_for_GT, sceneRez);
+
+    if ~isempty(ip_ae.metadata) && isfield(ip_ae.metadata, 'sceneSize')
+        sceneRez = ip_ae.metadata.sceneSize;
+        imresize(img_for_GT, sceneRez);
+        imresize(img_for_GT_burst, sceneRez);
+        imresize(img_for_GT_bracket, sceneRez);
+    end
 
     % Use GT & get back annotated image
     if ~isempty(infoFiles.instanceFile)
