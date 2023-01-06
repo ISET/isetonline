@@ -144,6 +144,8 @@ else
     % Good place to try parfor
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
+        % Preserve size for later use in resizing
+        ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
         % In our case we render the scene through our default 
         % (shift-invariant) optics so that we have an OI to work with
@@ -324,7 +326,7 @@ for iii = 1:numel(sensorFiles)
     % This is where we need to sync up resolution
     % We are going to annotate the sensor output
     % But the sensors have differing resolutions
-    % TBD
+    % So we will need to resize before we analyze
     sensor_ae = sensorCompute(sensor_ae,oi);
 
     sensor_burst = sensorCompute(sensor_burst,oiBurst);
@@ -372,7 +374,6 @@ for iii = 1:numel(sensorFiles)
     ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
 
     % Create a default IP so we can see some baseline image
-    % This could of course be tweaked
     ip_ae = ipCreate('ourIP',sensor_ae);
     % For RCCC we need to set the IP differently
     if contains(sensor_ae.name, 'RCCC')
@@ -404,10 +405,16 @@ for iii = 1:numel(sensorFiles)
 
     % We also want to save a GT-annotated version of each!
     % "doGT" will run detector, but need to make it integrate bboxes
-    % Generate images to use for GT
+    % Generate images to use for GT, with size matching scene
+    sceneRez = ip_ae.metadata.sceneSize;
     img_for_GT = imread(outputFile);
+    imresize(img_for_GT, sceneRez);
+
     img_for_GT_burst = imread(burstFile);
+    imresize(img_for_GT, sceneRez);
+
     img_for_GT_bracket = imread(bracketFile);
+    imresize(img_for_GT, sceneRez);
 
     % Use GT & get back annotated image
     if ~isempty(infoFiles.instanceFile)
