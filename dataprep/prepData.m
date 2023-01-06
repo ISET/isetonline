@@ -142,12 +142,12 @@ else
     % our scenes are pre-rendered .exr files for various illuminants
     % that have been combined into ISETcam scenes for evaluation
     % Good place to try parfor
-    parfor ii = 1:numScenes
+    for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene.metadata.sceneID = fName; % best we can do for now
         % In our case we render the scene through our default 
         % (shift-invariant) optics so that we have an OI to work with
-        % HERE IS WHERE WE WILL LOAD PARAMS IF ZHENYI STARTS SAVING THEM!
+
         oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
 
         % Get rid of the oi border for better viewing
@@ -321,6 +321,10 @@ for iii = 1:numel(sensorFiles)
     % See how long this takes in case we want
     % to allow users to do it in real-time on our server
     tic;
+    % This is where we need to sync up resolution
+    % We are going to annotate the sensor output
+    % But the sensors have differing resolutions
+    % TBD
     sensor_ae = sensorCompute(sensor_ae,oi);
 
     sensor_burst = sensorCompute(sensor_burst,oiBurst);
