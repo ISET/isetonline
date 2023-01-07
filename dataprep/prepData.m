@@ -130,22 +130,22 @@ else
         jj = jj+1;
     end
 
-    % This is where the scene ID is available
-    fName = erase(sceneFileEntries(ii).name,'.mat');
-    imageID = fName;
-
     % Now we'll make oi's by iterating through our scenes
     oiFiles = {};
 
     % our scenes are pre-rendered .exr files for various illuminants
     % that have been combined into ISETcam scenes for evaluation
-    % Good place to try parfor
-
-    % reset oiComputed
+    % We create a pinhole OI for each one
+    % USE parfor except for debugging
     oiComputed = {};
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene = ourScene.scene; % we get a nested variable for some reason
+
+        % This is where the scene ID is available
+        fName = erase(sceneFileEntries(ii).name,'.mat');
+        imageID = fName;
+
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
@@ -159,7 +159,7 @@ else
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
         oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
 
-        %% Create Ground Truth Image 
+        %% Find Object Ground Truth and Create Annotated Image 
         % use instance map plus text index of them
         instanceFile = fullfile(datasetFolder, ...
             sprintf('%s_instanceID.exr', imageID));
@@ -334,7 +334,7 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
 
     % merge metadata from the OI with our own
-    sensor_ae.metadata = mergeStructures(sensor_ae.metadata, oi.metadata);
+    sensor_ae.metadata = appendStruct(sensor_ae.metadata, oi.metadata);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
     % See how long this takes in case we want
