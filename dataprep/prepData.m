@@ -5,7 +5,7 @@
 % are designed to be used by ISETOnline
 %
 % Optionally can store in a mongoDB set of collections, in addition
-% to the file system
+% to the file system by specifying useDB 
 %
 % D. Cardinal, Stanford University, 2022
 %
@@ -120,7 +120,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 3;
+    sceneNumberLimit = 2;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -244,9 +244,8 @@ end
 % We can write metadata as one file to make it faster to read
 % Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
-% imageMetaDataArray is a cell Array, so we wind up with a sort of empty
-% top level right now
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+imageMetaDataStruct = imageMetadataArray{:}; % Convert so we have better output
+jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetaDataStruct);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
@@ -329,7 +328,7 @@ for iii = 1:numel(sensorFiles)
     % defaults, but have not processed an OI,
     % so we want to write them out for use in our Sensor Editor
     sensor_ae.metadata = baseMetadata; % initialize with generic value
-    sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
+    sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
 
     % Get the sceneID
     sensor_ae.metadata.sceneID = oi.metadata.sceneID; % snag original scene ID
@@ -431,16 +430,16 @@ for iii = 1:numel(sensorFiles)
     imwrite(thumbnail, ipLocalThumbnail);
 
     % We need to save the relative paths for the website to use
-    sensor_ae.metadata.jpegName = ipJPEGName;
-    sensor_ae.metadata.YOLOName = ipYOLOName;
-    sensor_ae.metadata.thumbnailName = ipThumbnailName;
+    sensor_ae.metadata.web.jpegName = ipJPEGName;
+    sensor_ae.metadata.web.YOLOName = ipYOLOName;
+    sensor_ae.metadata.web.thumbnailName = ipThumbnailName;
 
     % we also have bracket & burst (& others)
     % how do we want to store / note them?
-    sensor_ae.metadata.burstJPEGName = ipJPEGName_burst;
-    sensor_ae.metadata.burstYOLOName = ipYOLOName_burst;
-    sensor_ae.metadata.bracketJPEGName = ipJPEGName_bracket;
-    sensor_ae.metadata.bracketYOLOName = ipYOLOName_bracket;
+    sensor_ae.metadata.web.burstJPEGName = ipJPEGName_burst;
+    sensor_ae.metadata.web.burstYOLOName = ipYOLOName_burst;
+    sensor_ae.metadata.web.bracketJPEGName = ipJPEGName_bracket;
+    sensor_ae.metadata.web.bracketYOLOName = ipYOLOName_bracket;
 
     % Stash exposure time for reference
     sensor_ae.metadata.exposureTime = aeTime;
