@@ -7,14 +7,10 @@ addParameter(p, 'additionalfile', '', @isfile);
 addParameter(p, 'instancefile', '', @isfile);
 
 varargin = ieParamFormat(varargin);
-
 p.parse(varargin{:});
 
-options = p.Results;
-
-
-GTData = olGetGroundTruth('addtionalFile',options.additionalFile, ...
-    'instanceFile',options.instanceFile);
+GTData = olGetGroundTruth('addtionalFile',p.Results.additionalfile, ...
+    'instanceFile',p.Results.instancefile);
 
 % Currently, GTData has a separate entry for each object
 % That is different from our YOLO detector that returns a list of boxes &

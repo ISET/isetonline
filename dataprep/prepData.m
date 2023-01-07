@@ -10,10 +10,6 @@
 % D. Cardinal, Stanford University, 2022
 %
 
-%% TBFixed: We wind up with COCO annotations for full 1080p
-%  But images that are smaller. Need to sort that out
-%%
-
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
 
@@ -146,17 +142,42 @@ else
     % Good place to try parfor
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
+        ourScene = ourScene.scene; % we get a nested variable for some reason
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
-        % In our case we render the scene through our default 
+        % In our case we render the scene through our default
         % (shift-invariant) optics so that we have an OI to work with
 
-        oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
+        oiComputed{ii} = oiCompute(ourScene, oiDefault); %#ok<SAGROW>
 
-        % Get rid of the oi border for better viewing
+        % Get rid of the oi border so we match the original
+        % scene for better viewing & ground truth matching
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
         oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
+
+        %% Create Ground Truth Image 
+        % use instance map plus text index of them
+        instanceFile = fullfile(datasetFolder, ...
+            sprintf('%s_instanceID.exr', imageID));
+        additionalFile = fullfile(infoFolder, ...
+            sprintf('%s.txt',imageID));
+
+        ipGTName = [fName '-GT.png'];
+        % "Local" is our ISET filepath, not the website path
+        ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+        % Use GT & get back annotated image
+        % pass it a native resolution image so the bounding boxes
+        % match the scene locations
+        if ~isempty(instanceFile)
+            % Use HDR for render given the DR of many scenes
+            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+            img_GT = doGT(img_for_GT,'instanceFile',instanceFile, ...
+                'additionalFile',additionalFile);
+
+            % Write out our GT annotated image
+            imwrite(img_GT, ipLocalGT);
+        end
 
     end
 
@@ -190,10 +211,6 @@ if usePreComputedOI
             load(oiDataFile);
         end
 
-        % specify the files needed to extract Ground Truth
-        infoFiles.instanceFile = '';
-        infoFiles.additionalFile = '';
-
         % LOOP THROUGH THE SENSORS HERE
         % we use basemetadata for other render case, but not here?
         imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, ourDB);
@@ -214,21 +231,12 @@ else
         % once we figure out what that is
         baseMetadata = '';
 
-        % specify the files needed to extract Ground Truth
-        % Example:
-        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
-        infoFiles.instanceFile = fullfile(datasetFolder, ...
-            sprintf('%s_instanceID.exr', imageID));
-        infoFiles.additionalFile = fullfile(infoFolder, ...
-            sprintf('%s.txt',imageID));
-
         % LOOP THROUGH THE SENSORS HERE
         imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
             baseMetadata, infoFiles, ourDB);
 
         % Not all sensorimages will have the same
         % metadata fields, so we need to put them in a cell struct
-
         imageMetadataArray{ii} = imageMetadata;
     end
 end
@@ -237,7 +245,7 @@ end
 % Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
 % imageMetaDataArray is a cell Array, so we wind up with a sort of empty
-% top level right now??
+% top level right now
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
@@ -355,20 +363,6 @@ for iii = 1:numel(sensorFiles)
     ipLocalJPEG_bracket = fullfile(outputFolder,'images',ipJPEGName_bracket);
     ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
-    % Do the same for our Ground Truth filenames
-    % QUESTION: It makes sense to do YOLO on the sensor-rendered image
-    %   but Ground Truth is based on the original PBRT render
-    %   so if we use it, then try to show it over a sensor-rendered image
-    %   then will it all line up? Or do we just show a single GT vesion?
-
-    ipGTName = [fName '-' sName '-GT.jpg'];
-    ipGTName_burst = [fName '-' sName 'GT-burst.jpg'];
-    ipGTName_bracket = [fName '-' sName 'GT-bracket.jpg'];
-
-    % "Local" is our ISET filepath, not the website path
-    ipLocalGT = fullfile(outputFolder,'images',ipGTName);
-    ipLocalGT_burst = fullfile(outputFolder,'images',ipGTName_burst);
-    ipLocalGT_bracket = fullfile(outputFolder,'images',ipGTName_bracket);
 
     % Do the same for our YOLO version filenames
     ipYOLOName = [fName '-' sName '-YOLO.jpg'];
@@ -410,56 +404,16 @@ for iii = 1:numel(sensorFiles)
     burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst);
     bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket);
 
-    % We also want to save a GT-annotated version of each!
-    % "doGT" will run detector, but need to make it integrate bboxes
-    % Generate images to use for GT, with size matching scene
-    img_for_GT = imread(outputFile);
-
-    img_for_GT_burst = imread(burstFile);
-
-    img_for_GT_bracket = imread(bracketFile);
-
-    % Sometimes we are not getting sceneSize
-    if ~isempty(ip_ae.metadata) && isfield(ip_ae.metadata, 'sceneSize')
-        sceneRez = ip_ae.metadata.sceneSize;
-        imresize(img_for_GT, sceneRez);
-        imresize(img_for_GT_burst, sceneRez);
-        imresize(img_for_GT_bracket, sceneRez);
-        
-    end
-
-    % Use GT & get back annotated image
-    if ~isempty(infoFiles.instanceFile)
-        img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-        img_GT_burst = doGT(img_for_GT_burst,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-        img_GT_bracket = doGT(img_for_GT_bracket,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-
-        % Write out our GT annotated image
-        imwrite(img_GT, ipLocalGT);
-        imwrite(img_GT_burst, ipLocalGT_burst);
-        imwrite(img_GT_bracket, ipLocalGT_bracket);
-    end
-    % We also want to save a YOLO-annotated version of each!
-    % doYOLO will run detector, but need to make it integrate bboxes
+    % We also want to save a YOLO-annotated version of each
     % Generate images to use for YOLO
     img_for_YOLO = imread(outputFile);
     img_for_YOLO_burst = imread(burstFile);
     img_for_YOLO_bracket = imread(bracketFile);
 
     % Use YOLO & get back annotated image
-    % FIGURE OUT HOW TO WRITE OUT YOLO DATA
     [img_YOLO, bboxes, scores, labels] = doYOLO(img_for_YOLO);
 
-    % yoloJSON needs to be fixed for parfor, and
-    % we're not currently using it, so comment out
-    %yoloJSON.bboxes = bboxes;
-    %yoloJSON.scores = scores;
-    %yoloJSON.labels = labels;
-
-    % Don't know if we need to write these version out separately?
+    % Don't know if we need to write these version out separately
     [img_YOLO_burst, bboxes, scores, labels] = doYOLO(img_for_YOLO_burst);
     [img_YOLO_bracket, bboxes, scores, labels] = doYOLO(img_for_YOLO_bracket);
 
@@ -478,17 +432,14 @@ for iii = 1:numel(sensorFiles)
 
     % We need to save the relative paths for the website to use
     sensor_ae.metadata.jpegName = ipJPEGName;
-    sensor_ae.metadata.GTName = ipGTName;
     sensor_ae.metadata.YOLOName = ipYOLOName;
     sensor_ae.metadata.thumbnailName = ipThumbnailName;
 
     % we also have bracket & burst (& others)
     % how do we want to store / note them?
     sensor_ae.metadata.burstJPEGName = ipJPEGName_burst;
-    sensor_ae.metadata.burstGTName = ipGTName_burst;
     sensor_ae.metadata.burstYOLOName = ipYOLOName_burst;
     sensor_ae.metadata.bracketJPEGName = ipJPEGName_bracket;
-    sensor_ae.metadata.bracketGTName = ipGTName_bracket;
     sensor_ae.metadata.bracketYOLOName = ipYOLOName_bracket;
 
     % Stash exposure time for reference
@@ -534,7 +485,7 @@ for iii = 1:numel(sensorFiles)
     % adds and updates?
 
     % Need to accumulate all sensor data
-    imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW> 
+    imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW>
 
 end
 end
