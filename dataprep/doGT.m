@@ -1,6 +1,22 @@
 function [annotatedImage, bboxes, scores, labels] = doGT(img, varargin)
 %DOGT Get Ground Truth for image
 
+% Can we have a function that processes the options argument so that
+% the strings (e.g., 'additionalFile') could also be sent in as
+% 'additional File' or 'additional file'.  THis would be like
+%
+%   varargin = ieParamFormat(varargin);
+%
+% Type checking.  BW needs education on that.
+
+% Can we have a function that processes the options argument so that
+% the strings (e.g., 'additionalFile') could also be sent in as
+% 'additional File' or 'additional file'.  THis would be like
+%
+%   varargin = ieParamFormat(varargin);
+%
+% Type checking.  BW needs education on that.
+
 p = inputParser;
 
 addParameter(p, 'additionalFile', '', @isfile);
