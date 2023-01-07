@@ -274,6 +274,11 @@ for iii = 1:numel(sensorFiles)
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
+    % NOTE to self DJC:
+    % This is a little complicated, as we often have a narrow FOV
+    % scene (front-facing auto camera), but a wider FOV sensor.
+    % We want to keep pixel size the same, but cropping isn't
+    % ideal
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
@@ -414,11 +419,13 @@ for iii = 1:numel(sensorFiles)
 
     img_for_GT_bracket = imread(bracketFile);
 
+    % Sometimes we are not getting sceneSize
     if ~isempty(ip_ae.metadata) && isfield(ip_ae.metadata, 'sceneSize')
         sceneRez = ip_ae.metadata.sceneSize;
         imresize(img_for_GT, sceneRez);
         imresize(img_for_GT_burst, sceneRez);
         imresize(img_for_GT_bracket, sceneRez);
+        
     end
 
     % Use GT & get back annotated image

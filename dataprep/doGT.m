@@ -1,11 +1,15 @@
-function [annotatedImage, bboxes, scores, labels] = doGT(img, options)
+function [annotatedImage, bboxes, scores, labels] = doGT(img, varargin)
 %DOGT Get Ground Truth for image
 
-arguments
-    img = [];
-    options.additionalFile = '';
-    options.instanceFile = '';
-end
+p = inputParser;
+
+addParameter(p, 'additionalFile', '', @isfile);
+addParameter(p, 'instanceFile', '', @isfile);
+
+p.parse(varargin{:});
+
+options = p.Results;
+
 
 GTData = olGetGroundTruth('addtionalFile',options.additionalFile, ...
     'instanceFile',options.instanceFile);

@@ -1,4 +1,4 @@
-function [GTData] = olGetGroundTruth(options)
+function [GTData] = olGetGroundTruth(varargin)
 %OLGETGROUNDTRUE Retrieve GT info from rendered scenes
 %   D. Cardinal, Stanford University, 12/2022
 
@@ -13,15 +13,15 @@ function [GTData] = olGetGroundTruth(options)
 %   that has a map of object instances to pixels
 % additionalFile is a text file with the list of objects in the scene
 
-arguments
-    options.instanceFile = '';
-    options.addtionalFile = '';
-    options.offset = 0; % I think how many lines we skip in info file
-    % Used to be:
-    % fullfile(datasetRoot,sprintf('dataset/nighttime/additionalInfo/%s.txt',imageID))
+p = inputParser;
+addParameter(p,'instanceFile','',@ischar);
+addParameter(p,'addtionalFile','',@ischar);
+addParameter(p,'offset',0,@isnumeric); 
 
-    % others?
-end
+p.parse(varargin{:});
+
+options = p.Results;
+
 
 GTData = []; % make sure we return a value
 
@@ -107,6 +107,7 @@ for ii = 1:numel(objectslist)
     GTData(objectIndex).catId = catId;
 
     objectIndex = objectIndex + 1;
+
     %{
     % This is the COCO generation code from Zhenyi's original
     annotations{nBox} = struct('segmentation',[segmentation],'area',area,'iscrowd',0,...
@@ -115,19 +116,7 @@ for ii = 1:numel(objectslist)
     nBox = nBox+1;
     %}
 
-% CONVERSION STOPPED HERE< REST NEEDS WORK
-%{
-    % We could write out GT version of image (or even YOLO version) here
-    % Or just pass an image back to our caller?
-    imgName = sprintf('%d.png',str2double(imageID));
-
-    images{nImage} = struct('file_name',imgName,'height',h,'width',w,'id',str2double(imageID));
-    nImage = nImage + 1;
 end
-%}
-% Instead we want to return our JSON structure to our caller
-% So that they can embed it into an output file
-% and create an annotated version (unless we return that also)
 
 
 end
