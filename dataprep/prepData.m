@@ -140,6 +140,9 @@ else
     % our scenes are pre-rendered .exr files for various illuminants
     % that have been combined into ISETcam scenes for evaluation
     % Good place to try parfor
+
+    % reset oiComputed
+    oiComputed = {};
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene = ourScene.scene; % we get a nested variable for some reason
@@ -177,6 +180,11 @@ else
 
             % Write out our GT annotated image
             imwrite(img_GT, ipLocalGT);
+
+            % Unlike other previews, this one is generic to the scene
+            % but we've already built an oi, so save it there also
+            ourScene.metadata.web.GTName = ipGTName;
+            oiComputed{ii}.metadata.web.GTName = ipGTName;
         end
 
     end
@@ -281,11 +289,6 @@ for iii = 1:numel(sensorFiles)
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
-    % NOTE to self DJC:
-    % This is a little complicated, as we often have a narrow FOV
-    % scene (front-facing auto camera), but a wider FOV sensor.
-    % We want to keep pixel size the same, but cropping isn't
-    % ideal
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
@@ -330,8 +333,8 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata = baseMetadata; % initialize with generic value
     sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
 
-    % Get the sceneID
-    sensor_ae.metadata.sceneID = oi.metadata.sceneID; % snag original scene ID
+    % merge metadata from the OI with our own
+    sensor_ae.metadata = mergeStructures(sensor_ae.metadata, oi.metadata);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
     % See how long this takes in case we want

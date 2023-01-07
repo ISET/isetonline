@@ -13,6 +13,9 @@ function [GTData] = olGetGroundTruth(varargin)
 %   that has a map of object instances to pixels
 % additionalFile is a text file with the list of objects in the scene
 
+% TBD: Allow passing in of depthmap, so we can compare to instance map
+%      and get a depth number for each object of interest
+
 p = inputParser;
 addParameter(p,'instanceFile','',@ischar);
 addParameter(p,'addtionalFile','',@ischar);

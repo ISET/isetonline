@@ -111,56 +111,61 @@ var imageData;
 
 for (let rr = 0; rr < imageMetaData.length; rr++) {
   imageData = imageMetaData[rr]; // hope this works:)
-  for (let ii = 0; ii < imageData.length; ii++) {
-    // Read image objects into grid rows
-    // Some visible, some hidden for other uses
-    let newRow = [
-      {
-        // Columns displayed to user
-        thumbnail: imageDir + imageData[ii].thumbnailName,
-        scene: imageData[ii].scenename,
+  // Read image objects into grid rows
+  // Some visible, some hidden for other uses
+  let newRow = [
+    {
+      // Columns displayed to user
+      thumbnail: imageDir + imageData.web.thumbnailName,
+      scene: imageData.scenename,
 
-        // Just some demo data
-        illumination: imageData[ii].illumination,
+      // Just some demo data
+      illumination: imageData.illumination,
 
-        lens: imageData[ii].opticsname,
-        sensor: imageData[ii].sensorname,
+      lens: imageData.opticsname,
+      sensor: imageData.sensorname,
 
-        // pre-load sensor objects
-        sensorObject: require(sensorDir + imageData[ii].sensorFile + ".json"),
+      // pre-load sensor objects
+      sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
 
-        // Used to set the file for the preview window
-        preview: imageDir + imageData[ii].jpegName,
+      // Used to set the file for the preview window
+      preview: imageDir + imageData.web.jpegName,
 
-        // And for alternate versions
-        // Right now just burst & bracket
-        // We should probably have a more general
-        // "variants" based scheme
-        burstPreview: imageDir + imageData[ii].burstJPEGName,
-        bracketPreview: imageDir + imageData[ii].bracketJPEGName,
+      // And for alternate versions
+      // Right now just burst & bracket
+      // We should probably have a more general
+      // "variants" based scheme
+      burstPreview: imageDir + imageData.web.burstJPEGName,
+      bracketPreview: imageDir + imageData.web.bracketJPEGName,
 
-        // And our YOLO annotated versions
-        YOLOPreview: imageDir + imageData[ii].YOLOName,
-        YOLOBurstPreview: imageDir + imageData[ii].burstYOLOName,
-        YOLOBracketPreview: imageDir + imageData[ii].bracketYOLOName,
+      // We only keep one Ground Truth version
+      GTPreview: imageDir + imageData.web.GTName,
 
-        // Used for download files
-        jpegFile: imageData[ii].jpegName,
-        sensorRawFile: imageDir + imageData[ii].sensorRawFile,
-        sensorRawName: imageData[ii].sensorRawFile,
-        oiName: imageData[ii].oiFile,
+      // And our YOLO annotated versions
+      YOLOPreview: imageDir + imageData.web.YOLOName,
+      YOLOBurstPreview: imageDir + imageData.web.burstYOLOName,
+      YOLOBracketPreview: imageDir + imageData.web.bracketYOLOName,
 
-        // Used for other metadata properties
-        eTime: imageData[ii].exposureTime,
-        aeMethod: imageData[ii].aeMethod,
+      // Used for download files
+      jpegFile: imageData.web.jpegName,
+      sensorRawFile: imageDir + imageData.sensorRawFile,
+      sensorRawName: imageData.sensorRawFile,
+      oiName: imageData.oiFile,
 
-        // Pixel info
-        pixel: imageData[ii].pixel,
-      },
-    ];
-    rows = rows.concat(newRow);
-  }
+      // Used for other metadata properties
+      eTime: imageData.exposureTime,
+      aeMethod: imageData.aeMethod,
+
+      // Pixel info
+      pixel: imageData.pixel,
+ 
+      // Are labels kept at the top level?
+      objects: imageData.labels,
+    },
+  ];
+  rows = rows.concat(newRow);
 }
+
 var userSensorContent = "";
 function updateUserSensor(newContent) {
   // argh. Hard to call into our App to set things
@@ -268,14 +273,22 @@ const App = () => {
       filter: true,
       tooltipField: "Filter and Sort by Scene name",
     },
-    // Lighting is Demo only so far
-    //{ headerName: 'Lighting', field: 'illumination', width: 100, filter: true },
+
+    // Display the actual objects found in scene
+    {
+      headerName: "Objects",
+      field: "objects",
+      filter: true,
+      tooltipField: "Objects in Scene",
+      hide: false,
+    },
 
     {
       headerName: "Lens Used",
       field: "lens",
       filter: true,
       tooltipField: "Filter and sort by lens",
+      hide: true,
     },
     {
       headerName: "Sensor",
@@ -295,6 +308,7 @@ const App = () => {
     { headerName: "Burst Preview", field: "burstPreview", hide: true },
     { headerName: "Bracket Preview", field: "bracketPreview", hide: true },
     { headerName: "YOLO Preview", field: "YOLOPreview", hide: true },
+    { headerName: "GT Preview", field: "GTPreview", hide: true },
     { headerName: "YOLO Burst Preview", field: "YOLOBurstPreview", hide: true },
     {
       headerName: "YOLO Bracket Preview",
@@ -399,6 +413,13 @@ const App = () => {
         setValue(3);
         captureType.current = "bracket";
         break;
+
+      // show the ground truth
+      case "buttonGT":
+        pI.current.src = selectedRow.current.GTPreview;
+        break;
+
+      // show the results of our YOLO function for each exposure type
       case "buttonYOLO":
         // Show /toggle YOLO annotations
         if (YOLOMode.current === false) {
@@ -891,7 +912,6 @@ const App = () => {
             <CButton
               id="buttonGT"
               variant="outline"
-              disabled
               onClick={btnExposureListener}
             >
               Ground Truth
