@@ -258,9 +258,7 @@ end
 % We can write metadata as one file to make it faster to read
 % Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
-imageMetadataStructs = imageMetadataArray(:);
-imageMetaDataStruct = imageMetadataStructs{:}; % Convert so we have better output
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetaDataStruct);
+jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
