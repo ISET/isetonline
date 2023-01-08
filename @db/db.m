@@ -60,12 +60,16 @@ classdef db < handle
                     end
             end
 
-            obj.connection = mongoc(obj.dbServer, obj.dbPort, obj.dbName);
-            if isopen(obj.connection)
-                obj.createSchema;
-                return; % not sure how we signal trouble?
-            else
-                error("unable to connect to database");
+            try
+                obj.connection = mongoc(obj.dbServer, obj.dbPort, obj.dbName);
+                if isopen(obj.connection)
+                    obj.createSchema;
+                    return; % not sure how we signal trouble?
+                else
+                    warning("unable to connect to database");
+                end
+            catch
+                warning("Can't connect to mongoDB")
             end
         end
 

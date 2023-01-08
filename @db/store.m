@@ -16,6 +16,11 @@ else
     isetDB = db();
 end
 
+if isempty(obj.connection)
+    status = -1;
+    return;
+end
+
 % need to add update logic & type specific keys and such
 insert(obj.connection,options.collection,isetObj);
 status = 0;

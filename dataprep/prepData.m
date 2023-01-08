@@ -63,16 +63,13 @@ sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB);
 %% Export Lenses
 exportLenses(outputFolder, privateDataFolder, ourDB)
 
-%% ... Eventually see if we can modify illumination ...
-% And potentially download information about it?
-% Or maybe this all comes in the variants on the recipes?
-
 %% Copy/Export OIs
 %  OIs include complex numbers, which are not directly-accessible
 %  in standard JSON. They also become extremely large as JSON (or BSON)
-%  files. So for now, seems best to simply export the .mat files.
+%  files. So we simply export the .mat files.
 %  We do that in the loop below as we render each one.
 
+%% Start assembling metadata
 % The Metadata Array is the non-image portion of those, which
 % is small enough to be kept in a single file & used for filtering
 imageMetadataArray = [];
@@ -112,14 +109,18 @@ else
         datasetFolder = '';
 
     end
+    % scenes are actually synthetic and have already been rendered
     sceneFolder = fullfile(datasetRoot, 'skymap_scale10', sceneSet);
+
+    % additional info is based on the original scene & shared
+    % across many different renderings
     infoFolder = fullfile(datasetRoot,'nighttime','additionalInfo');
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
-    % Limit how many scenes we use for testing to speed things up
+    % for DEBUG: Limit how many scenes we use for testing to speed things up
     sceneNumberLimit = 4;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
@@ -277,7 +278,13 @@ else
 end
 
 % We can write metadata as one file to make it faster to read
-% Since it is only read by our code, we place it in the code folder tree
+% But it becomes complex to generate. So we either need to 
+% use the DB for real, or have multiple metadata.json files
+% I think since scene names are unique, they can have any
+% naming scheme that is unique & over-writes previous versions
+% as needed.
+
+% Since the metadata is only read by our code, we place it in the code folder tree
 % instead of the public data folder
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
@@ -439,11 +446,14 @@ for iii = 1:numel(sensorFiles)
     img_for_YOLO_bracket = imread(bracketFile);
 
     % Use YOLO & get back annotated image
-    [img_YOLO, bboxes, scores, labels] = doYOLO(img_for_YOLO);
+    [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
+    sensor_ae.metadata.YOLOData = YOLO_Objects;
 
     % Don't know if we need to write these version out separately
-    [img_YOLO_burst, bboxes, scores, labels] = doYOLO(img_for_YOLO_burst);
-    [img_YOLO_bracket, bboxes, scores, labels] = doYOLO(img_for_YOLO_bracket);
+    [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
+    [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
+    sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
+    sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 
     % Write out our annotated image
     imwrite(img_YOLO, ipLocalYOLO);
