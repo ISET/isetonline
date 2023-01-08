@@ -119,7 +119,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       thumbnail: imageDir + imageData.web.thumbnailName,
       scene: imageData.scenename,
 
-      // Just some demo data
+      // For future
       illumination: imageData.illumination,
 
       lens: imageData.opticsname,
@@ -131,10 +131,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // Used to set the file for the preview window
       preview: imageDir + imageData.web.jpegName,
 
-      // And for alternate versions
-      // Right now just burst & bracket
-      // We should probably have a more general
-      // "variants" based scheme
+      // For alternate capture methods
       burstPreview: imageDir + imageData.web.burstJPEGName,
       bracketPreview: imageDir + imageData.web.bracketJPEGName,
 
@@ -159,8 +156,14 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // Pixel info
       pixel: imageData.pixel,
  
-      // simple string for now
+      // simple string of labels for now
       objects: JSON.stringify(imageData.labels),
+
+      lightSources: "Sky: " + imageData.lightingParams.skyL_wt 
+        + " Head: " + imageData.lightingParams.headL_wt 
+        + " Street: " + imageData.lightingParams.streetL_wt 
+        + " Flare: " + imageData.lightingParams.flare.toString,
+
     },
   ];
   rows = rows.concat(newRow);
@@ -296,6 +299,7 @@ const App = () => {
       filter: true,
       tooltipField: "Filter and sort by sensor",
     },
+    { headerName: "Light Sources", field:"lightSources"},
     // Hidden fields for addtional info
     { headerName: "Preview", field: "preview", hide: true },
     { headerName: "jpegName", field: "jpegName", hide: true },
