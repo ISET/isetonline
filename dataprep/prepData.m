@@ -175,18 +175,39 @@ else
         if ~isempty(instanceFile)
             % Use HDR for render given the DR of many scenes
             img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
-            [img_GT, ~, ~, labels] = doGT(img_for_GT,'instanceFile',instanceFile, ...
+
+            % now retrieve the ground truth, using
+            % our scene's depthmap and annotation files
+            [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
                 'additionalFile',additionalFile);
 
+            % Create single list for database and grid
+            % Also calculate the closest object of interest
+            % NB Not sure we need to stash in both the scene
+            % and the oi, but they are kind of in parallel
+            if ~isempty(GTObjects)
+                uniqueObjects = unique({GTObjects(:).label});
+                ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+                ourScene.metadata.Stats.minDistance = min([GTObjects(:).distance],[],'all');
+                oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+                oiComputed{ii}.metadata.Stats.minDistance = min([GTObjects(:).distance],[],"all");
+            else
+                ourScene.metadata.Stats.uniqueLabels = 'none';
+                ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
+                oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
+                oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
+            end
+            
+            
             % Write out our GT annotated image
             imwrite(img_GT, ipLocalGT);
 
             % Unlike other previews, this one is generic to the scene
             % but we've already built an oi, so save it there also
             ourScene.metadata.web.GTName = ipGTName;
-            ourScene.metadata.labels = labels;
+            ourScene.metadata.GTObjects = GTObjects;
             oiComputed{ii}.metadata.web.GTName = ipGTName;
-            oiComputed{ii}.metadata.labels = labels;
+            oiComputed{ii}.metadata.GTObjects = GTObjects;
 
         end
 

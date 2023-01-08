@@ -1,4 +1,4 @@
-function [GTData] = olGetGroundTruth(varargin)
+function [GTObjects] = olGetGroundTruth(scene, varargin)
 %OLGETGROUNDTRUE Retrieve GT info from rendered scenes
 %   D. Cardinal, Stanford University, 12/2022
 
@@ -25,13 +25,11 @@ p.parse(varargin{:});
 
 options = p.Results;
 
+GTObjects = []; % make sure we return a value
 
-GTData = []; % make sure we return a value
-
-%% Categories that we support currently (out of the 80 or so total)
+%% Set Categories that we support currently (out of the 80 or so total)
 %    One reason not to support them all is some like tree & rock
 %    would "just get in the way"
-
 catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
 catIds   = [0, 91, 2, 5, 7, 1, 3];
 dataDict = dictionary(catNames, catIds);
@@ -40,8 +38,9 @@ instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5
+headerLines = 4;
 objectslist = readlines(options.addtionalFile);
-objectslist = objectslist(5:end);
+objectslist = objectslist((headerLines+1):end);
 
 %% Iterate on objects, filtering for the ones we want
 %  and then building annotations
@@ -55,8 +54,7 @@ for ii = 1:numel(objectslist)
     name = erase(name,{'ObjectInstance ', '"', '_m'});
     %     fprintf(seg_FID, '%d %s \n',ii, name);
 
-    % These are category tweaks from Zhenyi
-    % I don't know if they are to correct past issues or are still needed
+    % Consolidate some categories, as needed
     if contains(lower(name), {'car'})
         label = 'car';
         catId = dataDict('car');
@@ -102,22 +100,17 @@ for ii = 1:numel(objectslist)
         continue
     end
 
-    % Build our return JSON structure
-    % detector version returns: annotated_images, bboxes, scores
-    % but we have different info, of course
-    GTData(objectIndex).label = label;
-    GTData(objectIndex).bbox2d = pos;
-    GTData(objectIndex).catId = catId;
+    % Build our object data structure
+    GTObjects(objectIndex).label = label;
+    GTObjects(objectIndex).bbox2d = pos;
+    GTObjects(objectIndex).catId = catId;
+
+    % Also Compute the distance to the object.
+    % Currently we use its minimum distance
+    GTObjects(objectIndex).distance = ...
+        min(scene.depthMap(instanceMap == objectIndex),[],"all");
 
     objectIndex = objectIndex + 1;
-
-    %{
-    % This is the COCO generation code from Zhenyi's original
-    annotations{nBox} = struct('segmentation',[segmentation],'area',area,'iscrowd',0,...
-        'image_id',str2double(imageID),'bbox',pos,'category_id',catId,'id',0,'ignore',0);
-    fprintf('Class %s, instanceID: %d \n', label, ii);
-    nBox = nBox+1;
-    %}
 
 end
 
