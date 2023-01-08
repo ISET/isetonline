@@ -245,7 +245,7 @@ if usePreComputedOI
 
         % LOOP THROUGH THE SENSORS HERE
         % we use basemetadata for other render case, but not here?
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, ourDB);
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', ourDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 else
@@ -265,7 +265,7 @@ else
 
         % LOOP THROUGH THE SENSORS HERE
         imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
-            baseMetadata, infoFiles, ourDB);
+            baseMetadata, ourDB);
 
         % Not all sensorimages will have the same
         % metadata fields, so we need to put them in a cell struct
@@ -283,7 +283,7 @@ jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
-function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB)
+function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 imageMetadata = baseMetadata;
 
