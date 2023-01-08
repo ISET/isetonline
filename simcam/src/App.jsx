@@ -160,7 +160,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       GTObjects: imageData.GTObjects,
       GTStats: imageData.Stats,
       GTLabels: imageData.Stats.uniqueLabels,
-      GTDistance: imageData.Stats.minDistance,
+      GTDistance: Number(imageData.Stats.minDistance),
 
       lightSources: "Sky: " + imageData.lightingParams.skyL_wt 
         + " Head: " + imageData.lightingParams.headL_wt 
@@ -292,7 +292,7 @@ const App = () => {
     {
       headerName: "Distance",
       field: "GTDistance",
-      filter: true,
+      filter: 'agNumberColumnFilter',
       tooltipField: "Minimum Object Distance",
       hide: false,
       valueFormatter: formatDistance,
@@ -336,9 +336,7 @@ const App = () => {
   ]);
 
   function formatDistance(params) {
-    // this puts commas into the number eg 1000 goes to 1,000,
-    // i pulled this from stack overflow, i have no idea how it works
-    var distance = Number(params.value);
+    var distance = params.value;
     distance = distance.toFixed(1);
     return distance + ' m';
   }
