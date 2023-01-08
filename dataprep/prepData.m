@@ -248,14 +248,18 @@ else
 
         % Not all sensorimages will have the same
         % metadata fields, so we need to put them in a cell struct
-        imageMetadataArray{ii} = imageMetadata;
+        % ImageMetaData is actually an array (per sensor)
+        for jj=1:numel(imageMetadata)
+            imageMetadataArray{end+1} = imageMetadata(jj);
+        end
     end
 end
 
 % We can write metadata as one file to make it faster to read
 % Since it is only read by our code, we place it in the code folder tree
 % instead of the public data folder
-imageMetaDataStruct = imageMetadataArray{:}; % Convert so we have better output
+imageMetadataStructs = imageMetadataArray(:);
+imageMetaDataStruct = imageMetadataStructs{:}; % Convert so we have better output
 jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetaDataStruct);
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
