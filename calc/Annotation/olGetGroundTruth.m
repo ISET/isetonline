@@ -58,28 +58,28 @@ for ii = 1:numel(objectslist)
     % These are category tweaks from Zhenyi
     % I don't know if they are to correct past issues or are still needed
     if contains(lower(name), {'car'})
-        label = 'vehicle';
+        label = 'car';
         catId = dataDict('car');
     elseif contains(lower(name),'deer')
-        label = 'Deer';
+        label = 'deer';
         catId = dataDict('deer');
     elseif contains(lower(name),['person','pedestrian'])
-        label = 'Person';
+        label = 'person';
         catId = dataDict('person');
     elseif contains(lower(name), 'bus')
-        label = 'vehicle';
+        label = 'bus';
         catId = dataDict('bus');
     elseif contains(lower(name), 'truck')
-        label = 'vehicle';
+        label = 'truck';
         catId = dataDict('truck');
     elseif contains(lower(name), ['bicycle','bike'])
-        label = 'vehicle';
+        label = 'bicycle';
         catId = dataDict('bicycle');
         % is it really motorbicycle??
     elseif contains(lower(name), ['motorcycle','motorbike'])
-        label = 'vehicle';
+        label = 'motorcycle';
         catId = dataDict('motorcycle');
-    else % WE NEED TO ADD OUR OTHER CATEGORIES HERE!
+    else % We can add other categories here as needed
         continue;
     end
     

@@ -120,7 +120,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 2;
+    sceneNumberLimit = 4;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -175,7 +175,7 @@ else
         if ~isempty(instanceFile)
             % Use HDR for render given the DR of many scenes
             img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
-            img_GT = doGT(img_for_GT,'instanceFile',instanceFile, ...
+            [img_GT, ~, ~, labels] = doGT(img_for_GT,'instanceFile',instanceFile, ...
                 'additionalFile',additionalFile);
 
             % Write out our GT annotated image
@@ -184,7 +184,10 @@ else
             % Unlike other previews, this one is generic to the scene
             % but we've already built an oi, so save it there also
             ourScene.metadata.web.GTName = ipGTName;
+            ourScene.metadata.labels = labels;
             oiComputed{ii}.metadata.web.GTName = ipGTName;
+            oiComputed{ii}.metadata.labels = labels;
+
         end
 
     end
@@ -508,8 +511,8 @@ end
 
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
-sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
-    'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
+sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
+    'ar0132atSensorrgb.mat'}; %, 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed

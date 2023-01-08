@@ -159,8 +159,8 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // Pixel info
       pixel: imageData.pixel,
  
-      // Are labels kept at the top level?
-      objects: imageData.labels,
+      // simple string for now
+      objects: JSON.stringify(imageData.labels),
     },
   ];
   rows = rows.concat(newRow);
