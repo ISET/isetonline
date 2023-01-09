@@ -338,7 +338,11 @@ const App = () => {
   function formatDistance(params) {
     var distance = params.value;
     distance = distance.toFixed(1);
-    return distance + ' m';
+    if (distance < 10000) {
+      return distance + ' m';
+    } else {
+      return 'none';
+    }
   }
   const fSlider = useRef([]); // This will be the preview image element & Slider
   const selectedRow = useRef([]); // for use later when we need to download

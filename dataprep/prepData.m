@@ -37,7 +37,7 @@ usePreComputedOI = false;
 % Port number seems to wander a bit:)
 
 if useDB
-    portNumber = 49154; % this changes, need to figure out why
+    portNumber = 49153; % this changes, need to figure out why
     ourDB = db('dbServer','seedling','dbPort',portNumber);
     % If we are also using Mongo create our collections first!
     ourDB.createSchema;
@@ -121,7 +121,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 4;
+    sceneNumberLimit = 10000;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -445,7 +445,13 @@ for iii = 1:numel(sensorFiles)
     img_for_YOLO_burst = imread(burstFile);
     img_for_YOLO_bracket = imread(bracketFile);
 
-    % Use YOLO & get back annotated image
+    % Use YOLO & get back annotated image plus
+    % found objects. By themselves they don't offer distance,
+    % although they do give us a bounding box, from which it might
+    % be possible to compute distance.
+
+    % However, the img_for_YOLO is at a lower resolution, so it will
+    % take some fiddling to align it with objects in the GT scene.
     [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
     sensor_ae.metadata.YOLOData = YOLO_Objects;
 
