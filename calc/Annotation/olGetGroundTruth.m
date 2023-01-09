@@ -70,7 +70,7 @@ for ii = 1:numel(objectslist)
     elseif contains(lower(name), 'truck')
         label = 'truck';
         catId = dataDict('truck');
-    elseif contains(lower(name), ['bicycle','bike', 'biker'])
+    elseif contains(lower(name), ['bicycle','bike', 'biker', 'cyclist'])
         label = 'bicycle';
         catId = dataDict('bicycle');
         % alternates + one allowance for possible mis-spelling

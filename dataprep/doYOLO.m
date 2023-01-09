@@ -1,8 +1,9 @@
 function [annotatedImage, YOLO_Objects] = doYOLO(img)
-%DOYOLO Summary of this function goes here
-%   Detailed explanation goes here
+%DOYOLO Run YOLO object detector on an image
+%   Returns annotated image and an array of found objects
+
 persistent ourDetector;
-detectorType = "tiny-yolov4-coco";
+detectorType = "csp-darknet53-coco"; %"tiny-yolov4-coco";
 if isempty(ourDetector)
     ourDetector = yolov4ObjectDetector(detectorType);
 end
