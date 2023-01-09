@@ -70,11 +70,11 @@ for ii = 1:numel(objectslist)
     elseif contains(lower(name), 'truck')
         label = 'truck';
         catId = dataDict('truck');
-    elseif contains(lower(name), ['bicycle','bike'])
+    elseif contains(lower(name), ['bicycle','bike', 'biker'])
         label = 'bicycle';
         catId = dataDict('bicycle');
-        % is it really motorbicycle??
-    elseif contains(lower(name), ['motorcycle','motorbike'])
+        % alternates + one allowance for possible mis-spelling
+    elseif contains(lower(name), ['motorcycle','motorbike', 'otorbike'])
         label = 'motorcycle';
         catId = dataDict('motorcycle');
     else % We can add other categories here as needed
