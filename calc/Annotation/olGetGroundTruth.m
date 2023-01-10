@@ -31,6 +31,8 @@ GTObjects = []; % make sure we return a value
 %    One reason not to support them all is some like tree & rock
 %    would "just get in the way"
 catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
+% These categories are 1 less than in the paper, but maybe
+% that is how they've been coded in the Blender exported scenes?
 catIds   = [0, 91, 2, 5, 7, 1, 3];
 dataDict = dictionary(catNames, catIds);
 
@@ -55,13 +57,14 @@ for ii = 1:numel(objectslist)
     %     fprintf(seg_FID, '%d %s \n',ii, name);
 
     % Consolidate some categories, as needed
+    % fprintf("Found: %s\n", name);
     if contains(lower(name), {'car'})
         label = 'car';
         catId = dataDict('car');
     elseif contains(lower(name),'deer')
         label = 'deer';
         catId = dataDict('deer');
-    elseif contains(lower(name),['person','pedestrian'])
+    elseif contains(lower(name),{'person','pedestrian'})
         label = 'person';
         catId = dataDict('person');
     elseif contains(lower(name), 'bus')
@@ -70,11 +73,11 @@ for ii = 1:numel(objectslist)
     elseif contains(lower(name), 'truck')
         label = 'truck';
         catId = dataDict('truck');
-    elseif contains(lower(name), ['bicycle','bike', 'biker', 'cyclist'])
+    elseif contains(lower(name), {'bicycle','bike', 'biker', 'cyclist'})
         label = 'bicycle';
         catId = dataDict('bicycle');
         % alternates + one allowance for possible mis-spelling
-    elseif contains(lower(name), ['motorcycle','motorbike', 'otorbike'])
+    elseif contains(lower(name), {'motorcycle','motorbike', 'otorbike'})
         label = 'motorcycle';
         catId = dataDict('motorcycle');
     else % We can add other categories here as needed

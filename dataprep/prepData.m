@@ -121,7 +121,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 10000;
+    sceneNumberLimit = 2;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -453,8 +453,13 @@ for iii = 1:numel(sensorFiles)
     % However, the img_for_YOLO is at a lower resolution, so it will
     % take some fiddling to align it with objects in the GT scene.
     [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
+    
     sensor_ae.metadata.YOLOData = YOLO_Objects;
 
+    % For Average Precision we want a GT table and a YOLO table
+    % with each row containing a bounding box and a label
+    % The YOLO version should/can also include score
+    
     % Don't know if we need to write these version out separately
     [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
     [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
