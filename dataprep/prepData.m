@@ -150,9 +150,9 @@ else
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
+        
         % In our case we render the scene through our default
         % (shift-invariant) optics so that we have an OI to work with
-
         oiComputed{ii} = oiCompute(ourScene, oiDefault); %#ok<SAGROW>
 
         % Get rid of the oi border so we match the original
@@ -198,8 +198,7 @@ else
                 oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
                 oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
             end
-            
-            
+                        
             % Write out our GT annotated image
             imwrite(img_GT, ipLocalGT);
 
@@ -322,6 +321,12 @@ for iii = 1:numel(sensorFiles)
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
+    % CAN WE TEST FOR EXISTENCE HERE AND SAVE OURSELVES SOME TIME?
+    keyQuery = "{""sceneID"":scene..}";
+    if ourDB.exists('sensorimage', keyQuery)
+        % not sure if just continue is correct
+        continue;
+    end
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
@@ -338,6 +343,9 @@ for iii = 1:numel(sensorFiles)
     %aeMethod = 'specular';
     %aeLevels = .8;
     aeTime = autoExposure(oi,sensor, aeLevels, aeMethod);
+    % aeTime varies in its low order bits when re-run
+    % since we use time values as keys we need to round
+    aeTime = round(aeTime,5);
     aeMethod = 'hdr';
     % Un-used, for now
     %aeHDRTime  = autoExposure(oi,sensor,aeLevels,aeMethod,'numframes',7);
@@ -459,7 +467,7 @@ for iii = 1:numel(sensorFiles)
     % For Average Precision we want a GT table and a YOLO table
     % with each row containing a bounding box and a label
     % The YOLO version should/can also include score
-    
+
     % Don't know if we need to write these version out separately
     [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
     [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
@@ -549,6 +557,7 @@ for ii = 1:lensCount
     % Get the full path to load
     lensFile = fullfile(lensFiles(ii).folder, lensFileName);
     ourLens = jsonread(lensFile);
+    ourLens.fileName = lensFileName; % need this to create a unique key
     if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lens'); end
 end
 end

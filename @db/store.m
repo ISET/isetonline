@@ -22,8 +22,11 @@ if isempty(obj.connection)
 end
 
 % need to add update logic & type specific keys and such
-insert(obj.connection,options.collection,isetObj);
-status = 0;
-
+try
+    status =insert(obj.connection,options.collection,isetObj);
+catch ex
+    status = -1;
+    fprintf("Database insert failed: %s\n", ex.message);
+end
 end
 
