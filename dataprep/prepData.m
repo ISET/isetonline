@@ -322,11 +322,23 @@ for iii = 1:numel(sensorFiles)
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
     % CAN WE TEST FOR EXISTENCE HERE AND SAVE OURSELVES SOME TIME?
-    keyQuery = "{""sceneID"":scene..}";
+    % Should eventually add lighting params!
+    % shutter time is an issue. We don't know it yet, but at least 0
+    % means some type of AE
+
+    % for debug
+    %sensor.name = 'MTV9V024-RGB'
+    %oi.metadata.sceneID = '1112154540'
+
+    keyQuery = "{""sceneID"": ""1112154540"", ""sensorname"" : ""MTV9V024-RGB""}";
+    %""%s"", oi.metadata.sceneID, sensor.name}"');
+
     if ourDB.exists('sensorimage', keyQuery)
         % not sure if just continue is correct
         continue;
     end
+
+
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
