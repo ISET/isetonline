@@ -36,7 +36,13 @@ catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
 catIds   = [0, 91, 2, 5, 7, 1, 3];
 dataDict = dictionary(catNames, catIds);
 
-instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
+% use catch block as ReadEXR will error if there is a file issue
+try
+    instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
+catch
+    disp(ex.message);
+    return;
+end
 
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5

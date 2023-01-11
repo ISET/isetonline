@@ -121,7 +121,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 2;
+    sceneNumberLimit = 100;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -139,7 +139,7 @@ else
     % We create a pinhole OI for each one
     % USE parfor except for debugging
     oiComputed = {};
-    for ii = 1:numScenes
+    parfor ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene = ourScene.scene; % we get a nested variable for some reason
 
@@ -295,6 +295,10 @@ if useDB
     
     % Should be able to enumerate collection (via find/all) then
     % write it out to the metadata file
+    sensorImages = ourDB.exportCollection('sensorimage');
+    if ~isempty(sensorImages)
+        jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+    end
 else
     % Leave the option open if someone "just" wants to process images
     % and save a metadata file
@@ -328,7 +332,7 @@ oiBurst = oi;
 
 % Loop through our sensors: (ideally with parfor)
 % But that may have issues
-for iii = 1:numel(sensorFiles)
+parfor iii = 1:numel(sensorFiles)
     % parfor wants us to assign load to a variable
     sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
     sensor = sensorWrapper.sensor;
@@ -344,9 +348,11 @@ for iii = 1:numel(sensorFiles)
     %sensor.name = 'MTV9V024-RGB'
     %oi.metadata.sceneID = '1112154540'
 
-    keyQuery = "{""sceneID"": ""1112154540"", ""sensorname"" : ""MTV9V024-RGB""}";
-    %""%s"", oi.metadata.sceneID, sensor.name}"');
+    % Need to pass actual data!: oi.metadata.sceneID, sensor.name;
 
+    keyQuery = ['{"sceneID": "' oi.metadata.sceneID '", "sensorname"" : "' sensor.name '"}'];
+    %keyQuery = "{""sceneID"": ""1112154540"", ""sensorname"" : ""MTV9V024-RGB""}";
+    
     if ourDB.exists('sensorimage', keyQuery)
         % not sure if just continue is correct
         continue;
@@ -591,7 +597,7 @@ end
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
-    'ar0132atSensorrgb.mat'}; %, 'ar0132atSensorRCCC.mat'};
+    'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
