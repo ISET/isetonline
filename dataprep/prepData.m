@@ -121,7 +121,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 2;
+    sceneNumberLimit = 20;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -139,7 +139,7 @@ else
     % We create a pinhole OI for each one
     % USE parfor except for debugging
     oiComputed = {};
-    parfor ii = 1:numScenes
+    for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
         ourScene = ourScene.scene; % we get a nested variable for some reason
 
@@ -283,13 +283,17 @@ end
 % naming scheme that is unique & over-writes previous versions
 % as needed.
 
-% If we are adding the sensorimages, they are in our metadata array.
-% But if they already exist, we need to retrieve them from the database
-% (Or from a prior set of written metadata?)
-
 % Since the metadata is only read by our code, we place it in the code folder tree
-% instead of the public data folder
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+% instead of the public data folder -- when we generate from scratch
+%jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+
+% Adding support for incremental updates, which means pulling all the
+% imageMetadata out of the sensorimage collection and putting it in a JSON
+% file (I hope)
+sensorImages = ourDB.find('sensorimage');
+jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+
+
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
@@ -318,7 +322,7 @@ oiBurst = oi;
 
 % Loop through our sensors: (ideally with parfor)
 % But that may have issues
-parfor iii = 1:numel(sensorFiles)
+for iii = 1:numel(sensorFiles)
     % parfor wants us to assign load to a variable
     sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
     sensor = sensorWrapper.sensor;
@@ -334,9 +338,10 @@ parfor iii = 1:numel(sensorFiles)
     %sensor.name = 'MTV9V024-RGB'
     %oi.metadata.sceneID = '1112154540'
 
-    keyQuery = "{""sceneID"": ""1112154540"", ""sensorname"" : ""MTV9V024-RGB""}";
+    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
+        oi.metadata.sceneID, sensor.name);
     %""%s"", oi.metadata.sceneID, sensor.name}"');
-
+    % need to put in actual variables!!
     if ourDB.exists('sensorimage', keyQuery)
         % not sure if just continue is correct
         continue;
@@ -581,7 +586,7 @@ end
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
-    'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
+    'ar0132atSensorrgb.mat'}; %, 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
