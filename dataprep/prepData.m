@@ -121,7 +121,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 2;
+    sceneNumberLimit = 20;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -284,8 +284,16 @@ end
 % as needed.
 
 % Since the metadata is only read by our code, we place it in the code folder tree
-% instead of the public data folder
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+% instead of the public data folder -- when we generate from scratch
+%jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+
+% Adding support for incremental updates, which means pulling all the
+% imageMetadata out of the sensorimage collection and putting it in a JSON
+% file (I hope)
+sensorImages = ourDB.find('sensorimage');
+jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+
+
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
@@ -330,9 +338,10 @@ for iii = 1:numel(sensorFiles)
     %sensor.name = 'MTV9V024-RGB'
     %oi.metadata.sceneID = '1112154540'
 
-    keyQuery = "{""sceneID"": ""1112154540"", ""sensorname"" : ""MTV9V024-RGB""}";
+    keyQuery = sprintf("{""sceneID"": ""oi.metadata.sceneID"", ""sensorname"" : ""sensor.name""}", ...
+        oi.metadata.sceneID, sensor.name);
     %""%s"", oi.metadata.sceneID, sensor.name}"');
-
+    % need to put in actual variables!!
     if ourDB.exists('sensorimage', keyQuery)
         % not sure if just continue is correct
         continue;
