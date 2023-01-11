@@ -338,7 +338,7 @@ for iii = 1:numel(sensorFiles)
     %sensor.name = 'MTV9V024-RGB'
     %oi.metadata.sceneID = '1112154540'
 
-    keyQuery = sprintf("{""sceneID"": ""oi.metadata.sceneID"", ""sensorname"" : ""sensor.name""}", ...
+    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
         oi.metadata.sceneID, sensor.name);
     %""%s"", oi.metadata.sceneID, sensor.name}"');
     % need to put in actual variables!!
