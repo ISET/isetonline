@@ -283,9 +283,23 @@ end
 % naming scheme that is unique & over-writes previous versions
 % as needed.
 
+% If we are adding the sensorimages, they are in our metadata array.
+% But if they already exist, we need to retrieve them from the database
+% (Or from a prior set of written metadata?)
+
 % Since the metadata is only read by our code, we place it in the code folder tree
 % instead of the public data folder
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+if useDB
+    % Get our sensorimage data from our database and write it out to 
+    % the metadata file for web use
+    
+    % Should be able to enumerate collection (via find/all) then
+    % write it out to the metadata file
+else
+    % Leave the option open if someone "just" wants to process images
+    % and save a metadata file
+    jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+end
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
