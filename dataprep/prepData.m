@@ -290,9 +290,12 @@ end
 % Adding support for incremental updates, which means pulling all the
 % imageMetadata out of the sensorimage collection and putting it in a JSON
 % file (I hope)
-sensorImages = ourDB.find('sensorimage');
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
-
+if useDB
+    sensorImages = ourDB.find('sensorimage');
+    jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+else
+    jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+end    
 
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
