@@ -341,12 +341,11 @@ for iii = 1:numel(sensorFiles)
     %sensor.name = 'MTV9V024-RGB'
     %oi.metadata.sceneID = '1112154540'
 
+    % check if we already have a sensorimage for this scene and sensor
+    % If so, then skip re-creating it
     keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
         oi.metadata.sceneID, sensor.name);
-    %""%s"", oi.metadata.sceneID, sensor.name}"');
-    % need to put in actual variables!!
     if ourDB.exists('sensorimage', keyQuery)
-        % not sure if just continue is correct
         continue;
     end
 
@@ -357,8 +356,6 @@ for iii = 1:numel(sensorFiles)
     end
 
     %% Now we have an OI + Sensor
-    % so at this point we should have a notion/function
-    % of what variants we want for that "sensorimage"
 
     % Default Auto-Exposure breaks with oncoming headlights, etc.
     % Experimenting with others
