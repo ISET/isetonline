@@ -12,6 +12,6 @@ db.scene.createIndex({"name":1, "pixel":1},{unique:true})
 db.createCollection('oi')
 db.scene.createIndex({"name":1, "pixel":1},{unique:true})
 
-db.createCollection('sensorImage')
+db.createCollection('sensorimage')
 db.sensorImage.createIndex({"sensorname":1, "scenename":1, "opticsname":1, "aeMethod":1, "exposureTime":1}, {unique:true})
 

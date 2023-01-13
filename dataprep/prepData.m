@@ -37,10 +37,7 @@ usePreComputedOI = false;
 % Port number seems to wander a bit:)
 
 if useDB
-    portNumber = 49153; % this changes, need to figure out why
-    ourDB = db('dbServer','seedling','dbPort',portNumber);
-    % If we are also using Mongo create our collections first!
-    ourDB.createSchema;
+    ourDB = db.ISETdb();
 else
     ourDB = []; % don't save to a database
 end
@@ -121,7 +118,7 @@ else
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 20;
+    sceneNumberLimit = 30;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -292,6 +289,10 @@ end
 % file (I hope)
 if useDB
     sensorImages = ourDB.find('sensorimage');
+    
+    % close db now that we're finished
+    ourDB.close();
+    
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
 else
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);

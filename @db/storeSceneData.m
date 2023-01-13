@@ -15,13 +15,6 @@ p.parse(varargin{:});
 
 useCollection = p.Results.collection;
 
-% Matlab doesn't natively support creating indices and (unique) keys.
-% So we probably need to do that via mongosh. We can then try to 
-% insert and will just get a failure on any that already exist
-
-% DO we want to have similar unique keys for all Collections? If so,
-% then we could automatically set those up when we create them.
-
 % Create collection if needed
 try
     obj.connection.createCollection(useCollection);

@@ -5,17 +5,36 @@ classdef db < handle
     % For reference:
     % docker run --name mongodb -d -v YOUR_LOCAL_DIR:/data/db mongo
     % docker run --name mongodb -d -e MONGO_INITDB_ROOT_USERNAME=AzureDiamond -e MONGO_INITDB_ROOT_PASSWORD=hunter2 mongo
-
-    % I don't know if we can create a db directly from matlab,
-    % or quite what we want to do about making the db part
-    % of the repo (/data) versus per-user (/local) or both
+    
+    % Typically we only connect to a single db instance, where our 
+    % ISET data is kept. So make this the default
+    methods (Static)
+        function defaultDB = ISETdb()
+            persistent ISETdb;
+            if ~exist(ISETdb, 'var')
+                ISETdb = [];
+            end
+            if isempty(ISETdb)
+                defaultDB = db();
+            else
+                defaultDB = ISETdb;
+            end
+        end
+    end
 
     properties
         dbDataFolder = fullfile(onlineRootPath,'data','db'); % database volume to mount
         dbContainerFolder = '/data/db'; % where mongo db is in container
         dbContainerName = 'mongodb';
-        dbServer  = 'localhost';
-        dbPort = 27017; % port to use and connect to
+
+        % Read this from prefs or just use a local instance
+        dbServer  = getpref('db','server','localhost');
+        dbPort = getpref('db','port',27017); % port to use and connect to
+
+        % we don'w support username or password yet
+        dbUserName  = getpref('db','username','');
+        dbPassword  = getpref('db','password','');
+        
         dbName = 'iset';
         dbImage = 'mongo';
 
@@ -34,8 +53,8 @@ classdef db < handle
         function obj = db(options)
 
             arguments
-                options.dbServer = 'localhost';
-                options.dbPort = 27017;
+                options.dbServer = getpref('db','server','localhost');
+                options.dbPort = getpref('db','port',27017);
             end
             obj.dbServer = options.dbServer;
             obj.dbPort = options.dbPort;
@@ -62,8 +81,11 @@ classdef db < handle
 
             try
                 obj.connection = mongoc(obj.dbServer, obj.dbPort, obj.dbName);
+                % sometimes this doesn't work the first time, but
+                % I don't know why. Try a pause
+                pause(1);
                 if isopen(obj.connection)
-                    obj.createSchema;
+                    % ASSUME already created: obj.createSchema;
                     return; % not sure how we signal trouble?
                 else
                     warning("unable to connect to database");
@@ -73,7 +95,9 @@ classdef db < handle
             end
         end
 
-
+        function close(obj)
+            close(obj.connection);
+        end
     end
 end
 
