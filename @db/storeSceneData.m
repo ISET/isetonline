@@ -7,7 +7,7 @@ function [status, result] = storeSceneData(obj, sceneData,varargin)
 p = inputParser;
 
 %addRequired(p, 'itemid'); % Needs to be unique across the collection
-addParameter(p, 'collection','scene',@ischar);
+addParameter(p, 'collection','scenes',@ischar);
 addParameter(p, 'update', false); % update existing record
 
 varargin = ieParamFormat(varargin);

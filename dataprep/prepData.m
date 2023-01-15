@@ -553,7 +553,7 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     if ~isempty(ourDB)
-        ourDB.store(sensor_ae.metadata,"collection","sensorimage");
+        ourDB.store(sensor_ae.metadata,"collection","sensorImages");
     end
 
     % We ONLY write out the metadata in the main .json
@@ -580,7 +580,7 @@ for ii = 1:lensCount
     lensFile = fullfile(lensFiles(ii).folder, lensFileName);
     ourLens = jsonread(lensFile);
     ourLens.fileName = lensFileName; % need this to create a unique key
-    if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lens'); end
+    if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lenses'); end
 end
 end
 
@@ -612,7 +612,7 @@ for ii = 1:numel(sensorFiles)
     jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
 
     % We want to write these to the sensor database also
-    if ~isempty(ourDB); ourDB.store(sensor, 'collection','sensor'); end
+    if ~isempty(ourDB); ourDB.store(sensor, 'collection','sensors'); end
 
 end
 

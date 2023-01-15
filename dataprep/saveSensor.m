@@ -15,6 +15,8 @@ function [status, result] = saveSensor(sensor)
 % "sensor only" definition of the attributes of the sensor.
 %
 
+% WORK IN PROGRESS
+
 % Use default dbName
-db().store(sensor, 'collection','sensorImage');
+%db().store(sensor, 'collection','sensorImages');
 

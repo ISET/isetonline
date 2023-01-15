@@ -21,8 +21,8 @@ switch obj.dbServer
     otherwise
         % we can only create collections from Matlab, not indices
         % so those have to get done another way
-        collectionNames = {'scene', 'sensor', 'lens',...
-            'oi','sensorimage'};
+        collectionNames = {'scenes', 'sensors', 'lenses',...
+            'OIs','sensorImages','autoScenesEXR'};
         for ii = 1:numel(collectionNames)
             try
             % use try block in case they exist and we get an error
