@@ -1,4 +1,8 @@
 % Simple script to create DB Documents for the Ford scenes
+% 
+% Currently only saves obvious metadata
+% Ideally would correlate the annotation files and
+% save easier to use versions of targets / GT
 
 sceneFolder = fullfile(iaFileDataRoot(), 'Ford', 'sceneMetadata');
 sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));

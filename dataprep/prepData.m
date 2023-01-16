@@ -1,4 +1,4 @@
-% Render & Export objects for use in "oi2sensor" / ISETOnline
+% Render & Export objects for use in ISETOnline
 %
 % Currently supports either pre-computed OIs, or scenes generated
 % using PBRT & re-processed for multiple illuminants. These
@@ -13,10 +13,11 @@
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
 
+%% Currently we process one "experiment" folder
+% Need to decide if we want to allow multiple/all
+experimentName = 'nighttime_23-01-16-08-41';
+
 %% Set output folder
-% I'm not sure where we want the data to go ultimately.
-% As it will wind up in the website and/or a db
-% We don't want it in our path or github (it wouldn't fit)
 
 % This is the place where our Web app expects to find web-accessible
 % Data files when running our dev environment locally. For production
@@ -34,8 +35,7 @@ useDB = true; % false;
 % that Zhenyi is having Denesh render
 usePreComputedOI = false;
 
-% Port number seems to wander a bit:)
-
+% If we're using a database, typically it is the ISET default
 if useDB
     ourDB = db.ISETdb();
 else
@@ -83,35 +83,20 @@ if usePreComputedOI
 else
     oiDefault = oiCreate('shift invariant');
 
-    % Here is where we look for our scenes
-    % TMP HACK with hard-coded paths
-    if ispc
-        % Live Root:
-        % datasetRoot = 'Y:\data\iset\isetauto';
-        % Test Root:
-        iaDataRoot = 'v:\data\iset\isetauto';
-        datasetRoot = fullfile(iaDataRoot, 'dataset');
-        % example instance file
-        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
-        sceneSet = 'nighttime_006';
-        instanceSet = 'ISETScene_006';
-        % Rendering folder has the .mat files for the Scenes that can be summed
-        datasetFolder = fullfile(iaDataRoot,'Deveshs_assets',[instanceSet '_renderings']);
+    % Assume we are processing scenes from the Ford project
+    projectName = 'Ford';
+    datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
-    else
-        % on Mux
-        datasetRoot = '/acorn/data/iset/isetauto/';
-        sceneSet = 'nighttime_006';
-        % needs to be set:
-        datasetFolder = '';
+    % Where the rendered EXR files live -- this is the
+    % same for all experiments as it is the input data
+    EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
-    end
     % scenes are actually synthetic and have already been rendered
-    sceneFolder = fullfile(datasetRoot, 'skymap_scale10', sceneSet);
+    sceneFolder = fullfile(datasetFolder, 'ISETScenes', experimentName);
 
     % additional info is based on the original scene & shared
     % across many different renderings
-    infoFolder = fullfile(datasetRoot,'nighttime','additionalInfo');
+    infoFolder = fullfile(datasetFolder, 'additionalInfo');
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
@@ -159,7 +144,7 @@ else
 
         %% Find Object Ground Truth and Create Annotated Image 
         % use instance map plus text index of them
-        instanceFile = fullfile(datasetFolder, ...
+        instanceFile = fullfile(EXRFolder, ...
             sprintf('%s_instanceID.exr', imageID));
         additionalFile = fullfile(infoFolder, ...
             sprintf('%s.txt',imageID));
@@ -288,7 +273,7 @@ end
 % imageMetadata out of the sensorimage collection and putting it in a JSON
 % file (I hope)
 if useDB
-    sensorImages = ourDB.find('sensorimage');
+    sensorImages = ourDB.find('sensorImages');
     
     % close db now that we're finished
     ourDB.close();
@@ -346,7 +331,7 @@ for iii = 1:numel(sensorFiles)
     % If so, then skip re-creating it
     keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
         oi.metadata.sceneID, sensor.name);
-    if ourDB.exists('sensorimage', keyQuery)
+    if ourDB.exists('sensorImages', keyQuery)
         continue;
     end
 

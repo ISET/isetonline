@@ -1,5 +1,6 @@
 function [GTObjects] = olGetGroundTruth(scene, varargin)
 %OLGETGROUNDTRUE Retrieve GT info from rendered scenes
+% Or from EXR renders that have enough information
 %   D. Cardinal, Stanford University, 12/2022
 
 % Currently needs the _instanceID.exr file, and
@@ -18,7 +19,7 @@ function [GTObjects] = olGetGroundTruth(scene, varargin)
 
 p = inputParser;
 addParameter(p,'instanceFile','',@ischar);
-addParameter(p,'addtionalFile','',@ischar);
+addParameter(p,'additionalFile','',@ischar);
 addParameter(p,'offset',0,@isnumeric); 
 
 p.parse(varargin{:});
@@ -41,7 +42,7 @@ instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5
 headerLines = 4;
-objectslist = readlines(options.addtionalFile);
+objectslist = readlines(options.additionalFile);
 objectslist = objectslist((headerLines+1):end);
 
 %% Iterate on objects, filtering for the ones we want
@@ -110,9 +111,15 @@ for ii = 1:numel(objectslist)
 
     % Also Compute the distance to the object.
     % Currently we use its minimum distance
-    GTObjects(objectIndex).distance = ...
-        min(scene.depthMap(instanceMap == objectIndex),[],"all");
-
+    if ~isempty(scene)
+        GTObjects(objectIndex).distance = ...
+            min(scene.depthMap(instanceMap == objectIndex),[],"all");
+    else
+        imageEXR = replace(options.instanceFile,'instanceID','skymap');
+        useDepthMap = piReadEXR(imageEXR, 'dataType','depth');
+        GTObjects(objectIndex).distance = ...
+            min(useDepthMap(instanceMap == objectIndex),[],"all");
+    end
     objectIndex = objectIndex + 1;
 
 end

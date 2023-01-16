@@ -17,7 +17,7 @@ scores = [];
 labels = [];
 distances = [];
 
-GTObjects = olGetGroundTruth(scene, 'addtionalFile',p.Results.additionalfile, ...
+GTObjects = olGetGroundTruth(scene, 'additionalFile',p.Results.additionalfile, ...
     'instanceFile',p.Results.instancefile);
 
 % Currently, GTObjects has a separate entry for each object
