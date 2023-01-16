@@ -1,19 +1,11 @@
 % Simple script to create DB Documents for the Ford scenes
 
-if ispc
-    sceneFolder = 'Y:\data\iset\isetauto\ISETRenderings_sceneMeta';
-else
-    % not implemented yet
-    return
-end
-
+sceneFolder = fullfile(iaFileDataRoot(), 'Ford', 'sceneMetadata');
 sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 
-% open our database
-portNumber = 49153; % this changes, need to figure out why
-ourDB = db('dbServer','seedling','dbPort',portNumber);
+useCollection = 'autoScenes';
 
-useCollection = 'autoscenes';
+ourDB = db.ISETdb();
 
 % create auto collection if needed
 try
