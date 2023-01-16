@@ -162,14 +162,22 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       GTLabels: imageData.Stats.uniqueLabels,
       GTDistance: Number(imageData.Stats.minDistance),
 
-      lightSources: "Sky: " + imageData.lightingParams.skyL_wt 
-        + " Head: " + imageData.lightingParams.headL_wt 
-        + " Street: " + imageData.lightingParams.streetL_wt 
-        + " Flare: " + imageData.lightingParams.flare.toString,
-
+      lightSources: getLightParams(imageData)
+      
     },
   ];
   rows = rows.concat(newRow);
+}
+
+function getLightParams(imageData) {
+  var lightSources = '';
+  if (typeof imageData.lightingParams != "undefined") {
+    lightSources = "Sky: " + imageData.lightingParams.skyL_wt 
+      + " Head: " + imageData.lightingParams.headL_wt 
+      + " Street: " + imageData.lightingParams.streetL_wt 
+      + " Flare: " + imageData.lightingParams.flare
+    }
+    return lightSources;
 }
 
 var userSensorContent = "";
