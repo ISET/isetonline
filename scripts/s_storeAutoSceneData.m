@@ -1,7 +1,12 @@
 % Simple script to create DB Documents for the Ford scenes
 % 
 % Currently saves obvious metadata
-% Adding ability to save GTObjects
+% Along with GTObjects (Ground Truth as calculated from the .exr files)
+% [GT can also be derived from earlier metadata on objects, but
+%  that hasn't been implemented here]
+
+% D.Cardinal, Stanford University, 2023
+% builds on Zhenyi & Devesh's scenes and renders
 
 projectName = 'Ford'; % we currently use folders per project
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
@@ -11,7 +16,8 @@ sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 EXRFolder = fullfile(projectFolder, 'SceneEXRs');
 infoFolder = fullfile(projectFolder, 'additionalInfo');
 
-useCollection = 'autoScenes';
+% Store in our collection of rendered auto scenes (.EXR files)
+useCollection = 'autoScenesEXR';
 
 ourDB = db.ISETdb();
 
