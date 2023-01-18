@@ -1,5 +1,10 @@
 % Simple script to create DB Documents for the Ford scenes
 % 
+% This (ISET verion) is a parallel to the EXR version:
+%  EXR version creates db entries for the original rendered EXR files
+%  ISET version creates entries for a specific set of lighting conditions
+%       that have been combined into a full ISET scene object
+
 % Currently saves obvious metadata
 % Along with GTObjects (Ground Truth as calculated from the .exr files)
 % [GT can also be derived from earlier metadata on objects, but
@@ -10,14 +15,13 @@
 
 projectName = 'Ford'; % we currently use folders per project
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
-sceneFolder =  fullfile(projectFolder, 'SceneMetadata');
+%FIX sceneFolder =  fullfile(projectFolder, 'SceneMetadata');
 sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 
-EXRFolder = fullfile(projectFolder, 'SceneEXRs');
-infoFolder = fullfile(projectFolder, 'additionalInfo');
+ISETSceneFolder = fullfile(projectFolder, 'TBD');
 
 % Store in our collection of rendered auto scenes (.EXR files)
-useCollection = 'autoScenesEXR';
+useCollection = 'autoScenesISET';
 
 ourDB = db.ISETdb();
 
@@ -30,9 +34,10 @@ end
 for ii = 1:numel(sceneDataFiles)
     load(fullfile(sceneDataFiles(ii).folder, ...
         sceneDataFiles(ii).name)); % get sceneMeta struct
-    sceneMeta.project = "Ford Motor Company";
-    sceneMeta.creator = "Zhenyi Liu";
-    sceneMeta.sceneSource = "Blender";
+    % Hopefully the metadata is passed along here, not added
+    %sceneMeta.project = "Ford Motor Company";
+    %sceneMeta.creator = "Zhenyi Liu";
+    %sceneMeta.sceneSource = "Blender";
 
     % Update dataset folder to new layout
     sceneMeta.datasetFolder = EXRFolder;
