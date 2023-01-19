@@ -1,4 +1,5 @@
-% Simple script to create DB Documents for the Ford scenes
+% Simple script to create DB Documents for scenarios
+% (ISET scenes) generated from .EXR scenes
 % 
 % Currently saves obvious metadata
 % TBD: Check how much we get "for free" and how much we can/should
@@ -8,15 +9,12 @@
 % builds on Zhenyi & Devesh's scenes and renders
 
 projectName = 'Ford'; % we currently use folders per project
-experimentName = 'baseline'; % default for now, need to make a parameter
+experimentName = 'nighttime'; % default for now, need to make a parameter
 
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
 EXRFolder = fullfile(projectFolder, 'SceneEXRs');
-sceneFolder =  fullfile(projectFolder, 'ISETScenes', experimentName);
+sceneFolder =  fullfile(projectFolder, 'SceneISET', experimentName);
 sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
-
-%EXRFolder = fullfile(projectFolder, 'SceneEXRs');
-%infoFolder = fullfile(projectFolder, 'additionalInfo');
 
 % Store in our collection of rendered auto scenes (.EXR files)
 useCollection = 'autoScenesISET';
@@ -32,6 +30,9 @@ end
 for ii = 1:numel(sceneDataFiles)
     load(fullfile(sceneDataFiles(ii).folder, ...
         sceneDataFiles(ii).name)); % get sceneMeta struct
+
+    % start with scene metadata
+    sceneMeta = scene.metadata;
     sceneMeta.project = "Ford";
     sceneMeta.creator = "Zhenyi Liu";
     sceneMeta.sceneSource = "Blender";
