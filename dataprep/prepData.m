@@ -145,13 +145,6 @@ else
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
         oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
 
-        %% Find Object Ground Truth and Create Annotated Image 
-        % use instance map plus text index of them
-        instanceFile = fullfile(EXRFolder, ...
-            sprintf('%s_instanceID.exr', imageID));
-        additionalFile = fullfile(infoFolder, ...
-            sprintf('%s.txt',imageID));
-
         %% We should get GT from the databaase!
 
 
@@ -165,8 +158,8 @@ else
             % Use HDR for render given the DR of many scenes
             img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
 
-            % now retrieve the ground truth, using
-            % our scene's depthmap and annotation files
+            %%% This needs to come from the actual scene data
+            % TBD TBD -- DJC
             [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
                 'additionalFile',additionalFile);
 
