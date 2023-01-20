@@ -5,7 +5,7 @@
 % are designed to be used by ISETOnline
 %
 % Optionally can store in a mongoDB set of collections, in addition
-% to the file system by specifying useDB 
+% to the file system by specifying useDB
 %
 % Adding getting GT data from mongodb of autoscenes
 %
@@ -128,15 +128,10 @@ else
         fName = erase(sceneFileEntries(ii).name,'.mat');
         imageID = fName;
 
-        if useDB % get ground truth from the Auto Scene in ISETdb
-            GTObjects = ourDB.getGTfromScene('auto',imageID);
-            ourScene.metadata.GTObject = GTObjects;
-        end
-
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
-        
+
         % In our case we render the scene through our default
         % (shift-invariant) optics so that we have an OI to work with
         oiComputed{ii} = oiCompute(ourScene, oiDefault); %#ok<SAGROW>
@@ -146,56 +141,58 @@ else
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
         oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
 
-        %% We should get GT from the databaase!
+        %% If possible, get GT from the databaase!
+        if useDB % get ground truth from the Auto Scene in ISETdb
+            GTObjects = ourDB.getGTfromScene('auto',imageID);
+            ourScene.metadata.GTObject = GTObjects;
+        else % we need to calculate ground truth "by hand"
 
+            ipGTName = [fName '-GT.png'];
+            % "Local" is our ISET filepath, not the website path
+            ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+            % Use GT & get back annotated image
+            % pass it a native resolution image so the bounding boxes
+            % match the scene locations
+            if ~isempty(instanceFile)
+                % Use HDR for render given the DR of many scenes
+                img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
 
-        ipGTName = [fName '-GT.png'];
-        % "Local" is our ISET filepath, not the website path
-        ipLocalGT = fullfile(outputFolder,'images',ipGTName);
-        % Use GT & get back annotated image
-        % pass it a native resolution image so the bounding boxes
-        % match the scene locations
-        if ~isempty(instanceFile)
-            % Use HDR for render given the DR of many scenes
-            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+                [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
+                    'additionalFile',additionalFile);
 
-            %%% This needs to come from the actual scene data
-            % TBD TBD -- DJC
-            [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
-                'additionalFile',additionalFile);
-
-            % Create single list for database and grid
-            % Also calculate the closest object of interest
-            % NB Not sure we need to stash in both the scene
-            % and the oi, but they are kind of in parallel
-            if ~isempty(GTObjects)
-                uniqueObjects = unique({GTObjects(:).label});
-                ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-                ourScene.metadata.Stats.minDistance = min([GTObjects(:).distance],[],'all');
-                oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-                oiComputed{ii}.metadata.Stats.minDistance = min([GTObjects(:).distance],[],"all");
-            else
-                ourScene.metadata.Stats.uniqueLabels = 'none';
-                ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
-                oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
-                oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
+                % Create single list for database and grid
+                % Also calculate the closest object of interest
+                % NB Not sure we need to stash in both the scene
+                % and the oi, but they are kind of in parallel
             end
-                        
-            % Write out our GT annotated image
-            imwrite(img_GT, ipLocalGT);
-
-            % Unlike other previews, this one is generic to the scene
-            % but we've already built an oi, so save it there also
-            ourScene.metadata.web.GTName = ipGTName;
-            ourScene.metadata.GTObjects = GTObjects;
-            oiComputed{ii}.metadata.web.GTName = ipGTName;
-            oiComputed{ii}.metadata.GTObjects = GTObjects;
-
         end
+        if ~isempty(GTObjects)
+            uniqueObjects = unique({GTObjects(:).label});
+            ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+            ourScene.metadata.Stats.minDistance = min([GTObjects(:).distance],[],'all');
+            oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+            oiComputed{ii}.metadata.Stats.minDistance = min([GTObjects(:).distance],[],"all");
+        else
+            ourScene.metadata.Stats.uniqueLabels = 'none';
+            ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
+            oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
+            oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
+        end
+
+        % Write out our GT annotated image
+        imwrite(img_GT, ipLocalGT);
+
+        % Unlike other previews, this one is generic to the scene
+        % but we've already built an oi, so save it there also
+        ourScene.metadata.web.GTName = ipGTName;
+        ourScene.metadata.GTObjects = GTObjects;
+        oiComputed{ii}.metadata.web.GTName = ipGTName;
+        oiComputed{ii}.metadata.GTObjects = GTObjects;
 
     end
 
 end
+
 
 % Either way we now have a set of optical images that we can
 % Loop through and render them with our sensors
@@ -259,7 +256,7 @@ else
 end
 
 % We can write metadata as one file to make it faster to read
-% But it becomes complex to generate. So we either need to 
+% But it becomes complex to generate. So we either need to
 % use the DB for real, or have multiple metadata.json files
 % I think since scene names are unique, they can have any
 % naming scheme that is unique & over-writes previous versions
@@ -274,14 +271,14 @@ end
 % file (I hope)
 if useDB
     sensorImages = ourDB.find('sensorImages');
-    
+
     % close db now that we're finished
     ourDB.close();
-    
+
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
 else
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
-end    
+end
 
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
@@ -468,7 +465,7 @@ for iii = 1:numel(sensorFiles)
     % However, the img_for_YOLO is at a lower resolution, so it will
     % take some fiddling to align it with objects in the GT scene.
     [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
-    
+
     sensor_ae.metadata.YOLOData = YOLO_Objects;
 
     % For Average Precision we want a GT table and a YOLO table
