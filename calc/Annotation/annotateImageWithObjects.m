@@ -9,7 +9,7 @@ if ~isempty(img) && ~isempty(objectStruct)
     for ii = 1:numel(objectStruct)
         % now build annotated image to return
         annotatedImage = insertObjectAnnotation(img,'Rectangle', ...
-        objectStruct(ii).bbox2d,objectStruct(ii).label);
+        cell2mat(objectStruct(ii).bbox2d),objectStruct(ii).label);
     end
 else
     annotatedImage = img;

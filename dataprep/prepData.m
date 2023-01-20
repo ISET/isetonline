@@ -175,11 +175,13 @@ else
             end
         end
         if ~isempty(GTObjects) && isfield(GTObjects,'label')
-            uniqueObjects = unique({GTObjects(:).label});
+            GTStruct = GTObjects; % already a struct
+            uniqueObjects = unique({GTStruct(1,:).label});
             ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-            ourScene.metadata.Stats.minDistance = min([GTObjects(:).distance],[],'all');
+            distanceValues = cell2mat([GTStruct(1,:).distance]);
+            ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
             oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-            oiComputed{ii}.metadata.Stats.minDistance = min([GTObjects(:).distance],[],"all");
+            oiComputed{ii}.metadata.Stats.minDistance = min([cell2mat(GTStruct(:).distance)],[],"all");
         else
             ourScene.metadata.Stats.uniqueLabels = 'none';
             ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
