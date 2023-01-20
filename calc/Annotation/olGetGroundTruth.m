@@ -1,5 +1,6 @@
-function [GTData] = olGetGroundTruth(options)
+function [GTObjects] = olGetGroundTruth(scene, varargin)
 %OLGETGROUNDTRUE Retrieve GT info from rendered scenes
+% Or from EXR renders that have enough information
 %   D. Cardinal, Stanford University, 12/2022
 
 % Currently needs the _instanceID.exr file, and
@@ -13,23 +14,26 @@ function [GTData] = olGetGroundTruth(options)
 %   that has a map of object instances to pixels
 % additionalFile is a text file with the list of objects in the scene
 
-arguments
-    options.instanceFile = '';
-    options.addtionalFile = '';
-    options.offset = 0; % I think how many lines we skip in info file
-    % Used to be:
-    % fullfile(datasetRoot,sprintf('dataset/nighttime/additionalInfo/%s.txt',imageID))
+% TBD: Allow passing in of depthmap, so we can compare to instance map
+%      and get a depth number for each object of interest
 
-    % others?
-end
+p = inputParser;
+addParameter(p,'instanceFile','',@ischar);
+addParameter(p,'additionalFile','',@ischar);
+addParameter(p,'offset',0,@isnumeric); 
 
-GTData = []; % make sure we return a value
+p.parse(varargin{:});
 
-%% Categories that we support currently (out of the 80 or so total)
+options = p.Results;
+
+GTObjects = []; % make sure we return a value
+
+%% Set Categories that we support currently (out of the 80 or so total)
 %    One reason not to support them all is some like tree & rock
 %    would "just get in the way"
-
 catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
+% These categories are 1 less than in the paper, but maybe
+% that is how they've been coded in the Blender exported scenes?
 catIds   = [0, 91, 2, 5, 7, 1, 3];
 dataDict = dictionary(catNames, catIds);
 
@@ -37,8 +41,9 @@ instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5
-objectslist = readlines(options.addtionalFile);
-objectslist = objectslist(5:end);
+headerLines = 4;
+objectslist = readlines(options.additionalFile);
+objectslist = objectslist((headerLines+1):end);
 
 %% Iterate on objects, filtering for the ones we want
 %  and then building annotations
@@ -52,31 +57,31 @@ for ii = 1:numel(objectslist)
     name = erase(name,{'ObjectInstance ', '"', '_m'});
     %     fprintf(seg_FID, '%d %s \n',ii, name);
 
-    % These are category tweaks from Zhenyi
-    % I don't know if they are to correct past issues or are still needed
+    % Consolidate some categories, as needed
+    % fprintf("Found: %s\n", name);
     if contains(lower(name), {'car'})
-        label = 'vehicle';
+        label = 'car';
         catId = dataDict('car');
     elseif contains(lower(name),'deer')
-        label = 'Deer';
+        label = 'deer';
         catId = dataDict('deer');
-    elseif contains(lower(name),['person','pedestrian'])
-        label = 'Person';
+    elseif contains(lower(name),{'person','pedestrian'})
+        label = 'person';
         catId = dataDict('person');
     elseif contains(lower(name), 'bus')
-        label = 'vehicle';
+        label = 'bus';
         catId = dataDict('bus');
     elseif contains(lower(name), 'truck')
-        label = 'vehicle';
+        label = 'truck';
         catId = dataDict('truck');
-    elseif contains(lower(name), ['bicycle','bike'])
-        label = 'vehicle';
+    elseif contains(lower(name), {'bicycle','bike', 'biker', 'cyclist'})
+        label = 'bicycle';
         catId = dataDict('bicycle');
-        % is it really motorbicycle??
-    elseif contains(lower(name), ['motorcycle','motorbike'])
-        label = 'vehicle';
+        % alternates + one allowance for possible mis-spelling
+    elseif contains(lower(name), {'motorcycle','motorbike', 'otorbike'})
+        label = 'motorcycle';
         catId = dataDict('motorcycle');
-    else % WE NEED TO ADD OUR OTHER CATEGORIES HERE!
+    else % We can add other categories here as needed
         continue;
     end
     
@@ -99,35 +104,25 @@ for ii = 1:numel(objectslist)
         continue
     end
 
-    % Build our return JSON structure
-    % detector version returns: annotated_images, bboxes, scores
-    % but we have different info, of course
-    GTData(objectIndex).label = label;
-    GTData(objectIndex).bbox2d = pos;
-    GTData(objectIndex).catId = catId;
+    % Build our object data structure
+    GTObjects(objectIndex).label = label;
+    GTObjects(objectIndex).bbox2d = pos;
+    GTObjects(objectIndex).catId = catId;
 
+    % Also Compute the distance to the object.
+    % Currently we use its minimum distance
+    if ~isempty(scene)
+        GTObjects(objectIndex).distance = ...
+            min(scene.depthMap(instanceMap == objectIndex),[],"all");
+    else
+        imageEXR = replace(options.instanceFile,'instanceID','skymap');
+        useDepthMap = piReadEXR(imageEXR, 'dataType','depth');
+        GTObjects(objectIndex).distance = ...
+            min(useDepthMap(instanceMap == objectIndex),[],"all");
+    end
     objectIndex = objectIndex + 1;
-    %{
-    % This is the COCO generation code from Zhenyi's original
-    annotations{nBox} = struct('segmentation',[segmentation],'area',area,'iscrowd',0,...
-        'image_id',str2double(imageID),'bbox',pos,'category_id',catId,'id',0,'ignore',0);
-    fprintf('Class %s, instanceID: %d \n', label, ii);
-    nBox = nBox+1;
-    %}
 
-% CONVERSION STOPPED HERE< REST NEEDS WORK
-%{
-    % We could write out GT version of image (or even YOLO version) here
-    % Or just pass an image back to our caller?
-    imgName = sprintf('%d.png',str2double(imageID));
-
-    images{nImage} = struct('file_name',imgName,'height',h,'width',w,'id',str2double(imageID));
-    nImage = nImage + 1;
 end
-%}
-% Instead we want to return our JSON structure to our caller
-% So that they can embed it into an output file
-% and create an annotated version (unless we return that also)
 
 
 end

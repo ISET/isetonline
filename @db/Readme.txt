@@ -2,6 +2,10 @@ DB
 
 mongoDB
 
--> Data Storage (is this part of our real repo, or just a local/general proxy?)
--> Interim storage (e.g. for oi2sensor)
+-> Data Storage for persistent ISET data
+-> db itself contains metadata and 'small' objects (lenses, 
+   sensors without data, etc.)
+-> It also contains file paths, typically on a file server
+
+
 

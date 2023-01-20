@@ -1,26 +1,26 @@
-% Render & Export objects for use in "oi2sensor" / ISETOnline
+% Render & Export objects for use in ISETOnline
 %
 % Currently supports either pre-computed OIs, or scenes generated
 % using PBRT & re-processed for multiple illuminants. These
 % are designed to be used by ISETOnline
 %
 % Optionally can store in a mongoDB set of collections, in addition
-% to the file system
+% to the file system by specifying useDB
+%
+% Adding getting GT data from mongodb of autoscenes
 %
 % D. Cardinal, Stanford University, 2022
 %
 
-%% TBFixed: We wind up with COCO annotations for full 1080p
-%  But images that are smaller. Need to sort that out
-%%
-
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
 
+%% Currently we process one "experiment" folder
+% Need to decide if we want to allow multiple/all
+projectName = 'Ford';
+scenarioName = 'nighttime';
+
 %% Set output folder
-% I'm not sure where we want the data to go ultimately.
-% As it will wind up in the website and/or a db
-% We don't want it in our path or github (it wouldn't fit)
 
 % This is the place where our Web app expects to find web-accessible
 % Data files when running our dev environment locally. For production
@@ -38,13 +38,9 @@ useDB = true; % false;
 % that Zhenyi is having Denesh render
 usePreComputedOI = false;
 
-% Port number seems to wander a bit:)
-
+% If we're using a database, typically it is the ISET default
 if useDB
-    portNumber = 49154; % this changes, need to figure out why
-    ourDB = db('dbServer','seedling','dbPort',portNumber);
-    % If we are also using Mongo create our collections first!
-    ourDB.createSchema;
+    ourDB = db.ISETdb();
 else
     ourDB = []; % don't save to a database
 end
@@ -67,16 +63,13 @@ sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB);
 %% Export Lenses
 exportLenses(outputFolder, privateDataFolder, ourDB)
 
-%% ... Eventually see if we can modify illumination ...
-% And potentially download information about it?
-% Or maybe this all comes in the variants on the recipes?
-
 %% Copy/Export OIs
 %  OIs include complex numbers, which are not directly-accessible
 %  in standard JSON. They also become extremely large as JSON (or BSON)
-%  files. So for now, seems best to simply export the .mat files.
+%  files. So we simply export the .mat files.
 %  We do that in the loop below as we render each one.
 
+%% Start assembling metadata
 % The Metadata Array is the non-image portion of those, which
 % is small enough to be kept in a single file & used for filtering
 imageMetadataArray = [];
@@ -93,37 +86,22 @@ if usePreComputedOI
 else
     oiDefault = oiCreate('shift invariant');
 
-    % Here is where we look for our scenes
-    % TMP HACK with hard-coded paths
-    if ispc
-        % Live Root:
-        % datasetRoot = 'Y:\data\iset\isetauto';
-        % Test Root:
-        iaDataRoot = 'v:\data\iset\isetauto';
-        datasetRoot = fullfile(iaDataRoot, 'dataset');
-        % example instance file
-        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
-        sceneSet = 'nighttime_006';
-        instanceSet = 'ISETScene_006';
-        % Rendering folder has the .mat files for the Scenes that can be summed
-        datasetFolder = fullfile(iaDataRoot,'Deveshs_assets',[instanceSet '_renderings']);
+    % Assume we are processing scenes from the Ford project
+    projectName = 'Ford';
+    datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
-    else
-        % on Mux
-        datasetRoot = '/acorn/data/iset/isetauto/';
-        sceneSet = 'nighttime_006';
-        % needs to be set:
-        datasetFolder = '';
+    % Where the rendered EXR files live -- this is the
+    % same for all experiments as it is the input data
+    EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
-    end
-    sceneFolder = fullfile(datasetRoot, 'skymap_scale10', sceneSet);
-    infoFolder = fullfile(datasetRoot,'nighttime','additionalInfo');
+    % scenes are actually synthetic and have already been rendered
+    sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
-    % Limit how many scenes we use for testing to speed things up
+    % for DEBUG: Limit how many scenes we use for testing to speed things up
     sceneNumberLimit = 3;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
@@ -134,33 +112,97 @@ else
         jj = jj+1;
     end
 
-    % This is where the scene ID is available
-    fName = erase(sceneFileEntries(ii).name,'.mat');
-    imageID = fName;
-
     % Now we'll make oi's by iterating through our scenes
     oiFiles = {};
 
     % our scenes are pre-rendered .exr files for various illuminants
     % that have been combined into ISETcam scenes for evaluation
-    % Good place to try parfor
+    % We create a pinhole OI for each one
+    % USE parfor except for debugging
+    oiComputed = {};
     for ii = 1:numScenes
         ourScene = load(sceneFileNames{ii}, 'scene');
+        ourScene = ourScene.scene; % we get a nested variable for some reason
+
+        % This is where the scene ID is available
+        fName = erase(sceneFileEntries(ii).name,'.mat');
+        imageID = fName;
+
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
         ourScene.metadata.sceneID = fName; % best we can do for now
-        % In our case we render the scene through our default 
+
+        % In our case we render the scene through our default
         % (shift-invariant) optics so that we have an OI to work with
+        oiComputed{ii} = oiCompute(ourScene, oiDefault); %#ok<SAGROW>
 
-        oiComputed{ii} = oiCompute(ourScene.scene, oiDefault); %#ok<SAGROW>
-
-        % Get rid of the oi border for better viewing
+        % Get rid of the oi border so we match the original
+        % scene for better viewing & ground truth matching
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
-        oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
+        oiComputed{ii}.metadata.sceneID = fName; %#ok<SAGROW> % best we can do for now
+
+        %% If possible, get GT from the databaase!
+        if useDB % get ground truth from the Auto Scene in ISETdb
+            GTObjects = ourDB.getGTfromScene('auto',imageID);
+            ourScene.metadata.GTObject = GTObjects;
+
+            % we need an image to annotate
+            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+            annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
+            img_GT = annotatedImage;
+        else % we need to calculate ground truth "by hand"
+
+            ipGTName = [fName '-GT.png'];
+            % "Local" is our ISET filepath, not the website path
+            ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+            % Use GT & get back annotated image
+            % pass it a native resolution image so the bounding boxes
+            % match the scene locations
+            if ~isempty(instanceFile)
+                % Use HDR for render given the DR of many scenes
+                img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+
+                % computeGroundTruth currently calculates and then
+                % creates an annotated image. For the DB case
+                % we just need an annotated image, though
+                [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
+                    'additionalFile',additionalFile);
+
+                % Create single list for database and grid
+                % Also calculate the closest object of interest
+                % NB Not sure we need to stash in both the scene
+                % and the oi, but they are kind of in parallel
+            end
+        end
+        if ~isempty(GTObjects) && isfield(GTObjects,'label')
+            GTStruct = GTObjects; % already a struct
+            uniqueObjects = unique({GTStruct(1,:).label});
+            ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+            distanceValues = cell2mat([GTStruct(1,:).distance]);
+            ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
+            oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+            oiComputed{ii}.metadata.Stats.minDistance = min(distanceValues,[],'all');
+        else
+            ourScene.metadata.Stats.uniqueLabels = 'none';
+            ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
+            oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
+            oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
+        end
+
+        % Write out our GT annotated image
+        imwrite(img_GT, ipLocalGT);
+
+        % Unlike other previews, this one is generic to the scene
+        % but we've already built an oi, so save it there also
+        ourScene.metadata.web.GTName = ipGTName;
+        ourScene.metadata.GTObjects = GTObjects;
+        oiComputed{ii}.metadata.web.GTName = ipGTName;
+        oiComputed{ii}.metadata.GTObjects = GTObjects;
 
     end
 
 end
+
 
 % Either way we now have a set of optical images that we can
 % Loop through and render them with our sensors
@@ -190,13 +232,9 @@ if usePreComputedOI
             load(oiDataFile);
         end
 
-        % specify the files needed to extract Ground Truth
-        infoFiles.instanceFile = '';
-        infoFiles.additionalFile = '';
-
         % LOOP THROUGH THE SENSORS HERE
         % we use basemetadata for other render case, but not here?
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', infoFiles, ourDB);
+        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', ourDB);
         imageMetadataArray = [imageMetadataArray imageMetadata];
     end
 else
@@ -214,35 +252,48 @@ else
         % once we figure out what that is
         baseMetadata = '';
 
-        % specify the files needed to extract Ground Truth
-        % Example:
-        % V:\data\iset\isetauto\Deveshs_assets\ISETScene_011_renderings\
-        infoFiles.instanceFile = fullfile(datasetFolder, ...
-            sprintf('%s_instanceID.exr', imageID));
-        infoFiles.additionalFile = fullfile(infoFolder, ...
-            sprintf('%s.txt',imageID));
-
         % LOOP THROUGH THE SENSORS HERE
         imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
-            baseMetadata, infoFiles, ourDB);
+            baseMetadata, ourDB);
 
         % Not all sensorimages will have the same
         % metadata fields, so we need to put them in a cell struct
-
-        imageMetadataArray{ii} = imageMetadata;
+        % ImageMetaData is actually an array (per sensor)
+        for jj=1:numel(imageMetadata)
+            imageMetadataArray{end+1} = imageMetadata(jj);
+        end
     end
 end
 
 % We can write metadata as one file to make it faster to read
-% Since it is only read by our code, we place it in the code folder tree
-% instead of the public data folder
-% imageMetaDataArray is a cell Array, so we wind up with a sort of empty
-% top level right now??
-jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+% But it becomes complex to generate. So we either need to
+% use the DB for real, or have multiple metadata.json files
+% I think since scene names are unique, they can have any
+% naming scheme that is unique & over-writes previous versions
+% as needed.
+
+% Since the metadata is only read by our code, we place it in the code folder tree
+% instead of the public data folder -- when we generate from scratch
+%jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+
+% Adding support for incremental updates, which means pulling all the
+% imageMetadata out of the sensorimage collection and putting it in a JSON
+% file (I hope)
+if useDB
+    sensorImages = ourDB.find('sensorImages');
+
+    % close db now that we're finished
+    ourDB.close();
+
+    jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+else
+    jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+end
+
 
 %% --------------- SUPPORT FUNCTIONS START HERE --------------------
 %% For each OI process through all the sensors we have
-function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, infoFiles, ourDB)
+function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 imageMetadata = baseMetadata;
 
@@ -274,14 +325,30 @@ for iii = 1:numel(sensorFiles)
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
 
+    % CAN WE TEST FOR EXISTENCE HERE AND SAVE OURSELVES SOME TIME?
+    % Should eventually add lighting params!
+    % shutter time is an issue. We don't know it yet, but at least 0
+    % means some type of AE
+
+    % for debug
+    %sensor.name = 'MTV9V024-RGB'
+    %oi.metadata.sceneID = '1112154540'
+
+    % check if we already have a sensorimage for this scene and sensor
+    % If so, then skip re-creating it
+    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
+        oi.metadata.sceneID, sensor.name);
+    if ourDB.exists('sensorImages', keyQuery)
+        continue;
+    end
+
+
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
     end
 
     %% Now we have an OI + Sensor
-    % so at this point we should have a notion/function
-    % of what variants we want for that "sensorimage"
 
     % Default Auto-Exposure breaks with oncoming headlights, etc.
     % Experimenting with others
@@ -290,6 +357,9 @@ for iii = 1:numel(sensorFiles)
     %aeMethod = 'specular';
     %aeLevels = .8;
     aeTime = autoExposure(oi,sensor, aeLevels, aeMethod);
+    % aeTime varies in its low order bits when re-run
+    % since we use time values as keys we need to round
+    aeTime = round(aeTime,5);
     aeMethod = 'hdr';
     % Un-used, for now
     %aeHDRTime  = autoExposure(oi,sensor,aeLevels,aeMethod,'numframes',7);
@@ -316,10 +386,10 @@ for iii = 1:numel(sensorFiles)
     % defaults, but have not processed an OI,
     % so we want to write them out for use in our Sensor Editor
     sensor_ae.metadata = baseMetadata; % initialize with generic value
-    sensor_ae.metadata.sensorBaselineFileName = [sName '-Baseline.json'];
+    sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
 
-    % Get the sceneID
-    sensor_ae.metadata.sceneID = oi.metadata.sceneID; % snag original scene ID
+    % merge metadata from the OI with our own
+    sensor_ae.metadata = appendStruct(sensor_ae.metadata, oi.metadata);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
     % See how long this takes in case we want
@@ -350,20 +420,6 @@ for iii = 1:numel(sensorFiles)
     ipLocalJPEG_bracket = fullfile(outputFolder,'images',ipJPEGName_bracket);
     ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
-    % Do the same for our Ground Truth filenames
-    % QUESTION: It makes sense to do YOLO on the sensor-rendered image
-    %   but Ground Truth is based on the original PBRT render
-    %   so if we use it, then try to show it over a sensor-rendered image
-    %   then will it all line up? Or do we just show a single GT vesion?
-
-    ipGTName = [fName '-' sName '-GT.jpg'];
-    ipGTName_burst = [fName '-' sName 'GT-burst.jpg'];
-    ipGTName_bracket = [fName '-' sName 'GT-bracket.jpg'];
-
-    % "Local" is our ISET filepath, not the website path
-    ipLocalGT = fullfile(outputFolder,'images',ipGTName);
-    ipLocalGT_burst = fullfile(outputFolder,'images',ipGTName_burst);
-    ipLocalGT_bracket = fullfile(outputFolder,'images',ipGTName_bracket);
 
     % Do the same for our YOLO version filenames
     ipYOLOName = [fName '-' sName '-YOLO.jpg'];
@@ -405,56 +461,32 @@ for iii = 1:numel(sensorFiles)
     burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst);
     bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket);
 
-    % We also want to save a GT-annotated version of each!
-    % "doGT" will run detector, but need to make it integrate bboxes
-    % Generate images to use for GT, with size matching scene
-    img_for_GT = imread(outputFile);
-
-    img_for_GT_burst = imread(burstFile);
-
-    img_for_GT_bracket = imread(bracketFile);
-
-    if ~isempty(ip_ae.metadata) && isfield(ip_ae.metadata, 'sceneSize')
-        sceneRez = ip_ae.metadata.sceneSize;
-        imresize(img_for_GT, sceneRez);
-        imresize(img_for_GT_burst, sceneRez);
-        imresize(img_for_GT_bracket, sceneRez);
-    end
-
-    % Use GT & get back annotated image
-    if ~isempty(infoFiles.instanceFile)
-        img_GT = doGT(img_for_GT,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-        img_GT_burst = doGT(img_for_GT_burst,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-        img_GT_bracket = doGT(img_for_GT_bracket,'instanceFile',infoFiles.instanceFile, ...
-            'additionalFile',infoFiles.additionalFile);
-
-        % Write out our GT annotated image
-        imwrite(img_GT, ipLocalGT);
-        imwrite(img_GT_burst, ipLocalGT_burst);
-        imwrite(img_GT_bracket, ipLocalGT_bracket);
-    end
-    % We also want to save a YOLO-annotated version of each!
-    % doYOLO will run detector, but need to make it integrate bboxes
+    % We also want to save a YOLO-annotated version of each
     % Generate images to use for YOLO
     img_for_YOLO = imread(outputFile);
     img_for_YOLO_burst = imread(burstFile);
     img_for_YOLO_bracket = imread(bracketFile);
 
-    % Use YOLO & get back annotated image
-    % FIGURE OUT HOW TO WRITE OUT YOLO DATA
-    [img_YOLO, bboxes, scores, labels] = doYOLO(img_for_YOLO);
+    % Use YOLO & get back annotated image plus
+    % found objects. By themselves they don't offer distance,
+    % although they do give us a bounding box, from which it might
+    % be possible to compute distance.
 
-    % yoloJSON needs to be fixed for parfor, and
-    % we're not currently using it, so comment out
-    %yoloJSON.bboxes = bboxes;
-    %yoloJSON.scores = scores;
-    %yoloJSON.labels = labels;
+    % However, the img_for_YOLO is at a lower resolution, so it will
+    % take some fiddling to align it with objects in the GT scene.
+    [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
 
-    % Don't know if we need to write these version out separately?
-    [img_YOLO_burst, bboxes, scores, labels] = doYOLO(img_for_YOLO_burst);
-    [img_YOLO_bracket, bboxes, scores, labels] = doYOLO(img_for_YOLO_bracket);
+    sensor_ae.metadata.YOLOData = YOLO_Objects;
+
+    % For Average Precision we want a GT table and a YOLO table
+    % with each row containing a bounding box and a label
+    % The YOLO version should/can also include score
+
+    % Don't know if we need to write these version out separately
+    [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
+    [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
+    sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
+    sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 
     % Write out our annotated image
     imwrite(img_YOLO, ipLocalYOLO);
@@ -470,19 +502,16 @@ for iii = 1:numel(sensorFiles)
     imwrite(thumbnail, ipLocalThumbnail);
 
     % We need to save the relative paths for the website to use
-    sensor_ae.metadata.jpegName = ipJPEGName;
-    sensor_ae.metadata.GTName = ipGTName;
-    sensor_ae.metadata.YOLOName = ipYOLOName;
-    sensor_ae.metadata.thumbnailName = ipThumbnailName;
+    sensor_ae.metadata.web.jpegName = ipJPEGName;
+    sensor_ae.metadata.web.YOLOName = ipYOLOName;
+    sensor_ae.metadata.web.thumbnailName = ipThumbnailName;
 
     % we also have bracket & burst (& others)
     % how do we want to store / note them?
-    sensor_ae.metadata.burstJPEGName = ipJPEGName_burst;
-    sensor_ae.metadata.burstGTName = ipGTName_burst;
-    sensor_ae.metadata.burstYOLOName = ipYOLOName_burst;
-    sensor_ae.metadata.bracketJPEGName = ipJPEGName_bracket;
-    sensor_ae.metadata.bracketGTName = ipGTName_bracket;
-    sensor_ae.metadata.bracketYOLOName = ipYOLOName_bracket;
+    sensor_ae.metadata.web.burstJPEGName = ipJPEGName_burst;
+    sensor_ae.metadata.web.burstYOLOName = ipYOLOName_burst;
+    sensor_ae.metadata.web.bracketJPEGName = ipJPEGName_bracket;
+    sensor_ae.metadata.web.bracketYOLOName = ipYOLOName_bracket;
 
     % Stash exposure time for reference
     sensor_ae.metadata.exposureTime = aeTime;
@@ -516,7 +545,7 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     if ~isempty(ourDB)
-        ourDB.store(sensor_ae.metadata,"collection","sensorimage");
+        ourDB.store(sensor_ae.metadata,"collection","sensorImages");
     end
 
     % We ONLY write out the metadata in the main .json
@@ -527,7 +556,7 @@ for iii = 1:numel(sensorFiles)
     % adds and updates?
 
     % Need to accumulate all sensor data
-    imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW> 
+    imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW>
 
 end
 end
@@ -542,14 +571,15 @@ for ii = 1:lensCount
     % Get the full path to load
     lensFile = fullfile(lensFiles(ii).folder, lensFileName);
     ourLens = jsonread(lensFile);
-    if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lens'); end
+    ourLens.fileName = lensFileName; % need this to create a unique key
+    if ~isempty(ourDB); ourDB.store(ourLens, 'collection','lenses'); end
 end
 end
 
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
-sensorFiles = {'MT9V024SensorRGB.mat', 'imx363.mat',...
-    'ar0132atSensorrgb.mat', 'ar0132atSensorRCCC.mat'};
+sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
+    'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
@@ -574,7 +604,7 @@ for ii = 1:numel(sensorFiles)
     jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
 
     % We want to write these to the sensor database also
-    if ~isempty(ourDB); ourDB.store(sensor, 'collection','sensor'); end
+    if ~isempty(ourDB); ourDB.store(sensor, 'collection','sensors'); end
 
 end
 

@@ -5,6 +5,28 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "command": "npm start",
+            "name": "Run npm start",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        {
+            "command": "npm start",
+            "name": "Run npm start",
+            "request": "launch",
+            "type": "node-terminal"
+        },
+        
+        {
+            "name": "Launch Program",
+            "program": "${workspaceFolder}/app.js",
+            "request": "launch",
+            "skipFiles": [
+                "<node_internals>/**"
+            ],
+            "type": "node"
+        },
+        {
             "type": "edge",
             "request": "launch",
             "name": "Launch Edge against localhost",

@@ -1,6 +1,10 @@
 function [status, result] = createSchema(obj)
 % Create our ISET DB schema in the database connection
 
+% NOTE: Our indices are now more sophisticated than in this script,
+% So as a practical matter creating our schema is probably best done
+% by copying it from a running instance in an admin tool.
+
 %%NB: Matlab has limited capability for schema management.
 %     Can't add indices, for example, so we might
 %     use a mongosh sript or commands.
@@ -17,8 +21,8 @@ switch obj.dbServer
     otherwise
         % we can only create collections from Matlab, not indices
         % so those have to get done another way
-        collectionNames = {'scene', 'sensor', 'lens',...
-            'oi','sensorimage'};
+        collectionNames = {'scenes', 'sensors', 'lenses',...
+            'OIs','sensorImages','autoScenesEXR'};
         for ii = 1:numel(collectionNames)
             try
             % use try block in case they exist and we get an error
