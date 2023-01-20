@@ -149,7 +149,7 @@ else
             % we need an image to annotate
             img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
             annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
-
+            img_GT = annotatedImage;
         else % we need to calculate ground truth "by hand"
 
             ipGTName = [fName '-GT.png'];
@@ -181,7 +181,7 @@ else
             distanceValues = cell2mat([GTStruct(1,:).distance]);
             ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
             oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-            oiComputed{ii}.metadata.Stats.minDistance = min([cell2mat(GTStruct(:).distance)],[],"all");
+            oiComputed{ii}.metadata.Stats.minDistance = min(distanceValues,[],'all');
         else
             ourScene.metadata.Stats.uniqueLabels = 'none';
             ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
