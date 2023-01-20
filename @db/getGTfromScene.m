@@ -10,8 +10,10 @@ function GTObjects = getGTfromScene(obj, sceneType, sceneID)
 %   GTObject structure
 %
 % Example:
-%   ourDB.getGTfromScene('auto', '1112153442');
-%
+%{
+   ourDB = db.ISETdb();
+   GTObject = ourDB.getGTfromScene('auto', '1112153442');
+%}
 % D.Cardinal, Stanford University, 2023
 
 % Assume our db is open & query
@@ -25,8 +27,8 @@ switch sceneType
         dbTable = 'autoScenesEXR';
         % sceneIDs are unique for auto scenes
         queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
-        ourScene = obj.find(dbTable, queryString);
-        if exists(ourScene.GTObjects)
+        ourScene = obj.find(dbTable, 'query', queryString);
+        if ~isempty(ourScene) && exists(ourScene.GTObjects)
             GTObjects = ourScene.GTObjects;
         else
             GTObjects = [];

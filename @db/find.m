@@ -22,16 +22,16 @@ if ~isopen(obj.connection)
 end
 
 p = inputParser();
-addParameter(p, 'query', '', @ischar);
+addParameter(p, 'query', '');
 
-p.Parse(varargin{:});
-query = p.Resuls.query;
+parse(p, varargin{:});
+query = p.Results.query;
 
 try
     if isempty(query)
         documents = find(obj.connection, collection);
     else
-        documents = find(ojb.connection, collection, Query = query);
+        documents = find(obj.connection, collection, Query = query);
     end
 catch
     documents = [];
