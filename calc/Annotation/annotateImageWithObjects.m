@@ -3,10 +3,13 @@ function annotatedImage = annotateImageWithObjects(img, objectStruct)
 % Currently YOLO annotations are someplace else because they
 % have a different format, but they should probably also get put here
 
-if isfile(img) && ~isempty(objectStruct)
+% need actual array of structs from the cells of our objectlist
+objectStruct = objectStruct{:};
+
+if ~isempty(img) && ~isempty(objectStruct)
     for ii = 1:numel(objectStruct)
         % now build annotated image to return
-        annotatedImage = insertObjectAnnotation(annotatedImage,'Rectangle', ...
+        annotatedImage = insertObjectAnnotation(img,'Rectangle', ...
         objectStruct(ii).bbox2d,objectStruct(ii).label);
     end
 else
