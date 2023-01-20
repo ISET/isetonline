@@ -7,7 +7,7 @@ function GTObjects = getGTfromScene(obj, sceneType, sceneID)
 %   SceneID   -- <ID of the desired scene>
 %
 % Output:
-%   GTObject structure
+%   GTObject struct array
 %
 % Example:
 %{
@@ -29,7 +29,7 @@ switch sceneType
         queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
         ourScene = obj.find(dbTable, 'query', queryString);
         if ~isempty(ourScene) && isfield(ourScene,'GTObject')
-            GTObjects = ourScene.GTObject;
+            GTObjects = cell2mat(ourScene.GTObject); % make usable
         else
             GTObjects = [];
         end
