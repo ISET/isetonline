@@ -7,6 +7,8 @@
 % Optionally can store in a mongoDB set of collections, in addition
 % to the file system by specifying useDB 
 %
+% Adding getting GT data from mongodb of autoscenes
+%
 % D. Cardinal, Stanford University, 2022
 %
 
@@ -93,13 +95,7 @@ else
     EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
     % scenes are actually synthetic and have already been rendered
-    sceneFolder = fullfile(datasetFolder, 'SceneISET', experimentName);
-
-    % !!! I think we can now get this from the database
-
-    % additional info is based on the original scene & shared
-    % across many different renderings
-    %infoFolder = fullfile(datasetFolder, 'additionalInfo');
+    sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
@@ -131,6 +127,11 @@ else
         % This is where the scene ID is available
         fName = erase(sceneFileEntries(ii).name,'.mat');
         imageID = fName;
+
+        if useDB % get ground truth from the Auto Scene in ISETdb
+            GTObjects = ourDB.getGTfromScene('auto',imageID);
+            ourScene.metadata.GTObject = GTObjects;
+        end
 
         % Preserve size for later use in resizing
         ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
