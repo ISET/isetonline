@@ -40,7 +40,7 @@ usePreComputedOI = false;
 
 % If we're using a database, typically it is the ISET default
 if useDB
-    ourDB = isetdb;
+    ourDB = isetdb();
 else
     ourDB = []; % don't save to a database
 end
