@@ -153,7 +153,7 @@ else
             sprintf('%s.txt',imageID));
 
         %% We should get GT from the databaase!
-        
+
 
         ipGTName = [fName '-GT.png'];
         % "Local" is our ISET filepath, not the website path
@@ -578,7 +578,7 @@ end
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
-    'ar0132atSensorrgb.mat'}; %, 'ar0132atSensorRCCC.mat'};
+    'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
