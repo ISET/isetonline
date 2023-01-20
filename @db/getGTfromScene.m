@@ -5,7 +5,7 @@ function GTObjects = getGTfromScene(obj, sceneType, sceneID)
 % Input:
 %   Scenetype -- 'auto'
 %   SceneID   -- <ID of the desired scene>
-% 
+%
 % Output:
 %   GTObject structure
 %
@@ -28,8 +28,8 @@ switch sceneType
         % sceneIDs are unique for auto scenes
         queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
         ourScene = obj.find(dbTable, 'query', queryString);
-        if ~isempty(ourScene) && exists(ourScene.GTObjects)
-            GTObjects = ourScene.GTObjects;
+        if ~isempty(ourScene) && isfield(ourScene,'GTObject')
+            GTObjects = ourScene.GTObject;
         else
             GTObjects = [];
         end
