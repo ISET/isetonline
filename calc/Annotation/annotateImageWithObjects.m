@@ -4,6 +4,8 @@ function annotatedImage = annotateImageWithObjects(img, objectStruct)
 % have a different format, but they should probably also get put here
 
 % need actual array of structs from the cells of our objectlist
+% I'm  sure there is a more elegant way!
+objectStruct = objectStruct(:);
 objectStruct = objectStruct{:};
 
 if ~isempty(img) && ~isempty(objectStruct)
