@@ -27,12 +27,7 @@ GTObjects = olGetGroundTruth(scene, 'additionalFile',p.Results.additionalfile, .
 % first check to see if we got data back
 % and if so, annotate our image 
 if ~isempty(GTObjects)
-    annotatedImage = img;
-    for ii = 1:numel(GTObjects)
-        % now build annotated image to return
-        annotatedImage = insertObjectAnnotation(annotatedImage,'Rectangle', ...
-        GTObjects(ii).bbox2d,GTObjects(ii).label);
-    end
+    annotatedImage = annotateImageWithObjects(img,GTObjects);
 else
     annotatedImage = img;
 end

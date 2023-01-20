@@ -139,12 +139,17 @@ else
         % Get rid of the oi border so we match the original
         % scene for better viewing & ground truth matching
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
-        oiComputed{ii}.metadata.sceneID = fName; % best we can do for now
+        oiComputed{ii}.metadata.sceneID = fName; %#ok<SAGROW> % best we can do for now
 
         %% If possible, get GT from the databaase!
         if useDB % get ground truth from the Auto Scene in ISETdb
             GTObjects = ourDB.getGTfromScene('auto',imageID);
             ourScene.metadata.GTObject = GTObjects;
+
+            % we need an image to annotate
+            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+            annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
+
         else % we need to calculate ground truth "by hand"
 
             ipGTName = [fName '-GT.png'];
@@ -157,6 +162,9 @@ else
                 % Use HDR for render given the DR of many scenes
                 img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
 
+                % computeGroundTruth currently calculates and then
+                % creates an annotated image. For the DB case
+                % we just need an annotated image, though
                 [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
                     'additionalFile',additionalFile);
 
@@ -166,7 +174,7 @@ else
                 % and the oi, but they are kind of in parallel
             end
         end
-        if ~isempty(GTObjects)
+        if ~isempty(GTObjects) && isfield(GTObjects,'label')
             uniqueObjects = unique({GTObjects(:).label});
             ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
             ourScene.metadata.Stats.minDistance = min([GTObjects(:).distance],[],'all');
