@@ -15,7 +15,8 @@
 
 %% Currently we process one "experiment" folder
 % Need to decide if we want to allow multiple/all
-experimentName = 'nighttime_23-01-16-08-41';
+projectName = 'Ford';
+scenarioName = 'nighttime';
 
 %% Set output folder
 
@@ -92,18 +93,20 @@ else
     EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
     % scenes are actually synthetic and have already been rendered
-    sceneFolder = fullfile(datasetFolder, 'ISETScenes', experimentName);
+    sceneFolder = fullfile(datasetFolder, 'SceneISET', experimentName);
+
+    % !!! I think we can now get this from the database
 
     % additional info is based on the original scene & shared
     % across many different renderings
-    infoFolder = fullfile(datasetFolder, 'additionalInfo');
+    %infoFolder = fullfile(datasetFolder, 'additionalInfo');
 
     % These are the composite scene files made by mixing
     % illumination sources and showing through a pinhole
     sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
     % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 30;
+    sceneNumberLimit = 3;
     numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
     sceneFileNames = '';
@@ -148,6 +151,9 @@ else
             sprintf('%s_instanceID.exr', imageID));
         additionalFile = fullfile(infoFolder, ...
             sprintf('%s.txt',imageID));
+
+        %% We should get GT from the databaase!
+        
 
         ipGTName = [fName '-GT.png'];
         % "Local" is our ISET filepath, not the website path
