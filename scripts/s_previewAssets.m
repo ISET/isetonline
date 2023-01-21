@@ -11,8 +11,8 @@ assets = ourDB.find(assetCollection);
 images = {};
 
 for ii = 1:numel(assets)
-    if ~isempty(assets.thumbnail) % we've found a thumbnail to display
-        images(end+1) = {assets.thumbnail}; %#ok<SAGROW> 
+    if ~isempty(assets(ii).thumbnail) % we've found a thumbnail to display
+        images(end+1) = {assets(ii).thumbnail}; %#ok<SAGROW> 
     end
 end
 
