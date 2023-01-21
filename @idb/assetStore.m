@@ -34,11 +34,11 @@ else
             assetStruct.folder = fullfile(potentialAssets(ii).folder, ...
                 potentialAssets(ii).name);
             assetStruct.name = potentialAssets(ii).name;
-            if isfile(fullfile(assetStruct.folder, [potentialAssets(ii).name '.png']))
+            if isfile(fullfile(potentialAssets(ii).folder, [potentialAssets(ii).name '.png']))
                 % We could probably read in the thumbnail and store it
                 % directly?
                 assetStruct.thumbnail = ...
-                    fullfile(assetStruct.folder, [potentialAssets(ii).name '.png']);
+                    fullfile(potentialAssets(ii).folder, [potentialAssets(ii).name '.png']);
             else
                 assetStruct.thumbnail = [];
             end
