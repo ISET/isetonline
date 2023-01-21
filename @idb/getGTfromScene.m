@@ -11,7 +11,7 @@ function GTObjects = getGTfromScene(obj, sceneType, sceneID)
 %
 % Example:
 %{
-   ourDB = db.ISETdb();
+   ourDB = isetdb;
    GTObject = ourDB.getGTfromScene('auto', '1112153442');
 %}
 % D.Cardinal, Stanford University, 2023

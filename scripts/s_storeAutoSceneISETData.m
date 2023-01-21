@@ -19,7 +19,7 @@ sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 % Store in our collection of rendered auto scenes (.EXR files)
 useCollection = 'autoScenesISET';
 
-ourDB = db.ISETdb();
+ourDB = isetdb();
 
 % create auto collection if needed
 try

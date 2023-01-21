@@ -1,4 +1,4 @@
-classdef db < handle
+classdef idb < handle
     %DB Store and retrieve ISET objects from a db
     %   currently only mongoDB
 
@@ -15,7 +15,7 @@ classdef db < handle
                 ISETdb = [];
             end
             if isempty(ISETdb)
-                defaultDB = db();
+                defaultDB = idb();
             else
                 defaultDB = ISETdb;
             end
@@ -50,7 +50,7 @@ classdef db < handle
     methods
         % default is a local Docker container, but we also want
         % to support storing remotely to a running instance
-        function obj = db(options)
+        function obj = idb(options)
 
             arguments
                 options.dbServer = getpref('db','server','localhost');

@@ -9,11 +9,10 @@ arguments
     options.collection = 'images'; % default collection
 end
 
-persistent isetDB; % instance of db class
 if ~isempty(obj.connection) && isopen(obj.connection)
     isetDB = obj.connection;
 else
-    isetDB = db();
+    isetDB = idb();
 end
 
 if isempty(obj.connection)
