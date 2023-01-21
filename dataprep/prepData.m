@@ -141,6 +141,10 @@ else
         oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
         oiComputed{ii}.metadata.sceneID = fName; %#ok<SAGROW> % best we can do for now
 
+        ipGTName = [fName '-GT.png'];
+        % "Local" is our ISET filepath, not the website path
+        ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+
         %% If possible, get GT from the databaase!
         if useDB % get ground truth from the Auto Scene in ISETdb
             GTObjects = ourDB.getGTfromScene('auto',imageID);
@@ -152,9 +156,6 @@ else
             img_GT = annotatedImage;
         else % we need to calculate ground truth "by hand"
 
-            ipGTName = [fName '-GT.png'];
-            % "Local" is our ISET filepath, not the website path
-            ipLocalGT = fullfile(outputFolder,'images',ipGTName);
             % Use GT & get back annotated image
             % pass it a native resolution image so the bounding boxes
             % match the scene locations
