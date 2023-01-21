@@ -11,6 +11,10 @@
 %
 % D. Cardinal, Stanford University, 2022
 %
+% TBD: With large datasets, the amount of virtual memory needed
+%      to keep all the OIs can be close to 1TB. We probably need
+%      to rework the flow so that the sensorImages are computed
+%      for each OI in turn.
 
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
