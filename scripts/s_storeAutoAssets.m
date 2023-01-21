@@ -4,7 +4,7 @@
 % Eventually should also store ISET assets, etc.
 %
 ourDB = isetdb();
-assetDir = fullfile(iaFileDataRoot('local',true),'PBRT_Assets');
+assetDir = fullfile(iaFileDataRoot('local',true),'PBRT_assets');
 
 assetFolders = dir(assetDir);
 
