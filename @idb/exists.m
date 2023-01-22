@@ -1,6 +1,6 @@
 function doesExist = exists(obj, collectionName,mongoQuery)
 %EXISTS Determine whether a given object with a unique key field
-%       already exists. 
+%       already exists.
 %
 %   Pass in the name of the collection where the object would be stored
 %   and also a mongoDB query that uniquely identifies objects in that
@@ -9,7 +9,7 @@ function doesExist = exists(obj, collectionName,mongoQuery)
 % Assume our db is open & query
 if ~isopen(obj.connection)
     doesExist = -1; % oops!
-end
+else
 
     found = find(obj.connection, collectionName, 'Query', mongoQuery);
     if ~isempty(found)
