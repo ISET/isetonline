@@ -151,13 +151,20 @@ else
 
         %% If possible, get GT from the databaase!
         if useDB % get ground truth from the Auto Scene in ISETdb
-            GTObjects = ourDB.getGTfromScene('auto',imageID);
-            ourScene.metadata.GTObject = GTObjects;
 
-            % we need an image to annotate
-            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
-            annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
-            img_GT = annotatedImage;
+            % this code sometimes has parse errors so use a try block
+            try
+                GTObjects = ourDB.gtGetFromScene('auto',imageID);
+                ourScene.metadata.GTObject = GTObjects;
+
+                % we need an image to annotate
+                img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+                annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
+                img_GT = annotatedImage;
+            catch
+                img_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+                warning("gtGet failed on %s", imageID);
+            end
         else % we need to calculate ground truth "by hand"
 
             % Use GT & get back annotated image
