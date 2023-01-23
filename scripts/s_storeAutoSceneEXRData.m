@@ -1,6 +1,5 @@
 % Simple script to create DB Documents for the Ford scenes
 % 
-% This (ISET verion) is a parallel to the EXR version:
 %  EXR version creates db entries for the original rendered EXR files
 %  ISET version creates entries for a specific set of lighting conditions
 %       that have been combined into a full ISET scene object
@@ -15,13 +14,11 @@
 
 projectName = 'Ford'; % we currently use folders per project
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
-%FIX sceneFolder =  fullfile(projectFolder, 'SceneMetadata');
-sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
-
-ISETSceneFolder = fullfile(projectFolder, 'TBD');
+sceneEXRFolder =  fullfile(projectFolder, 'ScenesEXRs');
+sceneEXRDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 
 % Store in our collection of rendered auto scenes (.EXR files)
-useCollection = 'autoScenesISET';
+useCollection = 'autoScenesEXR';
 
 ourDB = isetdb();
 
@@ -32,19 +29,19 @@ catch
 end
 
 for ii = 1:numel(sceneDataFiles)
-    load(fullfile(sceneDataFiles(ii).folder, ...
-        sceneDataFiles(ii).name)); % get sceneMeta struct
-    % Hopefully the metadata is passed along here, not added
-    %sceneMeta.project = "Ford Motor Company";
-    %sceneMeta.creator = "Zhenyi Liu";
-    %sceneMeta.sceneSource = "Blender";
+    load(fullfile(sceneEXRDataFiles(ii).folder, ...
+        sceneEXRDataFiles(ii).name)); % get sceneMeta struct
+    % Project-specific metadata
+    sceneMeta.project = "Ford Motor Company";
+    sceneMeta.creator = "Zhenyi Liu";
+    sceneMeta.sceneSource = "Blender";
 
     % Update dataset folder to new layout
-    sceneMeta.datasetFolder = EXRFolder;
+    sceneMeta.datasetFolder = sceneEXRFolder;
 
     % in theory we can get the ground truth from the original
     % .exr files. Do we need these .mat files?
-    instanceFile = fullfile(EXRFolder, ...
+    instanceFile = fullfile(sceneEXRFolder, ...
             sprintf('%s_instanceID.exr', imageID));
     additionalFile = fullfile(infoFolder, ...
             sprintf('%s.txt',imageID));
