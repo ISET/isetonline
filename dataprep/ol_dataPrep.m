@@ -167,10 +167,10 @@ for ii = 1:numScenes
             % Use HDR for render given the DR of many scenes
             img_for_GT = oiShowImage(oiComputed, -3, 2.2);
 
-            % computeGroundTruth currently calculates and then
+            % ol_gtCompute currently calculates and then
             % creates an annotated image. For the DB case
             % we just need an annotated image, though
-            [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
+            [img_GT, GTObjects] = ol_gtCompute(ourScene, img_for_GT,'instanceFile',instanceFile, ...
                 'additionalFile',additionalFile);
 
             % Create single list for database and grid
@@ -185,12 +185,7 @@ for ii = 1:numScenes
         GTStruct = GTObjects; % already a struct
         uniqueObjects = unique({GTStruct(1,:).label});
         ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-        try
-            distanceValues = cell2mat([GTStruct(1,:).distance]);
-        catch
-            warning("Bad GTStruct for %s",imageID);
-            distanceValues =[1000000];
-        end
+        distanceValues = cell2mat([GTStruct(1,:).distance]);
         ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
         oiComputed.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
         oiComputed.metadata.Stats.minDistance = min(distanceValues,[],'all');
@@ -461,7 +456,7 @@ parfor iii = 1:numel(sensorFiles)
 
     % However, the img_for_YOLO is at a lower resolution, so it will
     % take some fiddling to align it with objects in the GT scene.
-    [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
+    [img_YOLO, YOLO_Objects] = ol_YOLOCompute(img_for_YOLO);
 
     sensor_ae.metadata.YOLOData = YOLO_Objects;
 
@@ -470,8 +465,8 @@ parfor iii = 1:numel(sensorFiles)
     % The YOLO version should/can also include score
 
     % Don't know if we need to write these version out separately
-    [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
-    [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
+    [img_YOLO_burst, YOLO_Objects_Burst] = ol_YOLOCompute(img_for_YOLO_burst);
+    [img_YOLO_bracket, YOLO_Objects_Bracket] = ol_YOLOCompute(img_for_YOLO_bracket);
     sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
     sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 

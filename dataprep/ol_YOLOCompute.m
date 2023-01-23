@@ -1,5 +1,5 @@
-function [annotatedImage, YOLO_Objects] = doYOLO(img)
-%DOYOLO Run YOLO object detector on an image
+function [annotatedImage, YOLO_Objects] = ol_YOLOCompute(img)
+%ol_YOLOCompute Run YOLO object detector on an image
 %   Returns annotated image and an array of found objects
 
 persistent ourDetector;
