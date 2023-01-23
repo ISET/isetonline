@@ -185,7 +185,12 @@ for ii = 1:numScenes
         GTStruct = GTObjects; % already a struct
         uniqueObjects = unique({GTStruct(1,:).label});
         ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-        distanceValues = cell2mat([GTStruct(1,:).distance]);
+        try
+            distanceValues = cell2mat([GTStruct(1,:).distance]);
+        catch
+            warning("Bad GTStruct for %s",imageID);
+            distanceValues =[1000000];
+        end
         ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
         oiComputed.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
         oiComputed.metadata.Stats.minDistance = min(distanceValues,[],'all');
