@@ -9,11 +9,11 @@
 % builds on Zhenyi & Devesh's scenes and renders
 
 projectName = 'Ford'; % we currently use folders per project
-experimentName = 'nighttime'; % default for now, need to make a parameter
+scenarioName = 'nighttime'; % default for now, need to make a parameter
 
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
 EXRFolder = fullfile(projectFolder, 'SceneEXRs');
-sceneFolder =  fullfile(projectFolder, 'SceneISET', experimentName);
+sceneFolder =  fullfile(projectFolder, 'SceneISET', scenarioName);
 sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 
 % Store in our collection of rendered auto scenes (.EXR files)

@@ -1,4 +1,4 @@
-function [annotatedImage, GTObjects] = computeGroundTruth(scene, img, varargin)
+function [annotatedImage, GTObjects] = ol_gtCompute(scene, img, varargin)
 %%computeGroundTruth Get Ground Truth for image
 % Relies on COCO-style annotation files, as used currently in ISETAuto
 % Returns both Ground Truth Data and a labeled version of the input image

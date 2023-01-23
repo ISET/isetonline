@@ -1,16 +1,21 @@
 % Render & Export objects for use in ISETOnline
 %
-% Currently supports either pre-computed OIs, or scenes generated
-% using PBRT & re-processed for multiple illuminants. These
-% are designed to be used by ISETOnline
+% Supports  scenes generated
+% using PBRT & re-processed for multiple illuminants. The
+% output is designed to be used by ISETOnline
 %
 % Optionally can store in a mongoDB set of collections, in addition
 % to the file system by specifying useDB
 %
-% Adding getting GT data from mongodb of autoscenes
+% Added getting GT data from mongodb of autoscenes
+% re-wrote flow to reduce memory footprint
 %
 % D. Cardinal, Stanford University, 2022
 %
+% TBD: With large datasets, the amount of virtual memory needed
+%      to keep all the OIs can be close to 1TB. We probably need
+%      to rework the flow so that the sensorImages are computed
+%      for each OI in turn.
 
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
@@ -74,203 +79,179 @@ exportLenses(outputFolder, privateDataFolder, ourDB)
 % is small enough to be kept in a single file & used for filtering
 imageMetadataArray = [];
 
-% We can either start with pre-computed optical images that
-% have been through lenses, or synthetic scenes through a pinhole
+% We start with synthetic scenes through a pinhole
 % that we'll render through "another" pinhole for now
-if usePreComputedOI
-    % For now we have the OI folder in our Matlab path
-    % As we add a large number we might want to enumerate a data folder
-    % Or even get them from a database
-    oiFiles = {'oi_001.mat', 'oi_002.mat',  ...
-        'oi_003.mat', 'oi_004.mat', 'oi_005.mat', 'oi_006.mat'};
-else
-    oiDefault = oiCreate('shift invariant');
+oiDefault = oiCreate('shift invariant');
 
-    % Assume we are processing scenes from the Ford project
-    projectName = 'Ford';
-    datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
+% Assume we are processing scenes from the Ford project
+projectName = 'Ford';
+datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
-    % Where the rendered EXR files live -- this is the
-    % same for all experiments as it is the input data
-    EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
+% Where the rendered EXR files live -- this is the
+% same for all experiments as it is the input data
+EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
-    % scenes are actually synthetic and have already been rendered
-    sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
+% scenes are actually synthetic and have already been rendered
+sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 
-    % These are the composite scene files made by mixing
-    % illumination sources and showing through a pinhole
-    sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
+% These are the composite scene files made by mixing
+% illumination sources and showing through a pinhole
+sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
-    % for DEBUG: Limit how many scenes we use for testing to speed things up
-    sceneNumberLimit = 3;
-    numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
+% for DEBUG: Limit how many scenes we use for testing to speed things up
+sceneNumberLimit = 3000;
+numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
-    sceneFileNames = '';
-    jj = 1;
-    for ii = 1:numScenes
-        sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
-        jj = jj+1;
-    end
+sceneFileNames = '';
+jj = 1;
+for ii = 1:numScenes
+    sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
+    jj = jj+1;
+end
 
-    % Now we'll make oi's by iterating through our scenes
-    oiFiles = {};
+% our scenes are pre-rendered .exr files for various illuminants
+% that have been combined into ISETcam scenes for evaluation
+% We create a pinhole OI for each one
+% USE parfor except for debugging
+oiComputed = []; % shifting to single OI to save memory
 
-    % our scenes are pre-rendered .exr files for various illuminants
-    % that have been combined into ISETcam scenes for evaluation
-    % We create a pinhole OI for each one
-    % USE parfor except for debugging
-    oiComputed = {};
-    for ii = 1:numScenes
-        ourScene = load(sceneFileNames{ii}, 'scene');
-        ourScene = ourScene.scene; % we get a nested variable for some reason
+% Currently we can't use parfor because we concatenate onto
+% imagemetadataarray on all threads...
+for ii = 1:numScenes
+    ourScene = load(sceneFileNames{ii}, 'scene');
+    ourScene = ourScene.scene; % we get a nested variable for some reason
 
-        % This is where the scene ID is available
-        fName = erase(sceneFileEntries(ii).name,'.mat');
-        imageID = fName;
+    % This is where the scene ID is available
+    fName = erase(sceneFileEntries(ii).name,'.mat');
+    imageID = fName;
 
-        % Preserve size for later use in resizing
-        ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
-        ourScene.metadata.sceneID = fName; % best we can do for now
+    % Preserve size for later use in resizing
+    ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
+    ourScene.metadata.sceneID = fName; % best we can do for now
 
-        % In our case we render the scene through our default
-        % (shift-invariant) optics so that we have an OI to work with
-        oiComputed{ii} = oiCompute(ourScene, oiDefault); %#ok<SAGROW>
+    % In our case we render the scene through our default
+    % (shift-invariant) optics so that we have an OI to work with
+    oiComputed = oiCompute(ourScene, oiDefault);
 
-        % Get rid of the oi border so we match the original
-        % scene for better viewing & ground truth matching
-        oiComputed{ii} = oiCrop(oiComputed{ii},'border'); %#ok<SAGROW>
-        oiComputed{ii}.metadata.sceneID = fName; %#ok<SAGROW> % best we can do for now
+    % Get rid of the oi border so we match the original
+    % scene for better viewing & ground truth matching
+    oiComputed = oiCrop(oiComputed,'border');
+    oiComputed.metadata.sceneID = fName;  % best we can do for now
 
-        %% If possible, get GT from the databaase!
-        if useDB % get ground truth from the Auto Scene in ISETdb
-            GTObjects = ourDB.getGTfromScene('auto',imageID);
+    ipGTName = [fName '-GT.png'];
+    % "Local" is our ISET filepath, not the website path
+    ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+
+    %% If possible, get GT from the databaase!
+    if useDB % get ground truth from the Auto Scene in ISETdb
+
+        % this code sometimes has parse errors so use a try block
+        try
+            GTObjects = ourDB.gtGetFromScene('auto',imageID);
             ourScene.metadata.GTObject = GTObjects;
 
             % we need an image to annotate
-            img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
+            img_for_GT = oiShowImage(oiComputed, -3, 2.2);
             annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
             img_GT = annotatedImage;
-        else % we need to calculate ground truth "by hand"
-
-            ipGTName = [fName '-GT.png'];
-            % "Local" is our ISET filepath, not the website path
-            ipLocalGT = fullfile(outputFolder,'images',ipGTName);
-            % Use GT & get back annotated image
-            % pass it a native resolution image so the bounding boxes
-            % match the scene locations
-            if ~isempty(instanceFile)
-                % Use HDR for render given the DR of many scenes
-                img_for_GT = oiShowImage(oiComputed{ii}, -3, 2.2);
-
-                % computeGroundTruth currently calculates and then
-                % creates an annotated image. For the DB case
-                % we just need an annotated image, though
-                [img_GT, GTObjects] = computeGroundTruth(ourScene, img_for_GT,'instanceFile',instanceFile, ...
-                    'additionalFile',additionalFile);
-
-                % Create single list for database and grid
-                % Also calculate the closest object of interest
-                % NB Not sure we need to stash in both the scene
-                % and the oi, but they are kind of in parallel
-            end
+        catch
+            img_GT = oiShowImage(oiComputed, -3, 2.2);
+            warning("gtGet failed on %s", imageID);
         end
-        if ~isempty(GTObjects) && isfield(GTObjects,'label')
-            GTStruct = GTObjects; % already a struct
-            uniqueObjects = unique({GTStruct(1,:).label});
-            ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-            distanceValues = cell2mat([GTStruct(1,:).distance]);
-            ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
-            oiComputed{ii}.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-            oiComputed{ii}.metadata.Stats.minDistance = min(distanceValues,[],'all');
-        else
-            ourScene.metadata.Stats.uniqueLabels = 'none';
-            ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
-            oiComputed{ii}.metadata.Stats.uniqueLabels = 'none';
-            oiComputed{ii}.metadata.Stats.minDistance = '1000000'; % found nothing
+    else % we need to calculate ground truth "by hand"
+
+        % Use GT & get back annotated image
+        % pass it a native resolution image so the bounding boxes
+        % match the scene locations
+        if ~isempty(instanceFile)
+            % Use HDR for render given the DR of many scenes
+            img_for_GT = oiShowImage(oiComputed, -3, 2.2);
+
+            % ol_gtCompute currently calculates and then
+            % creates an annotated image. For the DB case
+            % we just need an annotated image, though
+            [img_GT, GTObjects] = ol_gtCompute(ourScene, img_for_GT,'instanceFile',instanceFile, ...
+                'additionalFile',additionalFile);
+
+            % Create single list for database and grid
+            % Also calculate the closest object of interest
+            % NB Not sure we need to stash in both the scene
+            % and the oi, but they are kind of in parallel
         end
-
-        % Write out our GT annotated image
-        imwrite(img_GT, ipLocalGT);
-
-        % Unlike other previews, this one is generic to the scene
-        % but we've already built an oi, so save it there also
-        ourScene.metadata.web.GTName = ipGTName;
-        ourScene.metadata.GTObjects = GTObjects;
-        oiComputed{ii}.metadata.web.GTName = ipGTName;
-        oiComputed{ii}.metadata.GTObjects = GTObjects;
-
     end
 
-end
-
-
-% Either way we now have a set of optical images that we can
-% Loop through and render them with our sensors
-% and with whatever variants (burst, bracket, ...) we want
-if ~isfolder(fullfile(outputFolder,'oi'))
-    mkdir(fullfile(outputFolder,'oi'))
-end
-
-% Pre-compute sensor images
-% Start by giving them a folder
-if ~isfolder(fullfile(outputFolder,'images'))
-    mkdir(fullfile(outputFolder,'images'))
-end
-
-if usePreComputedOI
-    for ii = 1:numel(oiFiles)
-        [~, fName, fSuffix] = fileparts(oiFiles{ii});
-        oiDataFile = fullfile(outputFolder,'oi',[fName fSuffix]);
-
-        % For now only copy if we don't have it already
-        % Might need to change if we have updated versions
-        if ~isfile(oiDataFile)
-            % NOTE: This is where oi gets set!
-            load(oiFiles{ii}); % assume OIs are on our path
-            copyfile(which(oiFiles{ii}), oiDataFile);
-        else
-            load(oiDataFile);
-        end
-
-        % LOOP THROUGH THE SENSORS HERE
-        % we use basemetadata for other render case, but not here?
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, '', ourDB);
-        imageMetadataArray = [imageMetadataArray imageMetadata];
+    % Add ground truth to output metadata
+    if ~isempty(GTObjects) && isfield(GTObjects,'label')
+        GTStruct = GTObjects; % already a struct
+        uniqueObjects = unique({GTStruct(1,:).label});
+        ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+        distanceValues = cell2mat([GTStruct(1,:).distance]);
+        ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
+        oiComputed.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
+        oiComputed.metadata.Stats.minDistance = min(distanceValues,[],'all');
+    else
+        ourScene.metadata.Stats.uniqueLabels = 'none';
+        ourScene.metadata.Stats.minDistance = '1000000'; % found nothing
+        oiComputed.metadata.Stats.uniqueLabels = 'none';
+        oiComputed.metadata.Stats.minDistance = '1000000'; % found nothing
     end
-else
+
+    % Write out our GT annotated image
+    imwrite(img_GT, ipLocalGT);
+
+    % Unlike other previews, this one is generic to the scene
+    % but we've already built an oi, so save it there also
+    ourScene.metadata.web.GTName = ipGTName;
+    ourScene.metadata.GTObjects = GTObjects;
+    oiComputed.metadata.web.GTName = ipGTName;
+    oiComputed.metadata.GTObjects = GTObjects;
+
+
+    % Either way we now have an optical image that we can
+    % Loop through and render them with our sensors
+    % and with whatever variants (burst, bracket, ...) we want
+    if ~isfolder(fullfile(outputFolder,'oi'))
+        mkdir(fullfile(outputFolder,'oi'))
+    end
+
+    % Pre-compute sensor images
+    % Start by giving them a folder
+    if ~isfolder(fullfile(outputFolder,'images'))
+        mkdir(fullfile(outputFolder,'images'))
+    end
+
     % Originally we looped through oiFiles,
     % but for metric scenes we will generate them
     % from the .mat Scene objects created from .exr files
-    for ii = 1:numel(oiComputed)
-        % This is where the scene ID is available
-        fName = erase(sceneFileEntries(ii).name,'.mat');
-        imageID = fName;
+    % This is where the scene ID is available
+    fName = erase(sceneFileEntries(ii).name,'.mat');
+    imageID = fName;
 
-        oi = oiComputed{ii};
+    oi = oiComputed;
 
-        % baseMetadata should be generic info to add to per-image data
-        % once we figure out what that is
-        baseMetadata = '';
+    % baseMetadata should be generic info to add to per-image data
+    % once we figure out what that is
+    baseMetadata = '';
 
-        % LOOP THROUGH THE SENSORS HERE
-        imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
-            baseMetadata, ourDB);
+    % LOOP THROUGH THE SENSORS HERE
+    imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
+        baseMetadata, ourDB);
 
-        % Not all sensorimages will have the same
-        % metadata fields, so we need to put them in a cell struct
-        % ImageMetaData is actually an array (per sensor)
-        for jj=1:numel(imageMetadata)
-            imageMetadataArray{end+1} = imageMetadata(jj);
-        end
+    % Not all sensorimages will have the same
+    % metadata fields, so we need to put them in a cell struct
+    % ImageMetaData is actually an array (per sensor)
+    for jj=1:numel(imageMetadata)
+        imageMetadataArray{end+1} = imageMetadata(jj);
     end
-end
 
-% We can write metadata as one file to make it faster to read
-% But it becomes complex to generate. So we either need to
-% use the DB for real, or have multiple metadata.json files
-% I think since scene names are unique, they can have any
-% naming scheme that is unique & over-writes previous versions
-% as needed.
+    % We can write metadata as one file to make it faster to read
+    % But it becomes complex to generate. So we either need to
+    % use the DB for real, or have multiple metadata.json files
+    % I think since scene names are unique, they can have any
+    % naming scheme that is unique & over-writes previous versions
+    % as needed.
+
+end
 
 % Since the metadata is only read by our code, we place it in the code folder tree
 % instead of the public data folder -- when we generate from scratch
@@ -282,8 +263,9 @@ end
 if useDB
     sensorImages = ourDB.find('sensorImages');
 
-    % close db now that we're finished
-    ourDB.close();
+    % We could close db now that we're finished
+    % but seems better to let it persist
+    %ourDB.close();
 
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
 else
@@ -318,7 +300,7 @@ oiBurst = oi;
 
 % Loop through our sensors: (ideally with parfor)
 % But that may have issues
-for iii = 1:numel(sensorFiles)
+parfor iii = 1:numel(sensorFiles)
     % parfor wants us to assign load to a variable
     sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
     sensor = sensorWrapper.sensor;
@@ -474,7 +456,7 @@ for iii = 1:numel(sensorFiles)
 
     % However, the img_for_YOLO is at a lower resolution, so it will
     % take some fiddling to align it with objects in the GT scene.
-    [img_YOLO, YOLO_Objects] = doYOLO(img_for_YOLO);
+    [img_YOLO, YOLO_Objects] = ol_YOLOCompute(img_for_YOLO);
 
     sensor_ae.metadata.YOLOData = YOLO_Objects;
 
@@ -483,8 +465,8 @@ for iii = 1:numel(sensorFiles)
     % The YOLO version should/can also include score
 
     % Don't know if we need to write these version out separately
-    [img_YOLO_burst, YOLO_Objects_Burst] = doYOLO(img_for_YOLO_burst);
-    [img_YOLO_bracket, YOLO_Objects_Bracket] = doYOLO(img_for_YOLO_bracket);
+    [img_YOLO_burst, YOLO_Objects_Burst] = ol_YOLOCompute(img_for_YOLO_burst);
+    [img_YOLO_bracket, YOLO_Objects_Bracket] = ol_YOLOCompute(img_for_YOLO_bracket);
     sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
     sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 

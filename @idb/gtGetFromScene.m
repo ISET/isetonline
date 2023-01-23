@@ -1,5 +1,5 @@
 function GTObjects = getGTfromScene(obj, sceneType, sceneID)
-%GETGTFROMSCENE retrieve Ground truth from a scene in the database
+%GETGTFROMSCENE Retrieve Ground truth from a scene in the database
 % Currently supports auto scenes rendered for the Ford project
 %
 % Input:
@@ -11,8 +11,8 @@ function GTObjects = getGTfromScene(obj, sceneType, sceneID)
 %
 % Example:
 %{
-   ourDB = isetdb;
-   GTObject = ourDB.getGTfromScene('auto', '1112153442');
+   ourDB = idb.ISETdb();
+   GTObject = ourDB.gtGetFromScene('auto', '1112153442');
 %}
 % D.Cardinal, Stanford University, 2023
 
