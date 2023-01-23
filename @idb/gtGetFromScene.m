@@ -1,5 +1,5 @@
 function GTObjects = getGTfromScene(obj, sceneType, sceneID)
-%GETGTFROMSCENE retrieve Ground truth from a scene in the database
+%GETGTFROMSCENE Retrieve Ground truth from a scene in the database
 % Currently supports auto scenes rendered for the Ford project
 %
 % Input:
