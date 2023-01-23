@@ -1,5 +1,9 @@
 % Get a look at our PBRT assets by browsing thumbnails
 %
+% See the Dashlane account for how to set up Matlab preferences for
+% isetonline data base when on campus.  This is not yet working for
+% off-campus computers.
+%
 
 assetCollection = 'assetsPBRT';
 
