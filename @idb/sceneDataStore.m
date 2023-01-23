@@ -1,4 +1,4 @@
-function [status, result] = storeSceneData(obj, sceneData,varargin)
+function [status, result] = sceneDataStore(obj, sceneData,varargin)
 %STORESCENEDDATA Create a DB document of general information for a scene
 %   Work in progress for helping keep track of our scenes & related data
 
