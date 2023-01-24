@@ -1,13 +1,16 @@
 function result = docUpdate(obj,useCollection, doc)
 %DOCUPDATE Update document in the database
 %   Assumes the same _id, pass the updated version
+%   Replacing entire doc is hard. Maybe by field?
+
+%!!: Only replaces GTObject for now
 
 % Example:
 %{
 assetCollection = 'assetsPBRT';
 ourDB = isetdb();
 assets = ourDB.find(assetCollection);
-changed = ourDB.docUpdate(obj,assetCollection, assets(1));
+changed = ourDB.docUpdate(assetCollection, assets(1));
 %}
 
 % We actually have the doc we want to update, so
@@ -23,15 +26,12 @@ if ~isopen(obj.connection)
     result = 0; % oops!
 else
 
-    % Have to rename to access, then we put it back
-    renameStructField(doc,'_id','ID');
-    docID = doc.ID;
-    renameStructField(doc,'ID','_id');
+    % Can't use . notation for an _ field
+    docID = getfield(doc,'_id');
 
     fQuery = sprintf("{""_id"":{""oid"": ""%s""}", docID);
 
-    % test with null
-    uQuery = "{}";
+    uQuery = sprintf("{"" GTObject"": ""%s""}", doc.GTObjects);
 
     result = obj.connection.update(useCollection,fQuery,uQuery);
 end
