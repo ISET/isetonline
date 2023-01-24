@@ -116,11 +116,6 @@ for ii = 1:numel(objectslist)
 
     % Also Compute the distance to the object.
     % Currently we use its minimum distance
-
-    % NOTE: To calculate AP, we want to have the closest target object
-    %       along with distance and bounding box. 
-
-
     if ~isempty(scene)
         GTObjects(objectIndex).distance = ...
             min(scene.depthMap(instanceMap == ii),[],"all");
@@ -130,10 +125,14 @@ for ii = 1:numel(objectslist)
         GTObjects(objectIndex).distance = ...
             min(useDepthMap(instanceMap == ii),[],"all");
     end
+    
+    % NOTE: To calculate AP, we want to have the closest target object
+    %       along with distance and bounding box. 
     if GTObjects(objectIndex).distance < closestTarget.distance
         closestTarget.label = label;
         closestTarget.distance = GTObjects(objectIndex).distance;
         closestTarget.bbox = pos;
+        closestTarget.name = name;
     end
     objectIndex = objectIndex + 1;
 
