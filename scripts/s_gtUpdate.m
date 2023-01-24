@@ -23,7 +23,7 @@ useCollection = 'autoScenesEXR';
 ourDB = isetdb();
 
 % Retrieve all of our scenes
-ourScenes = ourDB.find(useCollection);
+ourScenes = ourDB.docFind(useCollection,[]);
 
 for ii = 1:numel(ourScenes)
 
