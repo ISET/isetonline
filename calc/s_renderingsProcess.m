@@ -1,6 +1,9 @@
 % This script reads rendered EXR files from PBRT, returns ISET scenes/OIs,
 % then save them in outputFolder in .mat format.
 % use t_COCOdatasetGeneration.m for annotation generation.
+
+%% LEGACY
+
 datasetFolder = '/acorn/data/iset/isetauto/Deveshs_assets/ISETScene_003_renderings';
 
 sceneNames = dir([datasetFolder,'/*_instanceID.exr']);

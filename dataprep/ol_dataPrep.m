@@ -4,23 +4,25 @@
 % using PBRT & re-processed for multiple illuminants. The
 % output is designed to be used by ISETOnline
 %
+% It does several things that should be separated:
+% * Reads scenes
+% * OI
+% * writes to metadata.json
+% * writes supporting files to web folders
+% * writes to sensorImage collection
+%
+
+%
 % Optionally can store in a mongoDB set of collections, in addition
 % to the file system by specifying useDB
 %
-% Added getting GT data from mongodb of autoscenes
-% re-wrote flow to reduce memory footprint
-%
 % D. Cardinal, Stanford University, 2022
 %
-% TBD: With large datasets, the amount of virtual memory needed
-%      to keep all the OIs can be close to 1TB. We probably need
-%      to rework the flow so that the sensorImages are computed
-%      for each OI in turn.
 
 % NOTE: Currently we create each sensor with the ISETCam resolution,
 %       but that is not the same as the actual resolution of the products
 
-%% Currently we process one "experiment" folder
+%% Currently we process one scenario
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
 scenarioName = 'nighttime';
