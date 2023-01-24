@@ -1,4 +1,4 @@
-function documents = find(obj,collection, query)
+function documents = docFind(obj,collection, useQuery)
 %FIND Return all the documents that match a find command on a collection
 % 
 % Input:
@@ -26,7 +26,7 @@ try
     if isempty(query)
         documents = find(obj.connection, collection);
     else
-        documents = find(obj.connection, collection, Query = query);
+        documents = find(obj.connection, collection, Query = useQuery);
     end
 catch
     documents = [];
