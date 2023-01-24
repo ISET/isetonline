@@ -1,6 +1,5 @@
 % Simple script to create DB Documents for the Ford scenes
 % 
-% This (ISET verion) is a parallel to the EXR version:
 %  EXR version creates db entries for the original rendered EXR files
 %  ISET version creates entries for a specific set of lighting conditions
 %       that have been combined into a full ISET scene object
