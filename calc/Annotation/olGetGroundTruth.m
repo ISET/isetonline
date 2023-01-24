@@ -45,6 +45,11 @@ headerLines = 4;
 objectslist = readlines(options.additionalFile);
 objectslist = objectslist((headerLines+1):end);
 
+% We want to calculate the closest target for use with AP calculation
+closestTarget.label = '';
+closestTarget.distance = 1000000;
+closestTarget.bbox = [];
+
 %% Iterate on objects, filtering for the ones we want
 %  and then building annotations
 
@@ -111,6 +116,11 @@ for ii = 1:numel(objectslist)
 
     % Also Compute the distance to the object.
     % Currently we use its minimum distance
+
+    % NOTE: To calculate AP, we want to have the closest target object
+    %       along with distance and bounding box. 
+
+
     if ~isempty(scene)
         GTObjects(objectIndex).distance = ...
             min(scene.depthMap(instanceMap == ii),[],"all");
@@ -119,6 +129,11 @@ for ii = 1:numel(objectslist)
         useDepthMap = piReadEXR(imageEXR, 'dataType','depth');
         GTObjects(objectIndex).distance = ...
             min(useDepthMap(instanceMap == ii),[],"all");
+    end
+    if GTObjects(objectIndex).distance < closestTarget.distance
+        closestTarget.label = label;
+        closestTarget.distance = GTObjects(objectIndex).distance;
+        closestTarget.bbox = pos;
     end
     objectIndex = objectIndex + 1;
 
