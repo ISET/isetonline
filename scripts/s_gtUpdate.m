@@ -18,7 +18,7 @@ sceneFolder =  fullfile(projectFolder, 'SceneMetadata');
 infoFolder = fullfile(projectFolder, 'additionalInfo');
 
 % Store in our collection of rendered auto scenes (.EXR files)
-useCollection = 'autoScenesISET';
+useCollection = 'autoScenesEXR';
 
 ourDB = isetdb();
 
@@ -29,7 +29,6 @@ for ii = 1:numel(ourScenes)
 
     % Update dataset folder to new layout, if needed
     %sceneMeta.datasetFolder = fullfile(projectFolder, 'SceneEXRs');
-
 
     instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes(ii).imageID));
     additionalFile = fullfile(infoFolder, sprintf("%s.txt", ourScenes(ii).imageID));
@@ -42,7 +41,7 @@ for ii = 1:numel(ourScenes)
     ourScenes(ii).GTObject = GTObject;
 
     % now update the document in the DB
-    ourDB.update(ourScenes(ii), 'collection', useCollection);
+    ourDB.gtUpdate(ourScenes(ii), 'collection', useCollection);
 
 end
 
