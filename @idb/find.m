@@ -1,10 +1,10 @@
-function documents = find(obj,collection, varargin)
+function documents = find(obj,collection, query)
 %FIND Return all the documents that match a find command on a collection
 % 
 % Input:
 %   Our db object
 %   collection name
-%   (optional) query string
+%   query string
 %
 % Output:
 %   matching documents
@@ -21,11 +21,6 @@ if ~isopen(obj.connection)
     return;
 end
 
-p = inputParser();
-addParameter(p, 'query', '');
-
-parse(p, varargin{:});
-query = p.Results.query;
 
 try
     if isempty(query)
