@@ -7,10 +7,10 @@ function result = docUpdate(obj,useCollection, doc)
 
 % Example:
 %{
-assetCollection = 'assetsPBRT';
+useCollection = 'autoScenes';
 ourDB = isetdb();
-assets = ourDB.find(assetCollection);
-changed = ourDB.docUpdate(assetCollection, assets(1));
+docs = ourDB.find(useCollection);
+changed = ourDB.docUpdate(useCollection, docs(1));
 %}
 
 % We actually have the doc we want to update, so
@@ -31,7 +31,8 @@ else
 
     fQuery = sprintf("{""_id"":{""oid"": ""%s""}", docID);
 
-    uQuery = sprintf("{"" GTObject"": ""%s""}", doc.GTObjects);
+    % Can't just put our object name here apparently?
+    uQuery = sprintf("{"" GTObject"": ""%s""""}", jsonencode(doc.GTObject));
 
     result = obj.connection.update(useCollection,fQuery,uQuery);
 end
