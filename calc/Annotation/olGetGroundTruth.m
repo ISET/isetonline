@@ -113,12 +113,12 @@ for ii = 1:numel(objectslist)
     % Currently we use its minimum distance
     if ~isempty(scene)
         GTObjects(objectIndex).distance = ...
-            min(scene.depthMap(instanceMap == objectIndex),[],"all");
+            min(scene.depthMap(instanceMap == ii),[],"all");
     else
         imageEXR = replace(options.instanceFile,'instanceID','skymap');
         useDepthMap = piReadEXR(imageEXR, 'dataType','depth');
         GTObjects(objectIndex).distance = ...
-            min(useDepthMap(instanceMap == objectIndex),[],"all");
+            min(useDepthMap(instanceMap == ii),[],"all");
     end
     objectIndex = objectIndex + 1;
 

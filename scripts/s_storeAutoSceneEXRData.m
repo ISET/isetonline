@@ -1,5 +1,6 @@
 % Simple script to create DB Documents for the Ford scenes
 % 
+% This (ISET verion) is a parallel to the EXR version:
 %  EXR version creates db entries for the original rendered EXR files
 %  ISET version creates entries for a specific set of lighting conditions
 %       that have been combined into a full ISET scene object
@@ -14,11 +15,16 @@
 
 projectName = 'Ford'; % we currently use folders per project
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
-sceneEXRFolder =  fullfile(projectFolder, 'ScenesEXRs');
-sceneEXRDataFiles = dir(fullfile(sceneFolder,'*.mat'));
+EXRFolder = fullfile(projectFolder, 'SceneEXRs');
+
+% Not sure we want to rely on this indefinitely
+sceneFolder =  fullfile(projectFolder, 'SceneMetadata');
+infoFolder = fullfile(projectFolder, 'additionalInfo');
+
+sceneDataFiles = dir(fullfile(sceneFolder,'*.mat'));
 
 % Store in our collection of rendered auto scenes (.EXR files)
-useCollection = 'autoScenesEXR';
+useCollection = 'autoScenesISET';
 
 ourDB = isetdb();
 
@@ -29,22 +35,22 @@ catch
 end
 
 for ii = 1:numel(sceneDataFiles)
-    load(fullfile(sceneEXRDataFiles(ii).folder, ...
-        sceneEXRDataFiles(ii).name)); % get sceneMeta struct
-    % Project-specific metadata
+    load(fullfile(sceneDataFiles(ii).folder, ...
+        sceneDataFiles(ii).name)); % get sceneMeta struct
+    % Hopefully the metadata is passed along here, not added
     sceneMeta.project = "Ford Motor Company";
     sceneMeta.creator = "Zhenyi Liu";
     sceneMeta.sceneSource = "Blender";
 
     % Update dataset folder to new layout
-    sceneMeta.datasetFolder = sceneEXRFolder;
+    sceneMeta.datasetFolder = fullfile(projectFolder, 'SceneEXRs');
 
     % in theory we can get the ground truth from the original
     % .exr files. Do we need these .mat files?
-    instanceFile = fullfile(sceneEXRFolder, ...
-            sprintf('%s_instanceID.exr', imageID));
+    instanceFile = fullfile(EXRFolder, ...
+            sprintf('%s_instanceID.exr', sceneMeta.imageID));
     additionalFile = fullfile(infoFolder, ...
-            sprintf('%s.txt',imageID));
+            sprintf('%s.txt',sceneMeta.imageID));
 
     GTObjects = olGetGroundTruth([], 'instanceFile', instanceFile, ...
         'additionalFile', additionalFile);
