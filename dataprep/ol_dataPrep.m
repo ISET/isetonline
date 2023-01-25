@@ -6,13 +6,12 @@
 %
 % It does several things that should be separated:
 % * Reads scenes
-% * OI
+% * computes an Optical Image (OI)
 % * writes to metadata.json
 % * writes supporting files to web folders
 % * writes to sensorImage collection
 %
 
-%
 % Optionally can store in a mongoDB set of collections, in addition
 % to the file system by specifying useDB
 %
@@ -52,7 +51,6 @@ else
     ourDB = []; % don't save to a database
 end
 
-
 % Our webserver pulls metadata from a private folder
 privateDataFolder = fullfile(onlineRootPath,'simcam','src','data');
 if ~isfolder(privateDataFolder)
@@ -87,6 +85,10 @@ oiDefault = oiCreate('shift invariant');
 
 % Assume we are processing scenes from the Ford project
 projectName = 'Ford';
+
+%% Here is where we should start separating DB-based scripts
+%  vs. ones that rely on simply the folders of files
+
 datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
 % Where the rendered EXR files live -- this is the
@@ -259,17 +261,12 @@ end
 % instead of the public data folder -- when we generate from scratch
 %jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 
-% Adding support for incremental updates, which means pulling all the
-% imageMetadata out of the sensorimage collection and putting it in a JSON
-% file (I hope)
+% Added support for incremental updates, by pulling all the
+% imageMetadata out of the sensorimage collection
+% NOTE: This assumes that all the needed preview files are still
+%       in place in public/data.
 if useDB
-    sensorImages = ourDB.find('sensorImages');
-
-    % We could close db now that we're finished
-    % but seems better to let it persist
-    %ourDB.close();
-
-    jsonwrite(fullfile(privateDataFolder,'metadata.json'), sensorImages);
+    ourDB.collectionToFile('sensorImages', fullfile(privateDataFolder,'metadata.json'));
 else
     jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
 end
