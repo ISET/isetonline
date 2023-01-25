@@ -1,4 +1,4 @@
-function [GTObjects] = olGetGroundTruth(scene, varargin)
+function [GTObjects, closestTarget] = olGetGroundTruth(scene, varargin)
 %OLGETGROUNDTRUE Retrieve GT info from rendered scenes
 % Or from EXR renders that have enough information
 %   D. Cardinal, Stanford University, 12/2022
@@ -137,6 +137,7 @@ for ii = 1:numel(objectslist)
     objectIndex = objectIndex + 1;
 
 end
+
 
 
 end

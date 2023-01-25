@@ -30,18 +30,20 @@ for ii = 1:numel(ourScenes)
     % Update dataset folder to new layout, if needed
     %sceneMeta.datasetFolder = fullfile(projectFolder, 'SceneEXRs');
 
-    instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes(ii).imageID));
-    additionalFile = fullfile(infoFolder, sprintf("%s.txt", ourScenes(ii).imageID));
+    % could also be imageID...
+    instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes{ii}.sceneID));
+    additionalFile = fullfile(infoFolder, sprintf('%s.txt', ourScenes{ii}.sceneID));
 
-    GTObjects = olGetGroundTruth([], 'instanceFile', instanceFile, ...
+    [GTObjects, closestTarget] = olGetGroundTruth([], 'instanceFile', instanceFile, ...
         'additionalFile', additionalFile);
 
     % Store whatever ground truth we can calculate
     GTObject = GTObjects;
-    ourScenes(ii).GTObject = GTObject;
+    ourScenes{ii}.GTObject = GTObject;
+    ourScenes{ii}.closestTarget = closestTarget;
 
     % now update the document in the DB
-    ourDB.gtUpdate(ourScenes(ii), 'collection', useCollection);
-
+    ourDB.gtUpdate(useCollection, ourScenes{ii});
+    fprintf("Processed scene #: %d\n", ii);
 end
 

@@ -39,9 +39,13 @@ else
     fQuery = sprintf("{""_id"":{""$oid"":""%s""}}", docID);
 
     % Can't just put our object name here apparently?
-    uQuery = sprintf("{""$set"":{""newGTObject"":%s}}", jsonencode(forDoc.GTObject));
+    gtQuery = sprintf("{""$set"":{""GTObject"":%s}}", jsonencode(forDoc.GTObject));
+    targetQuery = sprintf("{""$set"":{""closestTarget"":%s}}", jsonencode(forDoc.closestTarget));
 
-    result = obj.connection.update(useCollection,fQuery,uQuery);
+    % These could be combined when we get adventurous
+    result = obj.connection.update(useCollection,fQuery,gtQuery);
+    result = obj.connection.update(useCollection,fQuery,targetQuery);
+
 end
 end
 
