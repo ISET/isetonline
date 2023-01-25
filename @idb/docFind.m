@@ -23,7 +23,7 @@ end
 
 
 try
-    if isempty(query)
+    if isempty(useQuery)
         documents = find(obj.connection, collection);
     else
         documents = find(obj.connection, collection, Query = useQuery);
