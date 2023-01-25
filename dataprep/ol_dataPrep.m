@@ -541,7 +541,8 @@ parfor iii = 1:numel(sensorFiles)
 
 end
 end
-% Export lenses to fils for our users
+
+%% Export lenses to JSON files for our users
 function exportLenses(~, ~, ourDB)
 lensRoot = isetRootPath;
 lensFiles = lensC.list('quiet', true, 'lensRoot', lensRoot);
@@ -557,6 +558,7 @@ for ii = 1:lensCount
 end
 end
 
+%% Export sensors to JSON files for our users
 function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
