@@ -16,12 +16,14 @@ classdef scenario < handle
         Conceptually, scenarios can include one or more of the following:
         -- Recipe to EXR Scene using PBRT-v4
         -- EXR Scene to ISET Scene using weights
+        (Does this turn into an @experiment at this point?)
         -- ISET Scene to OI using optics and/or Flare
         -- OI to SensorImage using a sensor
         -- (When appropriate) Store sensorImage in ISETdb
         -- (When appropriate) Create metadata.json for ISETOnline
 
         Initial Use Case (DJC):
+        @Scenario or @Experiment?
         Experiment with flare on some of our Auto scenes:
         -- Start with our AutoSceneISET scenes (or a sub-set)
         -- oiCompute with optics (generic or lens)
