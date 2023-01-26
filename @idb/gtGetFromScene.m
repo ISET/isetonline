@@ -27,14 +27,14 @@ switch sceneType
         dbTable = 'autoScenesEXR';
         % sceneIDs are unique for auto scenes
         queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
-        ourScene = obj.find(dbTable, 'query', queryString);
+        ourScene = obj.docFind(dbTable, queryString);
         if ~isempty(ourScene) && isfield(ourScene,'GTObject')
             GTObjects = cell2mat(ourScene.GTObject); % make usable
         else
             GTObjects = [];
         end
         if ~isempty(ourScene) && isfield(ourScene,'closestTarget')
-            closestTarget = cell2mat(ourScene.closestTarget); % make usable
+            closestTarget = ourScene.closestTarget);
         else
             closestTarget = [];
         end

@@ -153,6 +153,7 @@ for ii = 1:numScenes
         try
             [GTObjects, closestTarget] = ourDB.gtGetFromScene('auto',imageID);
             ourScene.metadata.GTObject = GTObjects;
+            ourScene.metadata.closestTarget = closestTarget;
 
             % we need an image to annotate
             img_for_GT = oiShowImage(oiComputed, -3, 2.2);
@@ -189,7 +190,7 @@ for ii = 1:numScenes
         GTStruct = GTObjects; % already a struct
         uniqueObjects = unique({GTStruct(1,:).label});
         ourScene.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
-        distanceValues = cell2mat([GTStruct(1,:).distance]);
+        distanceValues = [GTStruct(1,:).distance];
         ourScene.metadata.Stats.minDistance = min(distanceValues,[],'all');
         oiComputed.metadata.Stats.uniqueLabels = convertCharsToStrings(uniqueObjects);
         oiComputed.metadata.Stats.minDistance = min(distanceValues,[],'all');
@@ -299,7 +300,7 @@ oiBurst = oi;
 
 % Loop through our sensors: (ideally with parfor)
 % But that may have issues
-parfor iii = 1:numel(sensorFiles)
+for iii = 1:numel(sensorFiles)
     % parfor wants us to assign load to a variable
     sensorWrapper = load(sensorFiles{iii},'sensor'); % assume they are on our path
     sensor = sensorWrapper.sensor;
