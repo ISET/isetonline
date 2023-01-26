@@ -21,9 +21,9 @@ if ~isopen(obj.connection)
 end
 
 % Get all the documents in the collection
-ourData = obj.docFind(useCollection);
+ourData = obj.docFind(useCollection, []);
 
 % Write them to a JSON file
-result = jsonwrite(outputFile, ourData);
-
+jsonwrite(outputFile, ourData);
+result = 0;
 end
