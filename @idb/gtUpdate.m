@@ -42,10 +42,10 @@ else
     sceneID = forDoc.sceneID;
 
     fQueryOID = sprintf("{""_id"":{""$oid"":""%s""}}", docID);
-    fQueryImageID = sprintf("{""_id"":{""$oid"":""%s""}}", sceneID);
+    fQueryImageID = sprintf("{""sceneID"":""%s""}", sceneID);
 
     % Can't just put our object name here apparently?
-    gtQuery = sprintf("{""$set"":{""GTObject"":%s}}", jsonencode(forDoc.GTObject));
+    gtQuery = sprintf("{""$set"":{""GTObjects"":%s}}", jsonencode(forDoc.GTObjects));
     targetQuery = sprintf("{""$set"":{""closestTarget"":%s}}", jsonencode(forDoc.closestTarget));
 
     for ii = 1:numel(useCollections)

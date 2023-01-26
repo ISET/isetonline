@@ -160,7 +160,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       GTObjects: imageData.GTObjects,
       GTStats: imageData.Stats,
       GTLabels: imageData.Stats.uniqueLabels,
-      GTDistance: Number(imageData.Stats.minDistance),
+      GTDistance: Number(imageData.closestTarget.distance),
 
       lightSources: getLightParams(imageData)
       
