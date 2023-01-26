@@ -1,4 +1,4 @@
-function GTObjects = getGTfromScene(obj, sceneType, sceneID)
+function [GTObjects, closestTarget] = gtGetFromScene(obj, sceneType, sceneID)
 %GETGTFROMSCENE Retrieve Ground truth from a scene in the database
 % Currently supports auto scenes rendered for the Ford project
 %
@@ -32,6 +32,11 @@ switch sceneType
             GTObjects = cell2mat(ourScene.GTObject); % make usable
         else
             GTObjects = [];
+        end
+        if ~isempty(ourScene) && isfield(ourScene,'closestTarget')
+            closestTarget = cell2mat(ourScene.closestTarget); % make usable
+        else
+            closestTarget = [];
         end
     case other
         warning("Scene Type %s not supported", sceneType);

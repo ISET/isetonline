@@ -151,7 +151,7 @@ for ii = 1:numScenes
 
         % this code sometimes has parse errors so use a try block
         try
-            GTObjects = ourDB.gtGetFromScene('auto',imageID);
+            [GTObjects, closestTarget] = ourDB.gtGetFromScene('auto',imageID);
             ourScene.metadata.GTObject = GTObjects;
 
             % we need an image to annotate
