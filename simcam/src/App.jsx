@@ -343,7 +343,7 @@ const App = () => {
     {
       headerName: "Closest",
       field: "closestLabel",
-      width: 96, 
+      width: 128, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -351,7 +351,7 @@ const App = () => {
     {
       headerName: "Skylight",
       field: "lightSky",
-      width: 64, 
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -359,7 +359,7 @@ const App = () => {
     {
       headerName: "StreetLamps",
       field: "lightStreet",
-      width: 64, 
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -367,7 +367,7 @@ const App = () => {
     {
       headerName: "Headlights",
       field: "lightHead",
-      width: 64, 
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -375,7 +375,7 @@ const App = () => {
     {
       headerName: "Other Light",
       field: "lightOther",
-      width: 64, 
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -383,7 +383,7 @@ const App = () => {
     {
       headerName: "Flare",
       field: "lightFlare",
-      width: 64, 
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -391,6 +391,7 @@ const App = () => {
     {
       headerName: "Luminance",
       field: "lightLuminance",
+      width: 128,
       sortable: true,
       resizable: true,
       filter: true,
