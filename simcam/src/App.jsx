@@ -281,7 +281,7 @@ const App = () => {
     {
       headerName: "Distance",
       field: "GTDistance",
-      width: 64,
+      width: 96,
       filter: 'agNumberColumnFilter',
       sortable: true,
       tooltipField: "Minimum Object Distance",
@@ -300,6 +300,7 @@ const App = () => {
     {
       headerName: "Sensor",
       field: "sensor",
+      width: 128,
       filter: true,
       sortable: true,
       tooltipField: "Filter and sort by sensor",
