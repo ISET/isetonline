@@ -57,7 +57,6 @@ import { Annotorious } from "@recogito/annotorious";
 import "@recogito/annotorious/dist/annotorious.min.css";
 import { breakpoints } from "@mui/system";
 
-
 // Load our rendered sensor images
 // They are located in sub-folders under /public
 let dataDir = "./data/";
@@ -84,7 +83,7 @@ let selectedImage = {
 var rows = [];
 
 for (let rr = 0; rr < imageMetaData.length; rr++) {
-  imageData = imageMetaData[rr]; 
+  imageData = imageMetaData[rr];
   // Read image objects into grid rows
   // Some visible, some hidden for other uses
   let newRow = [
@@ -132,7 +131,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       // Pixel info
       pixel: imageData.pixel,
- 
+
       // Ground Truth Objects & Statistics
       GTObjects: imageData.GTObjects,
       GTStats: imageData.Stats,
@@ -142,22 +141,40 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // Closest Target data
       closestTarget: imageData.closestTarget,
 
-      lightSources: getLightParams(imageData)
-      
+      // Text version of lighting parameters
+      lightSources: getLightParams(imageData),
+
+      // Each lighting parameter broken out
+      lightSky: imageData.lightingParams.skyL_wt,
+      lightHead: imageData.lightingParams.headL_wt,
+      lightStreet: imageData.lightingParams.streetL_wt,
+      lightFlare: imageData.lightingParams.flare,
+      lightOther: imageData.lightingParams.otherL_wt,
+      lightLuminance: imageData.lightingParams.meanLuminance,
+
+      // These need to come form the underlying scene when we generate
+      // the sensorImage collection in the db.
+      // project: imageData.project,
+      // scenario: imageData.scenario,
     },
   ];
   rows = rows.concat(newRow);
 }
 
 function getLightParams(imageData) {
-  var lightSources = '';
+  var lightSources = "";
   if (typeof imageData.lightingParams != "undefined") {
-    lightSources = "Sky: " + imageData.lightingParams.skyL_wt 
-      + " Head: " + imageData.lightingParams.headL_wt 
-      + " Street: " + imageData.lightingParams.streetL_wt 
-      + " Flare: " + imageData.lightingParams.flare
-    }
-    return lightSources;
+    lightSources =
+      "Sky: " +
+      imageData.lightingParams.skyL_wt +
+      " Head: " +
+      imageData.lightingParams.headL_wt +
+      " Street: " +
+      imageData.lightingParams.streetL_wt +
+      " Flare: " +
+      imageData.lightingParams.flare;
+  }
+  return lightSources;
 }
 
 var userSensorContent = "";
@@ -284,7 +301,7 @@ const App = () => {
       headerName: "Distance",
       field: "GTDistance",
       width: 96,
-      filter: 'agNumberColumnFilter',
+      filter: "agNumberColumnFilter",
       sortable: true,
       tooltipField: "Minimum Object Distance",
       hide: false,
@@ -309,13 +326,69 @@ const App = () => {
       resizable: true,
       tooltipField: "Filter and sort by sensor",
     },
-    { headerName: "Light Sources", 
-      field:"lightSources",
+
+    // Don't display text light sources if we display all of them separately
+    {
+      headerName: "Light Sources",
+      field: "lightSources",
       filter: true,
       sortable: true,
       resizable: true,
-      tooltipField: "Text version of light weightings"
+      tooltipField: "Text version of light weightings",
+      hide: true,
     },
+
+    // Additional fields that may be useful for sorting & filtering
+    {
+      headerName: "Closest",
+      field: "",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Skylight",
+      field: "lightSky",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "StreetLamps",
+      field: "lightStreet",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Headlights",
+      field: "lightHead",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Other Light",
+      field: "lightOther",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Flare",
+      field: "lightFlare",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Luminance",
+      field: "lightLuminance",
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+
     // Hidden fields for addtional info
     { headerName: "Preview", field: "preview", hide: true },
     { headerName: "jpegName", field: "jpegName", hide: true },
@@ -343,9 +416,9 @@ const App = () => {
     var distance = params.value;
     distance = distance.toFixed(1);
     if (distance < 10000) {
-      return distance + ' m';
+      return distance + " m";
     } else {
-      return 'none';
+      return "none";
     }
   }
   const fSlider = useRef([]); // This will be the preview image element & Slider
@@ -625,7 +698,6 @@ const App = () => {
   const [showEditor, setShowEditor] = useState(true);
   const [readOnly, setReadOnly] = useState(false);
 
-
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
 
@@ -642,10 +714,10 @@ const App = () => {
         </CCol>
         <CCol xs={7}>
           <p>
-            <br></br>Choose from our library of scenes to get a
-            highly-accurate simulated image as it would be rendered using a selected sensor. 
-            You can see the Ground Truth of objects in the scene, as well
-            as the results from YOLOv4 using auto-exposure, burst, and bracketing.
+            <br></br>Choose from our library of scenes to get a highly-accurate
+            simulated image as it would be rendered using a selected sensor. You
+            can see the Ground Truth of objects in the scene, as well as the
+            results from YOLOv4 using auto-exposure, burst, and bracketing.
           </p>
         </CCol>
       </CRow>
@@ -813,7 +885,8 @@ const App = () => {
                 id="computedImage"
                 rounded
                 thumbnail
-                width={400} height={300}
+                width={400}
+                height={300}
                 src={computedImage}
               />
             </CCol>
