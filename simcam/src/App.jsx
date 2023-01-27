@@ -631,16 +631,14 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CImage width="300" src="/glyphs/Vista_Lab_Logo.png"></CImage>
-          <h2>ISET Camera Simulator</h2>
+          <h2>ISET Image Simulation Online</h2>
         </CCol>
         <CCol xs={7}>
           <p>
-            <br></br>Select a scene, a lens, and a sensor, to get a
-            highly-accurate simulated image. From there you can download the
-            Voltage response that can be used to evaluate your own image
-            processing pipeline, or a JPEG with a simple rendering, or the
-            original optical image if you want to do further analysis on your
-            own.
+            <br></br>Choose from our library of scenes to get a
+            highly-accurate simulated image as it would be rendered using a selected sensor. 
+            You can see the Ground Truth of objects in the scene, as well
+            as the results from YOLOv4 using auto-exposure, burst, and bracketing.
           </p>
         </CCol>
       </CRow>
