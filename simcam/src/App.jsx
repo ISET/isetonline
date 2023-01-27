@@ -140,6 +140,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       // Closest Target data
       closestTarget: imageData.closestTarget,
+      closestLabel: imageData.closestTarget.label,
 
       // Text version of lighting parameters
       lightSources: getLightParams(imageData),
@@ -341,7 +342,8 @@ const App = () => {
     // Additional fields that may be useful for sorting & filtering
     {
       headerName: "Closest",
-      field: "",
+      field: "closestLabel",
+      width: 96, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -349,6 +351,7 @@ const App = () => {
     {
       headerName: "Skylight",
       field: "lightSky",
+      width: 64, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -356,6 +359,7 @@ const App = () => {
     {
       headerName: "StreetLamps",
       field: "lightStreet",
+      width: 64, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -363,6 +367,7 @@ const App = () => {
     {
       headerName: "Headlights",
       field: "lightHead",
+      width: 64, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -370,6 +375,7 @@ const App = () => {
     {
       headerName: "Other Light",
       field: "lightOther",
+      width: 64, 
       sortable: true,
       resizable: true,
       filter: true,
@@ -377,6 +383,7 @@ const App = () => {
     {
       headerName: "Flare",
       field: "lightFlare",
+      width: 64, 
       sortable: true,
       resizable: true,
       filter: true,
