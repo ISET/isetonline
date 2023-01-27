@@ -631,7 +631,7 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CImage width="300" src="/glyphs/Vista_Lab_Logo.png"></CImage>
-          <h2>ISET Image Simulation Online</h2>
+          <h2>ISET Online</h2>
         </CCol>
         <CCol xs={7}>
           <p>
