@@ -265,6 +265,7 @@ const App = () => {
       width: 128,
       filter: true,
       sortable: true,
+      resizable: true,
       tooltipField: "Filter and Sort by Scene name",
     },
 
@@ -274,6 +275,7 @@ const App = () => {
       field: "GTLabels",
       filter: true,
       sortable: true,
+      resizable: true,
       tooltipField: "Objects in Scene",
       hide: false,
     },
@@ -294,6 +296,7 @@ const App = () => {
       field: "lens",
       filter: true,
       sortable: true,
+      resizable: true,
       tooltipField: "Filter and sort by lens",
       hide: true,
     },
@@ -303,9 +306,16 @@ const App = () => {
       width: 128,
       filter: true,
       sortable: true,
+      resizable: true,
       tooltipField: "Filter and sort by sensor",
     },
-    { headerName: "Light Sources", field:"lightSources"},
+    { headerName: "Light Sources", 
+      field:"lightSources",
+      filter: true,
+      sortable: true,
+      resizable: true,
+      tooltipField: "Text version of light weightings"
+    },
     // Hidden fields for addtional info
     { headerName: "Preview", field: "preview", hide: true },
     { headerName: "jpegName", field: "jpegName", hide: true },
@@ -615,9 +625,6 @@ const App = () => {
   const [showEditor, setShowEditor] = useState(true);
   const [readOnly, setReadOnly] = useState(false);
 
-  const sayHelloWorld = () => {
-    alert("Hello world!");
-  };
 
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
