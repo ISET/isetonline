@@ -822,6 +822,7 @@ const App = () => {
                 id="computedImage"
                 rounded
                 thumbnail
+                width={400} height={300}
                 src={computedImage}
               />
             </CCol>
