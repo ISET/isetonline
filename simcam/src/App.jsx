@@ -5,10 +5,6 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 // import { useEffect, useMemo } from 'react'
 import "react-dom";
 
-// DevExtreme Components
-import Button from "devextreme-react/button";
-import DataGrid, { RemoteOperations } from "devextreme-react/data-grid";
-
 import { AgGridReact } from "ag-grid-react"; // the AG Grid React Component
 // import MyStatusPanel from './myStatusPanel.jsx';
 
@@ -47,8 +43,6 @@ import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
 
 // JSON Editor
-// Has an issue with .js for ESM, so commenting
-// out in this branch
 // import SvelteJSONEditor from "./sveltejsoneditor";
 import "./styles.css";
 
@@ -63,23 +57,6 @@ import { Annotorious } from "@recogito/annotorious";
 import "@recogito/annotorious/dist/annotorious.min.css";
 import { breakpoints } from "@mui/system";
 
-// DevExtreme DataGrid inits
-import { createStore } from "devextreme-aspnet-data-nojquery";
-
-// DevExtreme Init Stuff -- says it needs polyfill
-// const MongoClient = require("mongodb").MongoClient;
-// const query = require("devextreme-query-mongodb");
-
-// FIX!
-const serviceUrl = "https://mydomain.com/MyDataService";
-
-const remoteDataSource = createStore({
-  key: "ID",
-  loadUrl: serviceUrl + "/GetAction",
-  insertUrl: serviceUrl + "/InsertAction",
-  updateUrl: serviceUrl + "/UpdateAction",
-  deleteUrl: serviceUrl + "/DeleteAction",
-});
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
@@ -88,7 +65,6 @@ let imageDir = "/images/"; // Should use /public by default?
 let oiDir = "/oi/";
 let sensorDir = dataDir + "sensors/";
 
-let jsonUrl = "metadata.json";
 let imageMetaData = require(dataDir + "metadata.json");
 var imageData;
 
@@ -106,11 +82,9 @@ let selectedImage = {
 // get sensorimage data from the metadata.json file.
 // however, it is a map/collection, so we need to index into it first.
 var rows = [];
-var newRow = [];
-var imageData;
 
 for (let rr = 0; rr < imageMetaData.length; rr++) {
-  imageData = imageMetaData[rr]; // hope this works:)
+  imageData = imageMetaData[rr]; 
   // Read image objects into grid rows
   // Some visible, some hidden for other uses
   let newRow = [
@@ -143,6 +117,9 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       YOLOBurstPreview: imageDir + imageData.web.burstYOLOName,
       YOLOBracketPreview: imageDir + imageData.web.bracketYOLOName,
 
+      // FLARE previews should go here once we have them
+      //
+
       // Used for download files
       jpegFile: imageData.web.jpegName,
       sensorRawFile: imageDir + imageData.sensorRawFile,
@@ -161,6 +138,9 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       GTStats: imageData.Stats,
       GTLabels: imageData.Stats.uniqueLabels,
       GTDistance: Number(imageData.closestTarget.distance),
+
+      // Closest Target data
+      closestTarget: imageData.closestTarget,
 
       lightSources: getLightParams(imageData)
       
@@ -192,7 +172,6 @@ function updateUserSensor(newContent) {
 const App = () => {
   // Ref to the image DOM element
   const imgEl = useRef();
-  const computedEl = useRef();
 
   // The current Annotorious instance
   const [anno, setAnno] = useState();
@@ -285,6 +264,7 @@ const App = () => {
       field: "scene",
       width: 128,
       filter: true,
+      sort: true,
       tooltipField: "Filter and Sort by Scene name",
     },
 
@@ -293,6 +273,7 @@ const App = () => {
       headerName: "Objects",
       field: "GTLabels",
       filter: true,
+      sort: true,
       tooltipField: "Objects in Scene",
       hide: false,
     },
@@ -301,6 +282,7 @@ const App = () => {
       headerName: "Distance",
       field: "GTDistance",
       filter: 'agNumberColumnFilter',
+      sort: true,
       tooltipField: "Minimum Object Distance",
       hide: false,
       valueFormatter: formatDistance,
@@ -310,6 +292,7 @@ const App = () => {
       headerName: "Lens Used",
       field: "lens",
       filter: true,
+      sort: true,
       tooltipField: "Filter and sort by lens",
       hide: true,
     },
@@ -317,6 +300,7 @@ const App = () => {
       headerName: "Sensor",
       field: "sensor",
       filter: true,
+      sort: true,
       tooltipField: "Filter and sort by sensor",
     },
     { headerName: "Light Sources", field:"lightSources"},
@@ -963,7 +947,7 @@ const App = () => {
 
       <CFooter>
         <div>
-          <span>&copy; 2022 VistaLab, Stanford University</span>
+          <span>&copy; 2022-2023 VistaLab, Stanford University</span>
         </div>
         <div>
           <span>...</span>
