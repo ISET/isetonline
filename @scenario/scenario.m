@@ -57,6 +57,9 @@ classdef scenario < handle
         switch p.Results.scenariotype
             case 'isetscene'
                fprintf("Start with an iset scene");
+            case 'exrscene'
+               fprintf("Start with an exr scene");
+                
         end
 
         end
