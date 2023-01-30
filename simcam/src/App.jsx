@@ -114,6 +114,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       lens: imageData.opticsname,
       sensor: imageData.sensorname,
+      scenarioName: imageData.scenario,
 
       // pre-load sensor objects
       sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
@@ -344,7 +345,15 @@ const App = () => {
       resizable: true,
       tooltipField: "Filter and sort by sensor",
     },
-
+    {
+      headerName: "Scenario",
+      field: "scenario",
+      width: 128,
+      filter: true,
+      sortable: true,
+      resizable: true,
+      tooltipField: "Filter and sort by lighting scenario",
+    },
     // Don't display text light sources if we display all of them separately
     {
       headerName: "Light Sources",
