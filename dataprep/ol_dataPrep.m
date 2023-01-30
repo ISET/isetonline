@@ -140,7 +140,7 @@ for ii = 1:numScenes
     % scene for better viewing & ground truth matching
     oiComputed = oiCrop(oiComputed,'border');
     oiComputed.metadata.sceneID = sceneID;
-    oiComputed.metadata.scenario = scenario;
+    oiComputed.metadata.scenario = scenarioName;
 
     % Ground Truth is the same for all versions of a scene,
     % although perhaps for previewing we'll want to use the scenario lights
