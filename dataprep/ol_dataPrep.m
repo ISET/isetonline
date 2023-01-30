@@ -26,9 +26,14 @@
 %       but that is not the same as the actual resolution of the products
 
 %% Currently we process one scenario
+% If we're using isetdb() then this should work, as we incrementally
+% add the needed files & sensorImage db docs, with metadata being
+% exported from our complete collection of them
+
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
-scenarioName = 'nighttime';
+%scenarioName = 'nighttime';
+scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -81,9 +86,6 @@ imageMetadataArray = [];
 % that we'll render through "another" pinhole for now
 oiDefault = oiCreate('shift invariant');
 
-% Assume we are processing scenes from the Ford project
-projectName = 'Ford';
-
 % 'local' for iaFileDataRoot allows for local 'test' copies of file data
 datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
@@ -128,6 +130,7 @@ for ii = 1:numScenes
     % Preserve size for later use in resizing
     ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
     ourScene.metadata.sceneID = sceneID; 
+    ourScene.metadata.scenario = scenarioName;
 
     % In our case we render the scene through our default
     % (shift-invariant) optics so that we have an OI to work with
@@ -137,6 +140,7 @@ for ii = 1:numScenes
     % scene for better viewing & ground truth matching
     oiComputed = oiCrop(oiComputed,'border');
     oiComputed.metadata.sceneID = sceneID;
+    oiComputed.metadata.scenario = scenario;
 
     % Ground Truth is the same for all versions of a scene,
     % although perhaps for previewing we'll want to use the scenario lights
@@ -231,13 +235,6 @@ for ii = 1:numScenes
         imageMetadataArray{end+1} = imageMetadata(jj);
     end
 
-    % We can write metadata as one file to make it faster to read
-    % But it becomes complex to generate. So we either need to
-    % use the DB for real, or have multiple metadata.json files
-    % I think since scene names are unique, they can have any
-    % naming scheme that is unique & over-writes previous versions
-    % as needed.
-
 end
 
 % Since the metadata is only read by our code, we place it in the code folder tree
@@ -269,6 +266,9 @@ else
     fName = oi.name;
 end
 
+% need this to create unique sensor image files
+scenarioName = oi.metadata.scenario;
+
 % experiment with camera motion
 % for now each shift adds oi data to the oi
 % for expediency we're doing this once per OI, although ideally
@@ -288,9 +288,6 @@ for iii = 1:numel(sensorFiles)
     sensor = sensorWrapper.sensor;
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
-
-    % CAN WE TEST FOR EXISTENCE HERE AND SAVE OURSELVES SOME TIME?
-    % Should eventually add lighting params!
     % shutter time is an issue. We don't know it yet, but at least 0
     % means some type of AE
 
@@ -300,8 +297,9 @@ for iii = 1:numel(sensorFiles)
 
     % check if we already have a sensorimage for this scene and sensor
     % If so, then skip re-creating it
-    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
-        oi.metadata.sceneID, sensor.name);
+    %% NB Need more fields: project & scenario in key
+    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s"", ""scenario"" : ""%s""}", ...
+        oi.metadata.sceneID, sensor.name, scenarioName);
     if ourDB.exists('sensorImages', keyQuery)
         continue;
     end
@@ -373,10 +371,12 @@ for iii = 1:numel(sensorFiles)
     % We use the fullfile for local write
     % and just the filename for web use
     % May need to get fancier with #frames in filename!
-    ipJPEGName = [fName '-' sName '.jpg'];
-    ipJPEGName_burst = [fName '-' sName '-burst.jpg'];
-    ipJPEGName_bracket = [fName '-' sName '-bracket.jpg'];
-    ipThumbnailName = [fName '-' sName '-thumbnail.jpg'];
+
+    baseFileName = [fName '-' scenarioName '-' sName];
+    ipJPEGName = [baseFileName '.jpg'];
+    ipJPEGName_burst = [baseFileName '-burst.jpg'];
+    ipJPEGName_bracket = [baseFileName '-bracket.jpg'];
+    ipThumbnailName = [baseFileName '-thumbnail.jpg'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalJPEG = fullfile(outputFolder,'images',ipJPEGName);
@@ -386,9 +386,9 @@ for iii = 1:numel(sensorFiles)
 
 
     % Do the same for our YOLO version filenames
-    ipYOLOName = [fName '-' sName '-YOLO.jpg'];
-    ipYOLOName_burst = [fName '-' sName 'YOLO-burst.jpg'];
-    ipYOLOName_bracket = [fName '-' sName 'YOLO-bracket.jpg'];
+    ipYOLOName = [baseFileName '-YOLO.jpg'];
+    ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
+    ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
@@ -502,7 +502,7 @@ for iii = 1:numel(sensorFiles)
 
     % Write out the 'raw' voltage file
     % Need to add support for bracket & burst
-    sensorDataFile = [fName '-' sName '.json'];
+    sensorDataFile = [baseFileName '.json'];
     sensor_ae.metadata.sensorRawFile = sensorDataFile;
     jsonwrite(fullfile(outputFolder,'images', sensorDataFile), sensor_ae);
 
