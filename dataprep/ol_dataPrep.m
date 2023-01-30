@@ -165,6 +165,7 @@ for ii = 1:numScenes
             img_GT = annotatedImage;
         catch
             img_GT = oiShowImage(oiComputed, -3, 2.2);
+            ourScene.metadata.closestTarget = [];
             warning("gtGet failed on %s", sceneID);
         end
     else % we need to calculate ground truth "by hand"
