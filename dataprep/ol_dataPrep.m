@@ -209,8 +209,10 @@ for ii = 1:numScenes
     % but we've already built an oi, so save it there also
     ourScene.metadata.web.GTName = ipGTName;
     ourScene.metadata.GTObjects = GTObjects;
+    ourScene.metadata.closestTarget = closestTarget;
     oiComputed.metadata.web.GTName = ipGTName;
     oiComputed.metadata.GTObjects = GTObjects;
+    oiComputed.metadata.closestTarget = closestTarget;
 
     % Pre-compute sensor images
     % Start by giving them a folder
