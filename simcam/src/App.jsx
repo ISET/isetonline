@@ -347,7 +347,7 @@ const App = () => {
     },
     {
       headerName: "Scenario",
-      field: "scenario",
+      field: "scenarioName",
       width: 128,
       filter: true,
       sortable: true,
