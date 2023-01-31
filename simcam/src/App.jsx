@@ -146,6 +146,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       sensorRawFile: imageDir + imageData.sensorRawFile,
       sensorRawName: imageData.sensorRawFile,
       oiName: imageData.oiFile,
+      oiFileName: imageData.web.oiName,
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
@@ -485,7 +486,7 @@ const App = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sensor: userSensorContent,
-        oiFile: selectedRow.current.oiName,
+        oiName: selectedRow.current.oiFileName,
         name: selectedRow.current.name,
       }),
     };
@@ -695,8 +696,8 @@ const App = () => {
         break;
       case "dlOI":
         // Some OI may be too large, but so far so good
-        dlPath = oiDir + selectedRow.current.oiName;
-        dlName = selectedRow.current.oiName;
+        dlPath = oiDir + selectedRow.current.oiImageName;
+        dlName = selectedRow.current.oiImageName;
         break;
       default:
       // Nothing
@@ -1010,27 +1011,27 @@ const App = () => {
           <CRow>
             <h5>Download:</h5>
             <CButtonGroup>
-              <CTooltip content="This is the full sensor object, including its response in volts.">
+              <CTooltip content="Sensor object, including its response in volts.">
                 <CButton
                   id="dlSensorVolts"
+                  variant="outline"
+                  onClick={buttonDownload}
+                >
+                  Sensor Object
+                </CButton>
+              </CTooltip>
+              <CTooltip content="Example RGB result (JPEG) after processing the sensor data.">
+                <CButton
+                  id="dlIPRGB"
                   variant="outline"
                   onClick={buttonDownload}
                 >
                   Sensor Image
                 </CButton>
               </CTooltip>
-              <CTooltip content="This is an example RGB result after processing the sensor data.">
-                <CButton
-                  id="dlIPRGB"
-                  variant="outline"
-                  onClick={buttonDownload}
-                >
-                  Processed Image
-                </CButton>
-              </CTooltip>
-              <CTooltip content="This is the irradiance on the film plane of the scene viewed throug the lens.">
+              <CTooltip content="A visual (JPEG) of the scene lit using this Scenario.">
                 <CButton id="dlOI" variant="outline" onClick={buttonDownload}>
-                  Optical Image
+                  Image of Scene
                 </CButton>
               </CTooltip>
             </CButtonGroup>

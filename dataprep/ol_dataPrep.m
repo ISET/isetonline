@@ -217,11 +217,11 @@ for ii = 1:numScenes
     % Unlike other previews, this one is generic to the scene
     % but we've already built an oi, so save it there also
     ourScene.metadata.web.GTName = ipGTName;
-    ourScene.metadata.web.GTName = ipOIName;
+    ourScene.metadata.web.OIName = ipOIName;
     ourScene.metadata.GTObjects = GTObjects;
     ourScene.metadata.closestTarget = closestTarget;
     oiComputed.metadata.web.GTName = ipGTName;
-    ourScene.metadata.web.GTName = ipOIName;
+    ourScene.metadata.web.OIName = ipOIName;
     oiComputed.metadata.GTObjects = GTObjects;
     oiComputed.metadata.closestTarget = closestTarget;
 
