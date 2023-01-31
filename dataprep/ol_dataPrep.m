@@ -79,9 +79,12 @@ exportLenses(outputFolder, privateDataFolder, ourDB)
 % is small enough to be kept in a single file & used for filtering
 imageMetadataArray = [];
 
-% We start with synthetic scenes through a pinhole
-% that we'll render through "another" pinhole for now
+% prior to using lenses we use default optics, but need to change
+% the focal length (I think) to match the sensor size + FOV.
 oiDefault = oiCreate('shift invariant');
+
+% both our auto sensors are about 4.55mm x 2.97mm
+oiDefault = oiSet(oiDefault, 'focal length', .006);
 
 % Assume we are processing scenes from the Ford project
 projectName = 'Ford';
@@ -168,7 +171,7 @@ for ii = 1:numScenes
         % Use GT & get back annotated image
         % pass it a native resolution image so the bounding boxes
         % match the scene locations
-        if ~isempty(instanceFile)
+        if exist('instanceFile', 'var') && ~isempty(instanceFile)
             % Use HDR for render given the DR of many scenes
             img_for_GT = oiShowImage(oiComputed, -3, 2.2);
 
