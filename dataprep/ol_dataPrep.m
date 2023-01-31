@@ -5,8 +5,12 @@
 % output is designed to be used by ISETOnline
 %
 % It does several things that should be separated:
-% * Reads scenes
+% * Reads ISET scenes
 % * computes an Optical Image (OI)
+%   (currently using default optics)
+% * creates sensorImages for each chosen sensor
+%   (currently AE, burst, and bracket for each)
+% * runs YOLO on each version of a sensorImage
 % * writes to metadata.json
 % * writes supporting files to web folders
 % * writes to sensorImage collection
@@ -22,9 +26,14 @@
 %       but that is not the same as the actual resolution of the products
 
 %% Currently we process one scenario
+% If we're using isetdb() then this should work, as we incrementally
+% add the needed files & sensorImage db docs, with metadata being
+% exported from our complete collection of them
+
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
-scenarioName = 'nighttime';
+%scenarioName = 'nighttime';
+scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -68,12 +77,6 @@ sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB);
 %% Export Lenses
 exportLenses(outputFolder, privateDataFolder, ourDB)
 
-%% Copy/Export OIs
-%  OIs include complex numbers, which are not directly-accessible
-%  in standard JSON. They also become extremely large as JSON (or BSON)
-%  files. So we simply export the .mat files.
-%  We do that in the loop below as we render each one.
-
 %% Start assembling metadata
 % The Metadata Array is the non-image portion of those, which
 % is small enough to be kept in a single file & used for filtering
@@ -86,19 +89,18 @@ oiDefault = oiCreate('shift invariant');
 % both our auto sensors are about 4.55mm x 2.97mm
 oiDefault = oiSet(oiDefault, 'focal length', .006);
 
-% Assume we are processing scenes from the Ford project
-projectName = 'Ford';
+% both our auto sensors are about 4.55mm x 2.97mm
+oiDefault = oiSet(oiDefault, 'focal length', .006);
 
-%% Here is where we should start separating DB-based scripts
-%  vs. ones that rely on simply the folders of files
-
+% 'local' for iaFileDataRoot allows for local 'test' copies of file data
 datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
 % Where the rendered EXR files live -- this is the
-% same for all experiments as it is the input data
+% same for all scenarios as it is the input data
 EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
-% scenes are actually synthetic and have already been rendered
+% scenes are actually synthetic and have already been rendered 
+% typically using makeScenesFromRenders.m
 sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 
 % These are the composite scene files made by mixing
@@ -106,7 +108,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3000;
+sceneNumberLimit = 3;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
@@ -118,7 +120,6 @@ end
 
 % our scenes are pre-rendered .exr files for various illuminants
 % that have been combined into ISETcam scenes for evaluation
-% We create a pinhole OI for each one
 % USE parfor except for debugging
 oiComputed = []; % shifting to single OI to save memory
 
@@ -130,11 +131,12 @@ for ii = 1:numScenes
 
     % This is where the scene ID is available
     fName = erase(sceneFileEntries(ii).name,'.mat');
-    imageID = fName;
+    sceneID = fName;
 
     % Preserve size for later use in resizing
     ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
-    ourScene.metadata.sceneID = fName; % best we can do for now
+    ourScene.metadata.sceneID = sceneID; 
+    ourScene.metadata.scenario = scenarioName;
 
     % In our case we render the scene through our default
     % (shift-invariant) optics so that we have an OI to work with
@@ -143,9 +145,13 @@ for ii = 1:numScenes
     % Get rid of the oi border so we match the original
     % scene for better viewing & ground truth matching
     oiComputed = oiCrop(oiComputed,'border');
-    oiComputed.metadata.sceneID = fName;  % best we can do for now
+    oiComputed.metadata.sceneID = sceneID;
+    oiComputed.metadata.scenario = scenarioName;
 
-    ipGTName = [fName '-GT.png'];
+    % Ground Truth is the same for all versions of a scene,
+    % although perhaps for previewing we'll want to use the scenario lights
+    ipGTName = [sceneID '-GT.png'];
+
     % "Local" is our ISET filepath, not the website path
     ipLocalGT = fullfile(outputFolder,'images',ipGTName);
 
@@ -154,17 +160,19 @@ for ii = 1:numScenes
 
         % this code sometimes has parse errors so use a try block
         try
-            [GTObjects, closestTarget] = ourDB.gtGetFromScene('auto',imageID);
+            [GTObjects, closestTarget] = ourDB.gtGetFromScene('auto',sceneID);
             ourScene.metadata.GTObject = GTObjects;
             ourScene.metadata.closestTarget = closestTarget;
 
             % we need an image to annotate
+            % -3 says don't show, 2.2 is a gamma value
             img_for_GT = oiShowImage(oiComputed, -3, 2.2);
             annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
             img_GT = annotatedImage;
         catch
             img_GT = oiShowImage(oiComputed, -3, 2.2);
-            warning("gtGet failed on %s", imageID);
+            ourScene.metadata.closestTarget = [];
+            warning("gtGet failed on %s", sceneID);
         end
     else % we need to calculate ground truth "by hand"
 
@@ -181,10 +189,6 @@ for ii = 1:numScenes
             [img_GT, GTObjects] = ol_gtCompute(ourScene, img_for_GT,'instanceFile',instanceFile, ...
                 'additionalFile',additionalFile);
 
-            % Create single list for database and grid
-            % Also calculate the closest object of interest
-            % NB Not sure we need to stash in both the scene
-            % and the oi, but they are kind of in parallel
         end
     end
 
@@ -211,16 +215,10 @@ for ii = 1:numScenes
     % but we've already built an oi, so save it there also
     ourScene.metadata.web.GTName = ipGTName;
     ourScene.metadata.GTObjects = GTObjects;
+    ourScene.metadata.closestTarget = closestTarget;
     oiComputed.metadata.web.GTName = ipGTName;
     oiComputed.metadata.GTObjects = GTObjects;
-
-
-    % Either way we now have an optical image that we can
-    % Loop through and render them with our sensors
-    % and with whatever variants (burst, bracket, ...) we want
-    if ~isfolder(fullfile(outputFolder,'oi'))
-        mkdir(fullfile(outputFolder,'oi'))
-    end
+    oiComputed.metadata.closestTarget = closestTarget;
 
     % Pre-compute sensor images
     % Start by giving them a folder
@@ -228,13 +226,7 @@ for ii = 1:numScenes
         mkdir(fullfile(outputFolder,'images'))
     end
 
-    % Originally we looped through oiFiles,
-    % but for metric scenes we will generate them
-    % from the .mat Scene objects created from .exr files
-    % This is where the scene ID is available
-    fName = erase(sceneFileEntries(ii).name,'.mat');
-    imageID = fName;
-
+    % Our base OI
     oi = oiComputed;
 
     % baseMetadata should be generic info to add to per-image data
@@ -251,13 +243,6 @@ for ii = 1:numScenes
     for jj=1:numel(imageMetadata)
         imageMetadataArray{end+1} = imageMetadata(jj);
     end
-
-    % We can write metadata as one file to make it faster to read
-    % But it becomes complex to generate. So we either need to
-    % use the DB for real, or have multiple metadata.json files
-    % I think since scene names are unique, they can have any
-    % naming scheme that is unique & over-writes previous versions
-    % as needed.
 
 end
 
@@ -290,6 +275,9 @@ else
     fName = oi.name;
 end
 
+% need this to create unique sensor image files
+scenarioName = oi.metadata.scenario;
+
 % experiment with camera motion
 % for now each shift adds oi data to the oi
 % for expediency we're doing this once per OI, although ideally
@@ -309,9 +297,6 @@ for iii = 1:numel(sensorFiles)
     sensor = sensorWrapper.sensor;
     % prep for changing suffix to json
     [~, sName, ~] = fileparts(sensorFiles{iii});
-
-    % CAN WE TEST FOR EXISTENCE HERE AND SAVE OURSELVES SOME TIME?
-    % Should eventually add lighting params!
     % shutter time is an issue. We don't know it yet, but at least 0
     % means some type of AE
 
@@ -321,8 +306,9 @@ for iii = 1:numel(sensorFiles)
 
     % check if we already have a sensorimage for this scene and sensor
     % If so, then skip re-creating it
-    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s""}", ...
-        oi.metadata.sceneID, sensor.name);
+    %% NB Need more fields: project & scenario in key
+    keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s"", ""scenario"" : ""%s""}", ...
+        oi.metadata.sceneID, sensor.name, scenarioName);
     if ourDB.exists('sensorImages', keyQuery)
         continue;
     end
@@ -394,10 +380,12 @@ for iii = 1:numel(sensorFiles)
     % We use the fullfile for local write
     % and just the filename for web use
     % May need to get fancier with #frames in filename!
-    ipJPEGName = [fName '-' sName '.jpg'];
-    ipJPEGName_burst = [fName '-' sName '-burst.jpg'];
-    ipJPEGName_bracket = [fName '-' sName '-bracket.jpg'];
-    ipThumbnailName = [fName '-' sName '-thumbnail.jpg'];
+
+    baseFileName = [fName '-' scenarioName '-' sName];
+    ipJPEGName = [baseFileName '.jpg'];
+    ipJPEGName_burst = [baseFileName '-burst.jpg'];
+    ipJPEGName_bracket = [baseFileName '-bracket.jpg'];
+    ipThumbnailName = [baseFileName '-thumbnail.jpg'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalJPEG = fullfile(outputFolder,'images',ipJPEGName);
@@ -407,9 +395,9 @@ for iii = 1:numel(sensorFiles)
 
 
     % Do the same for our YOLO version filenames
-    ipYOLOName = [fName '-' sName '-YOLO.jpg'];
-    ipYOLOName_burst = [fName '-' sName 'YOLO-burst.jpg'];
-    ipYOLOName_bracket = [fName '-' sName 'YOLO-bracket.jpg'];
+    ipYOLOName = [baseFileName '-YOLO.jpg'];
+    ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
+    ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
@@ -523,7 +511,7 @@ for iii = 1:numel(sensorFiles)
 
     % Write out the 'raw' voltage file
     % Need to add support for bracket & burst
-    sensorDataFile = [fName '-' sName '.json'];
+    sensorDataFile = [baseFileName '.json'];
     sensor_ae.metadata.sensorRawFile = sensorDataFile;
     jsonwrite(fullfile(outputFolder,'images', sensorDataFile), sensor_ae);
 

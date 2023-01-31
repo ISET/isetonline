@@ -34,7 +34,7 @@ switch sceneType
             GTObjects = [];
         end
         if ~isempty(ourScene) && isfield(ourScene,'closestTarget')
-            closestTarget = ourScene.closestTarget);
+            closestTarget = ourScene.closestTarget;
         else
             closestTarget = [];
         end

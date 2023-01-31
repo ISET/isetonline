@@ -81,9 +81,26 @@ let selectedImage = {
 // get sensorimage data from the metadata.json file.
 // however, it is a map/collection, so we need to index into it first.
 var rows = [];
+var CT = [];
+var CTDistance = 1000000;
 
 for (let rr = 0; rr < imageMetaData.length; rr++) {
   imageData = imageMetaData[rr];
+
+  // closestTarget seems a bit flakey, so check for existence
+  if (imageData.hasOwnProperty('closestTarget')){
+    CT = imageData.closestTarget;
+    if (CT.hasOwnProperty('distance')){
+      CTDistance = CT.distance;
+    } else {
+      CTDistance = 1000000
+    }
+  } else {
+    CT = [];
+    CTDistance = 1000000;
+  }
+  
+
   // Read image objects into grid rows
   // Some visible, some hidden for other uses
   let newRow = [
@@ -97,6 +114,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       lens: imageData.opticsname,
       sensor: imageData.sensorname,
+      scenarioName: imageData.scenario,
 
       // pre-load sensor objects
       sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
@@ -136,11 +154,11 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       GTObjects: imageData.GTObjects,
       GTStats: imageData.Stats,
       GTLabels: imageData.Stats.uniqueLabels,
-      GTDistance: Number(imageData.closestTarget.distance),
+      GTDistance: Number(CTDistance),
 
       // Closest Target data
-      closestTarget: imageData.closestTarget,
-      closestLabel: imageData.closestTarget.label,
+      closestTarget: CT,
+      closestLabel: CT.label,
 
       // Text version of lighting parameters
       lightSources: getLightParams(imageData),
@@ -327,7 +345,15 @@ const App = () => {
       resizable: true,
       tooltipField: "Filter and sort by sensor",
     },
-
+    {
+      headerName: "Scenario",
+      field: "scenarioName",
+      width: 128,
+      filter: true,
+      sortable: true,
+      resizable: true,
+      tooltipField: "Filter and sort by lighting scenario",
+    },
     // Don't display text light sources if we display all of them separately
     {
       headerName: "Light Sources",
