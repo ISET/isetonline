@@ -193,7 +193,7 @@ for ii = 1:numScenes
     end
 
     % Write out the GT image as a nice "visual" of the scene
-    imwrite(img_for_GT, ipOIName);
+    imwrite(img_for_GT, ipLocalOI);
             
     % Add ground truth to output metadata
     if ~isempty(GTObjects) && isfield(GTObjects,'label')
