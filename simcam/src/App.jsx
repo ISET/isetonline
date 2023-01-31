@@ -59,10 +59,11 @@ import { breakpoints } from "@mui/system";
 
 // Load our rendered sensor images
 // They are located in sub-folders under /public
+// NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
 let imageDir = "/images/"; // Should use /public by default?
 let oiDir = "/oi/";
-let sensorDir = dataDir + "sensors/";
+let sensorDir = "./data/sensors/";
 
 let imageMetaData = require(dataDir + "metadata.json");
 var imageData;
@@ -117,7 +118,10 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       scenarioName: imageData.scenario,
 
       // pre-load sensor objects
-      sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
+      // sensorDir sometimes errors here? 
+      // sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
+      // make it just the sensor json name for now!
+      sensorFileName: sensorDir + imageData.sensorFile + ".json",
 
       // Used to set the file for the preview window
       preview: imageDir + imageData.web.jpegName,
@@ -608,7 +612,9 @@ const App = () => {
 
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
-    var factorySensorFile = selectedRow.current.sensorObject.sensorFileName;
+    //
+    var factorySensorFile = selectedRow.current.sensorFileName;
+    var sensorObject = require(factorySensorFile);
     var dataPrepSensorFile = factorySensorFile.replace(
       ".json",
       "-Baseline.json"
