@@ -89,9 +89,6 @@ oiDefault = oiCreate('shift invariant');
 % both our auto sensors are about 4.55mm x 2.97mm
 oiDefault = oiSet(oiDefault, 'focal length', .006);
 
-% both our auto sensors are about 4.55mm x 2.97mm
-oiDefault = oiSet(oiDefault, 'focal length', .006);
-
 % 'local' for iaFileDataRoot allows for local 'test' copies of file data
 datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 
@@ -108,7 +105,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3;
+sceneNumberLimit = 3000;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
