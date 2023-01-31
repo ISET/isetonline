@@ -148,9 +148,11 @@ for ii = 1:numScenes
     % Ground Truth is the same for all versions of a scene,
     % although perhaps for previewing we'll want to use the scenario lights
     ipGTName = [sceneID '-GT.png'];
+    ipOIName = [sceneID '-OI.png'];
 
     % "Local" is our ISET filepath, not the website path
     ipLocalGT = fullfile(outputFolder,'images',ipGTName);
+    ipLocalOI = fullfile(outputFolder,'images',ipOIName);
 
     %% If possible, get GT from the databaase!
     if useDB % get ground truth from the Auto Scene in ISETdb
@@ -164,6 +166,7 @@ for ii = 1:numScenes
             % we need an image to annotate
             % -3 says don't show, 2.2 is a gamma value
             img_for_GT = oiShowImage(oiComputed, -3, 2.2);
+
             annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
             img_GT = annotatedImage;
         catch
@@ -189,6 +192,9 @@ for ii = 1:numScenes
         end
     end
 
+    % Write out the GT image as a nice "visual" of the scene
+    imwrite(img_for_GT, ipOIName);
+            
     % Add ground truth to output metadata
     if ~isempty(GTObjects) && isfield(GTObjects,'label')
         GTStruct = GTObjects; % already a struct
@@ -211,9 +217,11 @@ for ii = 1:numScenes
     % Unlike other previews, this one is generic to the scene
     % but we've already built an oi, so save it there also
     ourScene.metadata.web.GTName = ipGTName;
+    ourScene.metadata.web.GTName = ipOIName;
     ourScene.metadata.GTObjects = GTObjects;
     ourScene.metadata.closestTarget = closestTarget;
     oiComputed.metadata.web.GTName = ipGTName;
+    ourScene.metadata.web.GTName = ipOIName;
     oiComputed.metadata.GTObjects = GTObjects;
     oiComputed.metadata.closestTarget = closestTarget;
 
