@@ -148,7 +148,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // This is kind of broken. We don't (yet) write out the correct filename
       // So we hard-code it based on the 
       // oiFileName: imageData.web.oiName,
-      oiFileName: imageData.sceneName + '-OI.png',
+      oiImageName: imageData.sceneName + '-OI.png',
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
@@ -700,7 +700,7 @@ const App = () => {
       case "dlOI":
         // Currently an RGB of the OI processed using HDR
         dlPath = imageDir + selectedRow.current.oiImageName;
-        dlName = imageDir + selectedRow.current.oiImageName;
+        dlName = selectedRow.current.oiImageName;
         break;
       default:
       // Nothing
