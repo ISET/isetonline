@@ -697,9 +697,9 @@ const App = () => {
         dlName = selectedRow.current.jpegFile;
         break;
       case "dlOI":
-        // Some OI may be too large, but so far so good
-        dlPath = selectedRow.current.oiImageName;
-        dlName = selectedRow.current.oiImageName;
+        // Currently an RGB of the OI processed using HDR
+        dlPath = imageDir + selectedRow.current.oiImageName;
+        dlName = imageDir + selectedRow.current.oiImageName;
         break;
       default:
       // Nothing
