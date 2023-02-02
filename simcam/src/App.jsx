@@ -120,7 +120,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // sensorDir sometimes errors here? 
       // sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
       // make it just the sensor json name for now!
-      sensorFileName: sensorDir + imageData.sensorFile + ".json",
+      sensorFileName: /sensors/ + imageData.sensorFile + ".json",
 
       // Used to set the file for the preview window
       preview: imageDir + imageData.web.jpegName,
