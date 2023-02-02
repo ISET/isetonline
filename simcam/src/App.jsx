@@ -148,7 +148,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // This is kind of broken. We don't (yet) write out the correct filename
       // So we hard-code it based on the 
       // oiFileName: imageData.web.oiName,
-      oiImageName: imageData.sceneName + '-OI.png',
+      oiImageName: imageData.scenename + '-OI.png',
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
