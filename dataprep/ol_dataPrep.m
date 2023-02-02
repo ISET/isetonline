@@ -220,8 +220,9 @@ for ii = 1:numScenes
     ourScene.metadata.web.OIName = ipOIName;
     ourScene.metadata.GTObjects = GTObjects;
     ourScene.metadata.closestTarget = closestTarget;
+
     oiComputed.metadata.web.GTName = ipGTName;
-    ourScene.metadata.web.OIName = ipOIName;
+    oiComputed.metadata.web.OIName = ipOIName;
     oiComputed.metadata.GTObjects = GTObjects;
     oiComputed.metadata.closestTarget = closestTarget;
 

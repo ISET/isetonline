@@ -62,7 +62,6 @@ import { breakpoints } from "@mui/system";
 // NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
 let imageDir = "/images/"; // Should use /public by default?
-let oiDir = "/oi/";
 let sensorDir = "./data/sensors/";
 
 let imageMetaData = require(dataDir + "metadata.json");
@@ -696,7 +695,7 @@ const App = () => {
         break;
       case "dlOI":
         // Some OI may be too large, but so far so good
-        dlPath = oiDir + selectedRow.current.oiImageName;
+        dlPath = selectedRow.current.oiImageName;
         dlName = selectedRow.current.oiImageName;
         break;
       default:
