@@ -144,8 +144,11 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       jpegFile: imageData.web.jpegName,
       sensorRawFile: imageDir + imageData.sensorRawFile,
       sensorRawName: imageData.sensorRawFile,
-      oiName: imageData.oiFile,
-      oiFileName: imageData.web.oiName,
+
+      // This is kind of broken. We don't (yet) write out the correct filename
+      // So we hard-code it based on the 
+      // oiFileName: imageData.web.oiName,
+      oiFileName: imageData.sceneName + '-OI.png',
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
