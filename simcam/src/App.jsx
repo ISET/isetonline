@@ -617,7 +617,8 @@ const App = () => {
     // to modify its parameters and recompute
     //
     var factorySensorFile = selectedRow.current.sensorFileName;
-    var sensorObject = require(factorySensorFile);
+    // I don't think we need the sensor object until we allow editing
+    // var sensorObject = require(factorySensorFile);
     var dataPrepSensorFile = factorySensorFile.replace(
       ".json",
       "-Baseline.json"
