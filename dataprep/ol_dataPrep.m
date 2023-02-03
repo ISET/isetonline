@@ -193,7 +193,7 @@ for ii = 1:numScenes
     end
 
     % Write out the GT image as a nice "visual" of the scene
-    imwrite(img_for_GT, ipLocalOI);
+    imwrite(imageCropBorder(img_for_GT), ipLocalOI);
             
     % Add ground truth to output metadata
     if ~isempty(GTObjects) && isfield(GTObjects,'label')
@@ -212,7 +212,7 @@ for ii = 1:numScenes
     end
 
     % Write out our GT annotated image
-    imwrite(img_GT, ipLocalGT);
+    imwrite(imageCropBorder(img_GT), ipLocalGT);
 
     % Unlike other previews, this one is generic to the scene
     % but we've already built an oi, so save it there also
@@ -468,9 +468,9 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 
     % Write out our annotated image
-    imwrite(img_YOLO, ipLocalYOLO);
-    imwrite(img_YOLO_burst, ipLocalYOLO_burst);
-    imwrite(img_YOLO_bracket, ipLocalYOLO_bracket);
+    imwrite(imageCropBorder(img_YOLO), ipLocalYOLO);
+    imwrite(imageCropBorder(img_YOLO_burst), ipLocalYOLO_burst);
+    imwrite(imageCropBorder(img_YOLO_bracket), ipLocalYOLO_bracket);
 
     % we could also save without an IP if we want
     %sensorSaveImage(sensor, sensorJPEG  ,'rgb');
@@ -478,7 +478,7 @@ for iii = 1:numel(sensorFiles)
     % Generate a quick thumbnail
     thumbnail = imread(ipLocalJPEG);
     thumbnail = imresize(thumbnail, [128 128]);
-    imwrite(thumbnail, ipLocalThumbnail);
+    imwrite(imageCropBorder(thumbnail), ipLocalThumbnail);
 
     % We need to save the relative paths for the website to use
     sensor_ae.metadata.web.jpegName = ipJPEGName;
