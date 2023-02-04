@@ -37,6 +37,7 @@ for ii = 1:numel(sceneDataFiles)
     sceneMeta.creator = "Zhenyi Liu";
     sceneMeta.sceneSource = "Blender";
     sceneMeta.imageID = scene.name;
+    sceneMeta.scenario = scenarioName;
 
     % maintain the lighting parameters, which currently
     % are the only items we change between experiments

@@ -34,40 +34,46 @@ classdef scenario < handle
 
     %}
     properties
+        scenarioName;
+        scenarioProject;
         scenarioType;
         scenarioInput;
         scenarioParameters;
     end
-    
+
     methods
         function obj = scenario(varargin)
             %SCENARIO Construct an instance of this class
             p = inputParser;
             varargin = ieParamFormat(varargin);
+            addParameter(p,'scenarioname','defaultScenario');
+            addParameter(p,'scenarioproject','ISET');
             addParameter(p,'scenariotype','isetscene',@ischar);
             addParameter(p,'scenarioinput',[]);
             addParameter(p,'scenarioparameters',[]);
 
             parse(p,varargin{:});
 
+            obj.scenarioName = p.Results.scenarioname;
+            obj.scenarioProject = p.Results.scenarioproject;
             obj.scenarioType = p.Results.scenariotype;
             obj.scenarioInput = p.Results.scenarioinput;
             obj.scenarioParameters = p.Results.scenarioparameters;
 
-        switch p.Results.scenariotype
-            case 'isetscene'
-               fprintf("Start with an iset scene");
-            case 'exrscene'
-               fprintf("Start with an exr scene");
-                
-        end
+            switch obj.scenarioType
+                case 'isetscene'
+                    fprintf("Start with an iset scene");
+                case 'exrscene'
+                    fprintf("Start with an exr scene");
+
+            end
 
         end
-        
-        function outputArg = method1(obj,inputArg)
-            %METHOD1 Summary of this method goes here
-            %   Detailed explanation goes here
-            outputArg = obj.Property1 + inputArg;
+
+
+        function print(obj)
+            %PRINT See what we hae
+            obj
         end
     end
 end

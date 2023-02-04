@@ -62,7 +62,6 @@ import { breakpoints } from "@mui/system";
 // NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
 let imageDir = "/images/"; // Should use /public by default?
-let oiDir = "/oi/";
 let sensorDir = "./data/sensors/";
 
 let imageMetaData = require(dataDir + "metadata.json");
@@ -121,7 +120,7 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       // sensorDir sometimes errors here? 
       // sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
       // make it just the sensor json name for now!
-      sensorFileName: sensorDir + imageData.sensorFile + ".json",
+      sensorFileName: /sensors/ + imageData.sensorFile + ".json",
 
       // Used to set the file for the preview window
       preview: imageDir + imageData.web.jpegName,
@@ -145,8 +144,11 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       jpegFile: imageData.web.jpegName,
       sensorRawFile: imageDir + imageData.sensorRawFile,
       sensorRawName: imageData.sensorRawFile,
-      oiName: imageData.oiFile,
-      oiFileName: imageData.web.oiName,
+
+      // This is kind of broken. We don't (yet) write out the correct filename
+      // So we hard-code it based on the 
+      // oiFileName: imageData.web.oiName,
+      oiImageName: imageData.scenename + '-OI.png',
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
@@ -615,7 +617,8 @@ const App = () => {
     // to modify its parameters and recompute
     //
     var factorySensorFile = selectedRow.current.sensorFileName;
-    var sensorObject = require(factorySensorFile);
+    // I don't think we need the sensor object until we allow editing
+    // var sensorObject = require(factorySensorFile);
     var dataPrepSensorFile = factorySensorFile.replace(
       ".json",
       "-Baseline.json"
@@ -695,8 +698,8 @@ const App = () => {
         dlName = selectedRow.current.jpegFile;
         break;
       case "dlOI":
-        // Some OI may be too large, but so far so good
-        dlPath = oiDir + selectedRow.current.oiImageName;
+        // Currently an RGB of the OI processed using HDR
+        dlPath = imageDir + selectedRow.current.oiImageName;
         dlName = selectedRow.current.oiImageName;
         break;
       default:
