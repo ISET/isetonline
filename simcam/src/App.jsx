@@ -761,7 +761,8 @@ const App = () => {
             <br></br>Choose from our library of scenes to get a highly-accurate
             simulated image as it would be rendered using a selected sensor. You
             can see the Ground Truth of objects in the scene, as well as the
-            results from YOLOv4 using auto-exposure, burst, and bracketing.
+            results from YOLOv4 using auto-exposure, burst, and bracketing. You can sort
+            and filter on any column(s) in the table.
           </p>
         </CCol>
       </CRow>
@@ -864,6 +865,7 @@ const App = () => {
             </CCol>
           </CRow>
           <CRow>
+            {/* We don't currently use a sensor editor, but it is surprisingly hard to comment out a block that includes comments:) */}
             <CCol>
               {/* JSON Editor for sensor object */}
               <div className="App" style={{ width: 300 }}>
