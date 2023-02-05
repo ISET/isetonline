@@ -35,23 +35,6 @@ YOLOData = sensorImages(:).YOLOData; % gets bboxes, scores, labels
 %  Col 1 is array of boxes
 %  Col 2 is array of labels
 % 
-%{
- WEB EXAMPLE:
-boxes = cell(10,2); %number of images x 2=(coordinates of box , labels)
-% fill boxes :
-for i=1:10
-n = randi(3); % number of box in i-th image, it maybe diffrenent so i consider it
-boxes{i,1} = rand(n,4); % nx4 each row coordinate of a box
-boxes{i,2} = string(randi(2,n,1)); % here i create n label for every image between 2 possible labels
-end
-
-% Convert to table
-boxes = cell2table(boxes,'VariableNames',{'Boxes','Labels'}); 
-
-blds = boxLabelDatastore(boxes)
-%}
-
-boxes = cell(numel(GTObjects, 2));
 
 GTStruct = [GTObjects{:}];
 GTBoxes = [];
@@ -68,11 +51,34 @@ for jj = 1:numel(GTObjects)
 end
 
 % Now we have a matrix of boxes & labels
-GTBoxes = transpose(GTBoxes);
-GTLabels = string(GTLabels);
+GTBoxes = GTBoxes;
+GTLabels = transpose(string(GTLabels));
 
-bboxes = [bboxesCell(:)];
+GTTable = table({GTBoxes}, {GTLabels});
 blds = boxLabelDatastore(GTTable);
-evaluateDetectionPrecision(YOLOData, blds)
+
+tmpBoxes = {};
+% Now we need to massage our detector results from their DB layout
+% need cells with categoricals, to match Ground Truth
+% HOWEVER, if we have "found" something with a different class
+%          then the call fails, so we need to weed those out. Sigh.
+allLabelData = detectorResults.labels;
+allScoreData = detectorResults.scores;
+numValid = 0;
+for kk = 1:numel(detectorResults.bboxes)
+    % First check to see if valid
+    if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
+        % do nothing
+    else % okay to process
+        numValid = numValid + 1;
+        tmpBoxes = [tmpBoxes cell2mat(detectorResults.bboxes{kk})];  
+        labelData{numValid} = categorical(cellstr(allLabelData{kk}));
+        scoreData{numValid} = allScoreData{kk};
+    end
+end
+
+resultTable = table(transpose(tmpBoxes), ...
+    transpose(scoreData), transpose(labelData));
+[ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds)
 end
 
