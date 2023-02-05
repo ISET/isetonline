@@ -259,7 +259,10 @@ end
 % Added support for incremental updates, by pulling all the
 % imageMetadata out of the sensorimage collection
 % NOTE: This assumes that all the needed preview files are still
-%       in place in public/data.
+%       in place in public/images.
+
+% TBD: As we grow, might want to put each scenario in its own
+%      metdata file, and load them all into the Web UI
 if useDB
     ourDB.collectionToFile('sensorImages', fullfile(privateDataFolder,'metadata.json'));
 else
