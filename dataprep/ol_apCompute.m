@@ -11,6 +11,7 @@ function [ap, precision, recall] = ol_apCompute(GTObjects, detectorResults)
 %         .YOLOData (.bboxes, .scores, .labels) -- arrays of matching size
 
 %{
+% Test code:
 ourDB = isetdb(); 
 dbTable = 'sensorImages';
 sceneID = '1112154540';
@@ -65,13 +66,16 @@ tmpBoxes = {};
 allLabelData = detectorResults.labels;
 allScoreData = detectorResults.scores;
 numValid = 0;
+
+% We may have an issue where the bboxes from the detector don't match
+% the scale of the GT image (sigh). 
 for kk = 1:numel(detectorResults.bboxes)
     % First check to see if valid
     if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
         % do nothing
     else % okay to process
         numValid = numValid + 1;
-        tmpBoxes = [tmpBoxes cell2mat(detectorResults.bboxes{kk})];  
+        tmpBoxes = [tmpBoxes cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW> 
         labelData{numValid} = categorical(cellstr(allLabelData{kk}));
         scoreData{numValid} = allScoreData{kk};
     end
@@ -79,6 +83,6 @@ end
 
 resultTable = table(transpose(tmpBoxes), ...
     transpose(scoreData), transpose(labelData));
-[ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds)
+[ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds);
 end
 
