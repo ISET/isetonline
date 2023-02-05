@@ -105,7 +105,8 @@ for kk = 1:numel(detectorResults)
         % do nothing
     else % okay to process
         numValid = numValid + 1;
-        tmpBoxes = [tmpBoxes cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW> 
+        allBoxes = {detectorResults.bboxes};
+        tmpBoxes = [tmpBoxes cell2mat(allBoxes{kk})];  %#ok<*AGROW> 
         labelData{numValid} = categorical(cellstr(allLabelData{kk}));
         scoreData{numValid} = allScoreData{kk};
     end
