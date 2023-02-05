@@ -9,8 +9,15 @@ function documents = docFind(obj,collection, useQuery)
 % Output:
 %   matching documents
 %
-% Example:
-%   ourDB.find('autoScenesEXR');
+% Examples:
+%{
+   ourDB.find('autoScenesEXR');
+
+   dbTable = 'autoScenesEXR';
+   % sceneIDs are unique for auto scenes
+   queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
+   ourScene = ourDB.docFind(dbTable, queryString);
+%}
 %
 % D.Cardinal, Stanford University, 2023
 %
