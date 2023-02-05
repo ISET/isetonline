@@ -42,6 +42,7 @@ sensorImages = ourDB.docFind(dbTable, queryString);
 
 GTObjects = sensorImages(:).GTObjects;
 sceneSize = sensorImages(:).sceneSize;
+detectorResults = sensorImages(:).YOLOData;
 
 % We need to scale YOLOData to match ther resolution of the GT Scene
 
@@ -98,7 +99,7 @@ numValid = 0;
 
 % We may have an issue where the bboxes from the detector don't match
 % the scale of the GT image (sigh). 
-for kk = 1:numel(detectorResults.bboxes)
+for kk = 1:numel(detectorResults)
     % First check to see if valid
     if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
         % do nothing
