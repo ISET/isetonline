@@ -27,14 +27,14 @@ sensorImages = ourDB.docFind(dbTable, queryString);
 
 [ap, precision, recall] = ol_apCompute(sensorImages);
 
+
+
 %}
 
 % D. Cardinal, Stanford University, 2023
 
-% Need to massage GT into 1 row for each image
-%  Col 1 is array of boxes
-%  Col 2 is array of labels
-% 
+% ONLY works for 1 image for now, so force it
+sensorImages = sensorImages(1);
 
 GTObjects = sensorImages(:).GTObjects;
 sceneSize = sensorImages(:).sceneSize;
@@ -45,6 +45,8 @@ detectorResults = sensorImages(:).YOLOData;
 ourDB = isetdb(); 
 dbTable = 'sensors';
 
+
+%{
 % Find the sensor so we can get its size
 sensorName = sensorImages(1).sensorname;
 
@@ -62,6 +64,9 @@ for qq = 1:numel(unscaledDetectorResults.bboxes)
     s{4} = unscaledDetectorResults.bboxes{qq}{4} * scaleRatio(2);
     detectorResults(qq).bboxes = s;
 end
+
+%}
+
 GTStruct = [GTObjects{:}];
 GTBoxes = [];
 GTLabels = {};
@@ -99,7 +104,7 @@ numValid = 0;
 
 % We may have an issue where the bboxes from the detector don't match
 % the scale of the GT image (sigh). 
-for kk = 1:numel(detectorResults)
+for kk = 1:numel(detectorResults.bboxes)
     % First check to see if valid
     if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
         % do nothing
