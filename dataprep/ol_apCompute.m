@@ -1,5 +1,6 @@
 function [ap, precision, recall] = ol_apCompute(GTObjects, detectorResults)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
+% NOTE: Currently only supports a single images
 
 % Start with 1 GT & 1 YOLOv4
 
@@ -25,18 +26,12 @@ YOLOData = sensorImages(:).YOLOData; % gets bboxes, scores, labels
 
 %}
 
-% Example call from docs:
-%         [ap, recall, precision] = evaluateDetectionPrecision(results, blds);
-%         results might be .YOLOData since we got it from a detector?
-%
-%         We need to create a BoxLabelDataStore from the GTObjects
-%
+% D. Cardinal, Stanford University, 2023
 
 % Need to massage GT into 1 row for each image
 %  Col 1 is array of boxes
 %  Col 2 is array of labels
 % 
-
 GTStruct = [GTObjects{:}];
 GTBoxes = [];
 GTLabels = {};
@@ -52,13 +47,18 @@ for jj = 1:numel(GTObjects)
 end
 
 % Now we have a matrix of boxes & labels
-GTBoxes = GTBoxes;
 GTLabels = transpose(string(GTLabels));
+GTBoxes = double(GTBoxes);
 
-GTTable = table({GTBoxes}, {GTLabels});
+GTTable = table('Size', [ 1 2], 'VariableTypes',{'cell', 'cell'});
+GTTable(1,1) = {GTBoxes};
+GTTable(1,2) = {GTLabels};
+
+%GTTable = table(double(GTBoxes), GTLabels, 'VariableNames','Boxes','Labels');
 blds = boxLabelDatastore(GTTable);
 
-tmpBoxes = {};
+tmpBoxes = [];
+scoreData = [];
 % Now we need to massage our detector results from their DB layout
 % need cells with categoricals, to match Ground Truth
 % HOWEVER, if we have "found" something with a different class
@@ -75,14 +75,18 @@ for kk = 1:numel(detectorResults.bboxes)
         % do nothing
     else % okay to process
         numValid = numValid + 1;
-        tmpBoxes = [tmpBoxes cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW> 
-        labelData{numValid} = categorical(cellstr(allLabelData{kk}));
-        scoreData{numValid} = allScoreData{kk};
+        tmpBoxes = [tmpBoxes; cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW> 
+        labelData(numValid) = categorical(cellstr(allLabelData{kk}));
+        scoreData(numValid) = allScoreData{kk};
     end
 end
 
-resultTable = table(transpose(tmpBoxes), ...
-    transpose(scoreData), transpose(labelData));
-[ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds);
+resultTable = table('Size',[1 3],'VariableTypes',{'cell','cell','cell'});
+resultTable(1,1) = {tmpBoxes};
+resultTable(1,2) = {transpose(scoreData)};
+resultTable(1,3) = {transpose(labelData)};
+
+useThreshold = .5; % default is .5
+[ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
 
