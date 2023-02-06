@@ -1,4 +1,4 @@
-function [ap, precision, recall] = ol_apCompute(GTObjects, detectorResults)
+function [ap, precision, recall] = ol_apCompute(sensorImages)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
 % NOTE: Currently only supports a single images
 
@@ -11,6 +11,12 @@ function [ap, precision, recall] = ol_apCompute(GTObjects, detectorResults)
 %             Each cell: (.label, .bbox2d, .catId, .distance) 
 %         .YOLOData (.bboxes, .scores, .labels) -- arrays of matching size
 
+% I think we have an issue where the YOLOData is scaled to the sensor size,
+% while the GTData is scaled to the scene size.
+
+% Either we need to rescale YOLOData when we record it, or on the fly 
+% When we need to use it to calculate AP, etc.
+
 %{
 % Test code:
 ourDB = isetdb(); 
@@ -19,10 +25,7 @@ sceneID = '1112154540';
 queryString = sprintf("{""sceneID"": ""%s""}", sceneID);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
-GTObjects = sensorImages(:).GTObjects;
-YOLOData = sensorImages(:).YOLOData; % gets bboxes, scores, labels
-
-[ap, precision, recall] = ol_apCompute(GTObjects, YOLOData);
+[ap, precision, recall] = ol_apCompute(sensorImages);
 
 %}
 
@@ -32,6 +35,33 @@ YOLOData = sensorImages(:).YOLOData; % gets bboxes, scores, labels
 %  Col 1 is array of boxes
 %  Col 2 is array of labels
 % 
+
+GTObjects = sensorImages(:).GTObjects;
+sceneSize = sensorImages(:).sceneSize;
+detectorResults = sensorImages(:).YOLOData;
+
+% We need to scale YOLOData to match ther resolution of the GT Scene
+
+ourDB = isetdb(); 
+dbTable = 'sensors';
+
+% Find the sensor so we can get its size
+sensorName = sensorImages(1).sensorname;
+
+queryString = sprintf("{""name"": ""%s""}", sensorName);
+sensor = ourDB.docFind(dbTable, queryString);
+
+unscaledDetectorResults = sensorImages(1).YOLOData; % gets bboxes, scores, labels
+sensorSize = [sensor.rows sensor.cols];
+
+scaleRatio = [single(sceneSize{1}) / single(sensorSize(1)), single(sceneSize{2}) / single(sensorSize(2))];
+for qq = 1:numel(unscaledDetectorResults.bboxes)
+    s{1} = unscaledDetectorResults.bboxes{qq}{1} * scaleRatio(1);
+    s{2} = unscaledDetectorResults.bboxes{qq}{2} * scaleRatio(2);
+    s{3} = unscaledDetectorResults.bboxes{qq}{3} * scaleRatio(1);
+    s{4} = unscaledDetectorResults.bboxes{qq}{4} * scaleRatio(2);
+    detectorResults(qq).bboxes = s;
+end
 GTStruct = [GTObjects{:}];
 GTBoxes = [];
 GTLabels = {};
@@ -69,7 +99,7 @@ numValid = 0;
 
 % We may have an issue where the bboxes from the detector don't match
 % the scale of the GT image (sigh). 
-for kk = 1:numel(detectorResults.bboxes)
+for kk = 1:numel(detectorResults)
     % First check to see if valid
     if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
         % do nothing
