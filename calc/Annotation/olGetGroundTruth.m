@@ -1,5 +1,5 @@
 function [GTObjects, closestTarget] = olGetGroundTruth(scene, varargin)
-%OLGETGROUNDTRUE Retrieve GT info from rendered scenes
+%OLGETGROUNDTRUTH Retrieve GT info from rendered scenes
 % Or from EXR renders that have enough information
 %   D. Cardinal, Stanford University, 12/2022
 
