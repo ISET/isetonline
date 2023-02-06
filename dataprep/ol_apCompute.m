@@ -1,21 +1,15 @@
 function [ap, precision, recall] = ol_apCompute(sensorImages)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
-% NOTE: Currently only supports a single images
-
-% Start with 1 GT & 1 YOLOv4
 
 % Extract one or more sensorImages to get GTObjects and YOLO
 % Example .sceneID: 1112154540
-%         .sensorname: MTV9V024-RGB  
+%         .sensorname: MTV9V024-RGB
 %         .GTObjects (Table with entries for each object)
-%             Each cell: (.label, .bbox2d, .catId, .distance) 
+%             Each cell: (.label, .bbox2d, .catId, .distance)
 %         .YOLOData (.bboxes, .scores, .labels) -- arrays of matching size
 
 % I think we have an issue where the YOLOData is scaled to the sensor size,
-% while the GTData is scaled to the scene size.
-
-% Either we need to rescale YOLOData when we record it, or on the fly 
-% When we need to use it to calculate AP, etc.
+% while the GTData is scaled to the scene size. Need to check
 
 %{
 % Test code:
@@ -27,26 +21,16 @@ sensorImages = ourDB.docFind(dbTable, queryString);
 
 [ap, precision, recall] = ol_apCompute(sensorImages);
 
-
-
 %}
 
 % D. Cardinal, Stanford University, 2023
 
-% ONLY works for 1 image for now, so force it
-sensorImages = sensorImages(1);
 
-GTObjects = sensorImages(:).GTObjects;
-sceneSize = sensorImages(:).sceneSize;
-detectorResults = sensorImages(:).YOLOData;
-
-% We need to scale YOLOData to match ther resolution of the GT Scene
-
+%{
+% We MAY need to scale YOLOData to match ther resolution of the GT Scene
 ourDB = isetdb(); 
 dbTable = 'sensors';
 
-
-%{
 % Find the sensor so we can get its size
 sensorName = sensorImages(1).sensorname;
 
@@ -67,59 +51,73 @@ end
 
 %}
 
-GTStruct = [GTObjects{:}];
-GTBoxes = [];
-GTLabels = {};
-for jj = 1:numel(GTObjects)
+% Allocate a table to store image detection results, one per row
+resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
+GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
 
-    % This gets us a 2 x N matrix of boxes
-    tmpBox = GTStruct(jj).bbox2d;
-    GTBoxes= [GTBoxes; [tmpBox{:}]];
+for ii = 1:numel(sensorImages)
 
-    tmpLabel = GTStruct(jj).label;
-    % fprintf("jj is: %d\n",jj);
-    GTLabels{jj} = tmpLabel;
-end
+    GTObjects = sensorImages(ii).GTObjects;
+    sceneSize = sensorImages(ii).sceneSize;
+    detectorResults = sensorImages(ii).YOLOData;
 
-% Now we have a matrix of boxes & labels
-GTLabels = transpose(string(GTLabels));
-GTBoxes = double(GTBoxes);
+    GTStruct = [GTObjects{:}];
+    GTBoxes = [];
+    GTLabels = {};
+    for jj = 1:numel(GTObjects)
 
-GTTable = table('Size', [ 1 2], 'VariableTypes',{'cell', 'cell'});
-GTTable(1,1) = {GTBoxes};
-GTTable(1,2) = {GTLabels};
+        % This gets us a 2 x N matrix of boxes
+        tmpBox = GTStruct(jj).bbox2d;
+        GTBoxes= [GTBoxes; [tmpBox{:}]];
 
-%GTTable = table(double(GTBoxes), GTLabels, 'VariableNames','Boxes','Labels');
-blds = boxLabelDatastore(GTTable);
-
-tmpBoxes = [];
-scoreData = [];
-% Now we need to massage our detector results from their DB layout
-% need cells with categoricals, to match Ground Truth
-% HOWEVER, if we have "found" something with a different class
-%          then the call fails, so we need to weed those out. Sigh.
-allLabelData = detectorResults.labels;
-allScoreData = detectorResults.scores;
-numValid = 0;
-
-% We may have an issue where the bboxes from the detector don't match
-% the scale of the GT image (sigh). 
-for kk = 1:numel(detectorResults.bboxes)
-    % First check to see if valid
-    if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
-        % do nothing
-    else % okay to process
-        numValid = numValid + 1;
-        tmpBoxes = [tmpBoxes; cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW> 
-        labelData(numValid) = categorical(cellstr(allLabelData{kk}));
-        scoreData(numValid) = allScoreData{kk};
+        tmpLabel = GTStruct(jj).label;
+        % fprintf("jj is: %d\n",jj);
+        GTLabels{jj} = tmpLabel;
     end
+
+    % Now we have a matrix of boxes & labels
+    GTLabels = transpose(string(GTLabels));
+    GTBoxes = double(GTBoxes);
+
+    GTTable(ii,1) = {GTBoxes};
+    GTTable(ii,2) = {GTLabels};
+
+
+    tmpBoxes = [];
+    scoreData = [];
+    % Now we need to massage our detector results from their DB layout
+    % need cells with categoricals, to match Ground Truth
+    % HOWEVER, if we have "found" something with a different class
+    %          then the call fails, so we need to weed those out. Sigh.
+    allLabelData = detectorResults.labels;
+    allScoreData = detectorResults.scores;
+    numValid = 0;
+
+    % clear out old data
+    tmpBoxes = [];
+    clear labelData;
+    scoreData = [];
+    % We may have an issue where the bboxes from the detector don't match
+    % the scale of the GT image (sigh).
+    for kk = 1:numel(detectorResults.bboxes)
+        % First check to see if valid
+        if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
+            % do nothing
+        else % okay to process
+            numValid = numValid + 1;
+            tmpBoxes = [tmpBoxes; cell2mat(detectorResults.bboxes{kk})];  %#ok<*AGROW>
+            labelData(numValid) = categorical(cellstr(allLabelData{kk}));
+            scoreData(numValid) = allScoreData{kk};
+        end
+    end
+
+    resultTable(ii,1) = {tmpBoxes};
+    resultTable(ii,2) = {transpose(scoreData)};
+    resultTable(ii,3) = {transpose(labelData)};
 end
 
-resultTable = table('Size',[1 3],'VariableTypes',{'cell','cell','cell'});
-resultTable(1,1) = {tmpBoxes};
-resultTable(1,2) = {transpose(scoreData)};
-resultTable(1,3) = {transpose(labelData)};
+% Buils a box data store now that we have all the GT needed
+blds = boxLabelDatastore(GTTable);
 
 useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
