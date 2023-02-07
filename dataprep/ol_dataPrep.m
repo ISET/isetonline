@@ -439,9 +439,9 @@ for iii = 1:numel(sensorFiles)
     ip_bracket = ipCompute(ip_bracket, sensor_bracket);
 
     % save an RGB JPEG using our default IP so we can show a preview
-    outputFile = ipSaveImage(ip_ae, ipLocalJPEG);
-    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst);
-    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket);
+    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, 'cropborder', true);
+    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, 'cropborder', true);
+    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, 'cropborder', true);
 
     % We also want to save a YOLO-annotated version of each
     % Generate images to use for YOLO
