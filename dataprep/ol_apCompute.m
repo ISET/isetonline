@@ -1,6 +1,8 @@
 function [ap, precision, recall] = ol_apCompute(sensorImages)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
 
+% Working to add support for single class AP
+
 % Extract one or more sensorImages to get GTObjects and YOLO
 % Example .sceneID: 1112154540
 %         .sensorname: MTV9V024-RGB
