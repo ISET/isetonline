@@ -49,8 +49,16 @@ end
 
 %}
 
+% Start with detecting a single class for now
+singleClass = true;
+
 % Allocate a table to store image detection results, one per row
-resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
+if singleClass
+    resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'cell','cell'});
+else
+    resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
+end
+
 GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
 
 % number of sensor images that have matching classes
@@ -59,7 +67,14 @@ numValid = 0;
 for ii = 1:numel(sensorImages)
 
     fprintf("Processing image %s\n", sensorImages(ii).scenename);
-    GTObjects = sensorImages(ii).GTObjects;
+    if singleClass
+        % cT has label, bbox, distance, name
+        GTObjects = sensorImages(ii).closestTarget;
+    else
+        % GTO has rows of: label, bbox2d, catID, distance
+        GTObjects = sensorImages(ii).GTObjects;
+    end
+
     sceneSize = sensorImages(ii).sceneSize;
     detectorResults = sensorImages(ii).YOLOData;
 
@@ -69,7 +84,11 @@ for ii = 1:numel(sensorImages)
     for jj = 1:numel(GTObjects)
 
         % This gets us a 2 x N matrix of boxes
-        tmpBox = GTStruct(jj).bbox2d;
+        if singleClass
+            tmpBox = GTStruct(jj).bbox;
+        else
+            tmpBox = GTStruct(jj).bbox2d;
+        end
         GTBoxes= [GTBoxes; [tmpBox{:}]];
 
         tmpLabel = GTStruct(jj).label;
