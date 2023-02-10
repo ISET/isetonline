@@ -78,7 +78,11 @@ for ii = 1:numel(sensorImages)
     sceneSize = sensorImages(ii).sceneSize;
     detectorResults = sensorImages(ii).YOLOData;
 
-    GTStruct = [GTObjects{:}];
+    if singleClass
+        GTStruct = GTObjects;
+    else
+        GTStruct = [GTObjects{:}];
+    end
     GTBoxes = [];
     GTLabels = {};
     for jj = 1:numel(GTObjects)
@@ -98,10 +102,15 @@ for ii = 1:numel(sensorImages)
 
     % Now we have a matrix of boxes & labels
     GTLabels = transpose(string(GTLabels));
-    GTBoxes = double(GTBoxes);
 
-    GTTable(ii,1) = {GTBoxes};
-    GTTable(ii,2) = {GTLabels};
+    GTBoxes = double(GTBoxes);
+    if ~singleClass
+        GTTable(ii,1) = {GTBoxes};
+        GTTable(ii,2) = {GTLabels};
+    else
+        GTTable{ii,1} = {GTBoxes};
+        GTTable{ii,2} = {GTLabels};
+end
 
     % Now we need to massage our detector results from their DB layout
     % need cells with categoricals, to match Ground Truth
@@ -151,7 +160,9 @@ for ii = 1:numel(sensorImages)
             resultTable(ii,1) = {tmpBoxes};
             resultTable(ii,2) = {transpose(scoreData)};
             tmpLabel = transpose(labelData);
-            resultTable(ii,3) = tmpLabel;
+            if ~singleClass
+                resultTable(ii,3) = tmpLabel;
+            end
         catch
             % pause
         end
