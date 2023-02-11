@@ -87,6 +87,9 @@ imageMetadataArray = [];
 oiDefault = oiCreate('shift invariant');
 
 % both our auto sensors are about 4.55mm x 2.97mm
+% That is a 1.5 aspect ratio, but our scenes are 1.77 (1920/1080)
+% So that + resolution mean that our YOLO data won't match GT Data
+% But this should be calculated for each size sensor if we add more
 oiDefault = oiSet(oiDefault, 'focal length', .006);
 
 % 'local' for iaFileDataRoot allows for local 'test' copies of file data
