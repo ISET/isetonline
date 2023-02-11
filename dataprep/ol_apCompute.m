@@ -149,19 +149,15 @@ end
 
     if singleClass
         % For singleClass we need to find the closest match YOLO object
-        % and _only_ compare it
-        % We have bboxes, but not distances, so maybe pick class
-        % and highest score?
+        % and _only_ compare it. We pick the one with max Overlap
 
-        % Match Label
-        % Pick Smallest Distance
-        % Put that element in the all**
-
-        % Match Label
+        % Match Label -- returns indices
         matchingElements = matches(detectorResults.labels, ourClass);
-
-        % Now pick smallest distance
-
+        matchingBoxes = detectorResults.bboxes(matchingElements);
+        matchingScores = detectorResults.scores(matchingElements);
+        % Now pick best fit of the matching elements
+        maxOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{2}), ...
+            cell2mat(tmpBox)));
 
         allLabelData = detectorResults.labels;
         allScoreData = detectorResults.scores;
@@ -235,4 +231,5 @@ end
 useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
+
 
