@@ -38,30 +38,6 @@ else
     singleClass = false;
 end
 
-%{
-% We MAY need to scale YOLOData to match ther resolution of the GT Scene
-ourDB = isetdb(); 
-dbTable = 'sensors';
-
-% Find the sensor so we can get its size
-sensorName = sensorImages(1).sensorname;
-
-queryString = sprintf("{""name"": ""%s""}", sensorName);
-sensor = ourDB.docFind(dbTable, queryString);
-
-unscaledDetectorResults = sensorImages(1).YOLOData; % gets bboxes, scores, labels
-sensorSize = [sensor.rows sensor.cols];
-
-scaleRatio = [single(sceneSize{1}) / single(sensorSize(1)), single(sceneSize{2}) / single(sensorSize(2))];
-for qq = 1:numel(unscaledDetectorResults.bboxes)
-    s{1} = unscaledDetectorResults.bboxes{qq}{1} * scaleRatio(1);
-    s{2} = unscaledDetectorResults.bboxes{qq}{2} * scaleRatio(2);
-    s{3} = unscaledDetectorResults.bboxes{qq}{3} * scaleRatio(1);
-    s{4} = unscaledDetectorResults.bboxes{qq}{4} * scaleRatio(2);
-    detectorResults(qq).bboxes = s;
-end
-
-%}
 
 % Allocate a table to store image detection results, one per row
 if singleClass
@@ -92,6 +68,9 @@ resultTable = table();
 
 for ii = 1:numel(sensorImages)
 
+    % YOLO is in sensor pixels, we need to scale to match scene pixels
+    detectorResults = scaleDetectorResults(sensorImages(ii));
+
     fprintf("Processing image %s\n", sensorImages(ii).scenename);
     if singleClass
         % cT has label, bbox, distance, name
@@ -100,9 +79,6 @@ for ii = 1:numel(sensorImages)
         % GTO has rows of: label, bbox2d, catID, distance
         GTObjects = sensorImages(ii).GTObjects;
     end
-
-    sceneSize = sensorImages(ii).sceneSize;
-    detectorResults = sensorImages(ii).YOLOData;
 
     if singleClass
         GTStruct = GTObjects;
@@ -232,4 +208,27 @@ useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
 
+function detectorResults = scaleDetectorResults(sensorImage)
+% We need to scale YOLOData to match ther resolution of the GT Scene
+ourDB = isetdb(); 
+dbTable = 'sensors';
 
+% Find the sensor so we can get its size
+sensorName = sensorImage.sensorname;
+
+queryString = sprintf("{""name"": ""%s""}", sensorName);
+sensor = ourDB.docFind(dbTable, queryString);
+sceneSize = sensorImage.sceneSize;
+
+unscaledDetectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+sensorSize = [sensor.rows sensor.cols];
+
+scaleRatio = [single(sceneSize{1}) / single(sensorSize(1)), single(sceneSize{2}) / single(sensorSize(2))];
+for qq = 1:numel(unscaledDetectorResults.bboxes)
+    s{1} = unscaledDetectorResults.bboxes{qq}{1} * scaleRatio(1);
+    s{2} = unscaledDetectorResults.bboxes{qq}{2} * scaleRatio(2);
+    s{3} = unscaledDetectorResults.bboxes{qq}{3} * scaleRatio(1);
+    s{4} = unscaledDetectorResults.bboxes{qq}{4} * scaleRatio(2);
+    detectorResults(qq).bboxes = s;
+end
+end
