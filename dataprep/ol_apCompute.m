@@ -1,7 +1,5 @@
-function [ap, precision, recall] = ol_apCompute(sensorImages)
+function [ap, precision, recall] = ol_apCompute(sensorImages, varargin)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
-
-% Working to add support for single class AP
 
 % Extract one or more sensorImages to get GTObjects and YOLO
 % Example .sceneID: 1112154540
@@ -19,12 +17,26 @@ target = 'truck';
 queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
-[ap, precision, recall] = ol_apCompute(sensorImages);
+[ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
 
 %}
 
 % D. Cardinal, Stanford University, 2023
 
+p = inputParser();
+
+% If we only want a single class
+addParameter(p, 'class', '');
+
+varargin = ieParamFormat(varargin);
+p.parse(varargin{:});
+
+if ~isempty(p.Results.class)
+    ourClass = p.Results.class;
+    singleClass = true;
+else
+    singleClass = false;
+end
 
 %{
 % We MAY need to scale YOLOData to match ther resolution of the GT Scene
@@ -51,9 +63,6 @@ end
 
 %}
 
-% Start with detecting a single class for now
-singleClass = true;
-
 % Allocate a table to store image detection results, one per row
 if singleClass
     resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'cell','cell'});
@@ -65,6 +74,21 @@ GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'
 
 % number of sensor images that have matching classes
 numValid = 0;
+
+resultTable = table();
+
+% ii is image iterator
+% numValid is how many images have useful data
+% jj is GTObjects iterator
+% kk is YOLO  iterator
+
+    % clear out old data
+    tmpBoxes = {};
+    labelData = [];
+    scoreData = {};
+    ourScoreData = [];
+    ourLabelData = [];
+
 
 for ii = 1:numel(sensorImages)
 
@@ -87,6 +111,9 @@ for ii = 1:numel(sensorImages)
     end
     GTBoxes = [];
     GTLabels = {};
+
+    % First process the ground truth objects
+    % For singleClass case we only use the closestObject
     for jj = 1:numel(GTObjects)
 
         % This gets us a 2 x N matrix of boxes
@@ -115,25 +142,45 @@ for ii = 1:numel(sensorImages)
 end
 
     % Now we need to massage our detector results from their DB layout
-    % need cells with categoricals, to match Ground Truth
+    % (multiclass needs cells with categoricals, to match Ground Truth)
     % HOWEVER, if we have "found" something with a different class
     %          then the call fails, so we need to weed those out. Sigh.
-    allLabelData = detectorResults.labels;
-    allScoreData = detectorResults.scores;
+    %
 
-    % clear out old data
-    tmpBoxes = {};
-    labelData = [];
-    scoreData = {};
+    if singleClass
+        % For singleClass we need to find the closest match YOLO object
+        % and _only_ compare it
+        % We have bboxes, but not distances, so maybe pick class
+        % and highest score?
+
+        % Match Label
+        % Pick Smallest Distance
+        % Put that element in the all**
+
+        % Match Label
+        matchingElements = matches(detectorResults.labels, ourClass);
+
+        % Now pick smallest distance
+
+
+        allLabelData = detectorResults.labels;
+        allScoreData = detectorResults.scores;
+
+        foo = 1; % bogus statement
+    else
+        allLabelData = detectorResults.labels;
+        allScoreData = detectorResults.scores;
+    end
+
+    tmpBoxes = [];
+
 
     % Assume not valid as we might have no boxes
     imgValid = false;
     if ~isequal(class(allLabelData),'cell')
         allLabelData = {allLabelData}; % make into a cell
     end
-        scoreData{numValid+1} = {};
-        ourScoreData = {};
-        ourLabelData = [];
+
         for kk = 1:numel(allLabelData)
 
             if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
@@ -146,7 +193,6 @@ end
                     ourScoreData = [ourScoreData allScoreData{kk}]; %#ok<*AGROW> 
                     ourLabelData = [ourLabelData; cellstr(allLabelData{kk})];
 
-                    numValid = numValid + 1;
                     imgValid = true;
                 catch
                     fprintf("failed processing image %s\n", sensorImages(ii).scenename);
@@ -155,24 +201,36 @@ end
                 end
             end
         end
+
+    % If the image has 1 or more targets worth processing
+    % (?? We might miss the case where YOLO detects nothing?)
     if imgValid
+        % Increment the valid image count
+        numValid = numValid + 1;
         try
             scoreData = ourScoreData(numValid);
             labelData = {ourLabelData(numValid)};
-            resultTable(ii,1) = {tmpBoxes};
-            resultTable(ii,2) = {transpose(scoreData)};
-            tmpLabel = transpose(labelData);
-            if ~singleClass
-                resultTable(ii,3) = tmpLabel;
-            end
+            BBoxes(numValid) = {tmpBoxes};
+            Results(numValid) = {transpose(scoreData)};
+            Labels(numValid) = transpose(labelData);
         catch
             % pause
         end
     end
 end
 
-% Buils a box data store now that we have all the GT needed
+% Builds a box data store now that we have all the GT needed
 blds = boxLabelDatastore(GTTable);
+
+% Now build resultTable
+Results = transpose(Results);
+BBoxes = transpose(BBoxes);
+
+if singleClass
+    resultTable = table(BBoxes,Results);
+else
+    resultTable = table(BBoxes,Results,Labels);
+end
 
 useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
