@@ -132,7 +132,7 @@ end
         matchingBoxes = detectorResults.bboxes(matchingElements);
         matchingScores = detectorResults.scores(matchingElements);
         % Now pick best fit of the matching elements
-        maxOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{2}), ...
+        maxOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{1}), ...
             cell2mat(tmpBox)));
 
         allLabelData = detectorResults.labels;
@@ -220,15 +220,16 @@ queryString = sprintf("{""name"": ""%s""}", sensorName);
 sensor = ourDB.docFind(dbTable, queryString);
 sceneSize = sensorImage.sceneSize;
 
-unscaledDetectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+
 sensorSize = [sensor.rows sensor.cols];
 
 scaleRatio = [single(sceneSize{1}) / single(sensorSize(1)), single(sceneSize{2}) / single(sensorSize(2))];
-for qq = 1:numel(unscaledDetectorResults.bboxes)
-    s{1} = unscaledDetectorResults.bboxes{qq}{1} * scaleRatio(1);
-    s{2} = unscaledDetectorResults.bboxes{qq}{2} * scaleRatio(2);
-    s{3} = unscaledDetectorResults.bboxes{qq}{3} * scaleRatio(1);
-    s{4} = unscaledDetectorResults.bboxes{qq}{4} * scaleRatio(2);
-    detectorResults(qq).bboxes = s;
+for qq = 1:numel(detectorResults.bboxes)
+    detectorResults.bboxes{qq}{1} = detectorResults.bboxes{qq}{1} * scaleRatio(1);
+    detectorResults.bboxes{qq}{2} = detectorResults.bboxes{qq}{2} * scaleRatio(2);
+    detectorResults.bboxes{qq}{3} = detectorResults.bboxes{qq}{3} * scaleRatio(1);
+    detectorResults.bboxes{qq}{4} = detectorResults.bboxes{qq}{4} * scaleRatio(2);
 end
 end
+
