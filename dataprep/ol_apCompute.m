@@ -38,6 +38,8 @@ else
     singleClass = false;
 end
 
+% FOR DEBUGGING
+%sensorImages = sensorImages(1:10);
 
 % Allocate a table to store image detection results, one per row
 if singleClass
@@ -58,12 +60,12 @@ resultTable = table();
 % jj is GTObjects iterator
 % kk is YOLO  iterator
 
-    % clear out old data
-    tmpBoxes = {};
-    labelData = [];
-    scoreData = {};
-    ourScoreData = [];
-    ourLabelData = [];
+% clear out old data
+tmpBoxes = {};
+labelData = [];
+scoreData = {};
+ourScoreData = [];
+ourLabelData = [];
 
 
 for ii = 1:numel(sensorImages)
@@ -115,7 +117,7 @@ for ii = 1:numel(sensorImages)
     else
         GTTable{ii,1} = {GTBoxes};
         GTTable{ii,2} = {GTLabels};
-end
+    end
 
     % Now we need to massage our detector results from their DB layout
     % (multiclass needs cells with categoricals, to match Ground Truth)
@@ -127,19 +129,34 @@ end
         % For singleClass we need to find the closest match YOLO object
         % and _only_ compare it. We pick the one with max Overlap
 
-        % Match Label -- returns indices
+        % Match Label -- returns indices of YOLO results for our class
         matchingElements = matches(detectorResults.labels, ourClass);
         matchingBoxes = detectorResults.bboxes(matchingElements);
         matchingScores = detectorResults.scores(matchingElements);
+
         % Now pick best fit of the matching elements
-        maxOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{1}), ...
-            cell2mat(tmpBox)));
+        maxOverlap = 0; % default
 
-        allLabelData = detectorResults.labels;
-        allScoreData = detectorResults.scores;
+        for ll = 1:numel(matchingBoxes)
+            tmpOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
+                cell2mat(tmpBox)));
+            if tmpOverlap > maxOverlap
+                maxOverlap = tmpOverlap;
 
-        foo = 1; % bogus statement
+                try
+                % bestBox and bestScore get the best fit we have
+                bestBox = matchingBoxes{ll};
+                bestScore = matchingScores(ll);
+                catch err
+                    fprintf("Error %s on boxes\n", err.message);
+                end
+            end
+        end
+
+        % Now we have the best fit bounding box
+
     else
+        % we need to work harder to do calcs: TBD!
         allLabelData = detectorResults.labels;
         allScoreData = detectorResults.scores;
     end
@@ -149,9 +166,30 @@ end
 
     % Assume not valid as we might have no boxes
     imgValid = false;
-    if ~isequal(class(allLabelData),'cell')
-        allLabelData = {allLabelData}; % make into a cell
-    end
+
+    if singleClass
+        % we may have what we need. GTStruct is the closestTarget
+        % and bestBox and bestScore are the closest we have
+
+        if ~isempty(GTStruct)
+            imgValid = true;
+        end
+        % We found something
+        if maxOverlap > 0
+            % Increment the valid image count
+            numValid = numValid + 1;
+            try
+                scoreData = bestScore;
+                BBoxes(numValid) = {cell2mat(bestBox)};
+                Results(numValid) = transpose(scoreData);
+            catch
+                % pause
+            end
+        end
+    else
+        if ~isequal(class(allLabelData),'cell')
+            allLabelData = {allLabelData}; % make into a cell
+        end
 
         for kk = 1:numel(allLabelData)
 
@@ -162,7 +200,7 @@ end
                 try
                     tmpBoxes = [tmpBoxes; cell2mat(detectorResults.bboxes{kk})];
                     % We want score & label to be cell arrays, like boxes
-                    ourScoreData = [ourScoreData allScoreData{kk}]; %#ok<*AGROW> 
+                    ourScoreData = [ourScoreData allScoreData{kk}]; %#ok<*AGROW>
                     ourLabelData = [ourLabelData; cellstr(allLabelData{kk})];
 
                     imgValid = true;
@@ -173,22 +211,23 @@ end
                 end
             end
         end
-
-    % If the image has 1 or more targets worth processing
-    % (?? We might miss the case where YOLO detects nothing?)
-    if imgValid
-        % Increment the valid image count
-        numValid = numValid + 1;
-        try
-            scoreData = ourScoreData(numValid);
-            labelData = {ourLabelData(numValid)};
-            BBoxes(numValid) = {tmpBoxes};
-            Results(numValid) = {transpose(scoreData)};
-            Labels(numValid) = transpose(labelData);
-        catch
-            % pause
+        % If the image has 1 or more targets worth processing
+        % (?? We might miss the case where YOLO detects nothing?)
+        if imgValid
+            % Increment the valid image count
+            numValid = numValid + 1;
+            try
+                scoreData = ourScoreData(numValid);
+                labelData = {ourLabelData(numValid)};
+                BBoxes(numValid) = {tmpBoxes};
+                Results(numValid) = {transpose(scoreData)};
+                Labels(numValid) = transpose(labelData);
+            catch
+                % pause
+            end
         end
     end
+
 end
 
 % Builds a box data store now that we have all the GT needed
@@ -208,9 +247,12 @@ useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
 
+%% -----------------------------------------------------------
+% Start supporting functions here
+
 function detectorResults = scaleDetectorResults(sensorImage)
 % We need to scale YOLOData to match ther resolution of the GT Scene
-ourDB = isetdb(); 
+ourDB = isetdb();
 dbTable = 'sensors';
 
 % Find the sensor so we can get its size
@@ -224,12 +266,31 @@ detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
 
 sensorSize = [sensor.rows sensor.cols];
 
-scaleRatio = [single(sceneSize{1}) / single(sensorSize(1)), single(sceneSize{2}) / single(sensorSize(2))];
-for qq = 1:numel(detectorResults.bboxes)
-    detectorResults.bboxes{qq}{1} = detectorResults.bboxes{qq}{1} * scaleRatio(1);
-    detectorResults.bboxes{qq}{2} = detectorResults.bboxes{qq}{2} * scaleRatio(2);
-    detectorResults.bboxes{qq}{3} = detectorResults.bboxes{qq}{3} * scaleRatio(1);
-    detectorResults.bboxes{qq}{4} = detectorResults.bboxes{qq}{4} * scaleRatio(2);
+scaleRatio = [double(sceneSize{1}) / double(sensorSize(1)), double(sceneSize{2}) / double(sensorSize(2))];
+
+% If we only have one bbox we have to handle it differently, apparently
+if numel(detectorResults.scores) == 1
+    try
+        tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
+        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
+        tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
+        detectorResults.bboxes = tmpBoxes;
+    catch err
+        fprintf('ERROR: %s\n', err.message);
+    end
+else
+    for qq = 1:numel(detectorResults.bboxes)
+        try
+            detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
+            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
+            detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
+        catch err
+            fprintf('ERROR: %s\n', err.message);
+        end
+    end
 end
 end
+
 
