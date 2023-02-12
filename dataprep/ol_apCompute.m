@@ -18,7 +18,7 @@ queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
 % for debugging
-sensorImages = sensorImages(1:100);
+%sensorImages = sensorImages(1:50);
 [ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
 
 figure;
@@ -171,31 +171,33 @@ for ii = 1:numel(sensorImages)
     tmpBoxes = [];
 
 
-    % Assume not valid as we might have no boxes
-    imgValid = false;
-
+    % Assume valid unless we have cases to throw it away
+    imgValid = true;
+    numValid = ii;
     if singleClass
         % we may have what we need. GTStruct is the closestTarget
         % and bestBox and bestScore are the closest we have
 
-        if ~isempty(GTStruct)
-            imgValid = true;
-        end
+        %if ~isempty(GTStruct)
+        %    imgValid = true;
+        %    numValid = numValid + 1;
+        %end
+        
         % We found something
         if maxOverlap > 0
             % Increment the valid image count
-            numValid = numValid + 1;
             try
                 scoreData = bestScore;
                 BBoxes(numValid) = {cell2mat(bestBox)};
                 Results(numValid) = transpose(scoreData);
             catch
                 % pause
-                scoreData = 0;
+                Results(numValid) = {[0]};
             end
         else
             Results(numValid) = {[0]};
-            scoreData = 0;
+            % Maybe an empty bbox works, but this one should get a 0 anyway
+            BBoxes(numValid) = {[1 1 1 1]}; % Not sure what to put here?
         end
     else
         if ~isequal(class(allLabelData),'cell')
@@ -214,10 +216,12 @@ for ii = 1:numel(sensorImages)
                     ourScoreData = [ourScoreData allScoreData{kk}]; %#ok<*AGROW>
                     ourLabelData = [ourLabelData; cellstr(allLabelData{kk})];
 
-                    imgValid = true;
+                    %imgValid = true;
                 catch
                     fprintf("failed processing image %s\n", sensorImages(ii).scenename);
-                    imgValid = false;
+                    %imgValid = false;
+                    % This is an issue as we've already added the GT to the
+                    % blds?
                     continue;
                 end
             end
@@ -225,14 +229,15 @@ for ii = 1:numel(sensorImages)
         % If the image has 1 or more targets worth processing
         % (?? We might miss the case where YOLO detects nothing?)
         if imgValid
+            % We're now assuming all valid, so no need to increment here
             % Increment the valid image count
-            numValid = numValid + 1;
+            % numValid = numValid + 1;
             try
                 scoreData = ourScoreData(numValid);
                 labelData = {ourLabelData(numValid)};
                 BBoxes(numValid) = {tmpBoxes};
                 if empty(scoreData)
-                    Results(numValid) = {[]};
+                    Results(numValid) = {[0]};
                 else
                     Results(numValid) = {transpose(scoreData)};
                 end
@@ -306,6 +311,7 @@ else
         end
     end
 end
+
 end
 
 
