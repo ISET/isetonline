@@ -17,7 +17,14 @@ target = 'truck';
 queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
+% for debugging
+sensorImages = sensorImages(1:100);
 [ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
+
+figure;
+plot(recall, precision);
+grid on
+title(sprintf('Average precision = %.1f', ap))
 
 %}
 
@@ -184,7 +191,11 @@ for ii = 1:numel(sensorImages)
                 Results(numValid) = transpose(scoreData);
             catch
                 % pause
+                scoreData = 0;
             end
+        else
+            Results(numValid) = {[0]};
+            scoreData = 0;
         end
     else
         if ~isequal(class(allLabelData),'cell')
@@ -220,7 +231,11 @@ for ii = 1:numel(sensorImages)
                 scoreData = ourScoreData(numValid);
                 labelData = {ourLabelData(numValid)};
                 BBoxes(numValid) = {tmpBoxes};
-                Results(numValid) = {transpose(scoreData)};
+                if empty(scoreData)
+                    Results(numValid) = {[]};
+                else
+                    Results(numValid) = {transpose(scoreData)};
+                end
                 Labels(numValid) = transpose(labelData);
             catch
                 % pause
@@ -292,5 +307,6 @@ else
     end
 end
 end
+
 
 
