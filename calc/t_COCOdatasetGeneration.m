@@ -114,9 +114,9 @@ for ss = 1:numel(sceneNames)
         elseif contains(lower(name), ['bicycle','bike'])
             label = 'vehicle';
             catId = dataDict('bicycle'); 
-        elseif contains(lower(name), ['motorbicycle','motorbike'])
+        elseif contains(lower(name), ['motorcycle','motorbike'])
             label = 'vehicle';
-            catId = dataDict('motorbicycle');
+            catId = dataDict('motorcycle');
 %             Id = 9;
 %             r = 1; g= 0.1; b = 0.1;
         else
