@@ -8,29 +8,35 @@
 % have a specific class of object as the closest:
 
 % Get a collection of images with a specific class of closest target
-ourDB = isetdb(); 
+ourDB = isetdb();
 dbTable = 'sensorImages';
 filter = 'closestTarget.label';
-target = 'truck';
-queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
+targetClass = 'truck';
+queryString = sprintf("{""closestTarget.label"": ""%s""}", targetClass);
 sensorImages = ourDB.docFind(dbTable, queryString);
+
+% For debugging can prune our data to save time
+%sensorImages = sensorImages(1:30);
 
 % Now we can separate by sensor name
 % Currently these are the two automotive sensors we have in our database
 sensorNames = {'MTV9V024-RGB', 'AR0132AT-RGB'};
 
+% Separate images by sensor
+perSensorImages = {};
+perSensorResults = {};
+
 for ii = 1:numel(sensorNames)
-    perSensorIndex = sensorImages(isequal(sensorname, sensorNames(ii)));
+    perSensorIndex = arrayfun(@(x) matches(x.sensorname, sensorNames{ii}),sensorImages);
+    perSensorImages{ii} = sensorImages(perSensorIndex); %#ok<*SAGROW>
+
+    [ap, precision, recall] = ol_apCompute(perSensorImages{ii}, 'class', ourClass);
+    perSensorResults{ii} = {ap, precision, recall};
+
+    figure;
+    plot(recall, precision);
+    grid on
+    title(sprintf('AP for %s on %s = %.1f', sensorNames{ii}, targetClass, ap))
+
 end
 
-%{
-Later on stuff:
-
-
-[ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
-
-figure;
-plot(recall, precision);
-grid on
-title(sprintf('Average precision = %.1f', ap))
-%}
