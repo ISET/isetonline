@@ -127,9 +127,13 @@ for ss = 1:numel(sceneNames)
         pos = [bbox2d.xmin bbox2d.ymin ...
             bbox2d.xmax-bbox2d.xmin ...
             bbox2d.ymax-bbox2d.ymin];
+
+        % if object < 10x10, ignore
         if pos(3)<10 || pos(4)<10
             continue
         end
+
+        % Not sure what this accomplishes, maybe meant something different?
         if pos(4)<500 && pos(3)>960
             continue
         end
