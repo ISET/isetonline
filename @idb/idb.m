@@ -14,7 +14,7 @@ classdef idb < handle
     methods (Static)
         function defaultDB = ISETdb()
             persistent ISETdb;
-            if ~exist(ISETdb, 'var')
+            if ~exist('ISETdb', 'var')
                 ISETdb = [];
             end
             if isempty(ISETdb)
