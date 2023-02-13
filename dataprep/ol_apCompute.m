@@ -92,7 +92,7 @@ for ii = 1:numel(sensorImages)
     % YOLO is in sensor pixels, we need to scale to match scene pixels
     detectorResults = scaleDetectorResults(sensorImages(ii));
 
-    fprintf("Processing image %s\n", sensorImages(ii).scenename);
+    %fprintf("Processing image %s\n", sensorImages(ii).scenename);
     if singleClass
         % cT has label, bbox, distance, name
         GTObjects = sensorImages(ii).closestTarget;
