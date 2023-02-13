@@ -27,7 +27,7 @@ queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
 % for debugging we can limit how many images to save time
-%sensorImages = sensorImages(1:50);
+sensorImages = sensorImages(1:4);
 
 % Rely on Matlab to do most of the heavy-lifting math
 [ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
@@ -306,7 +306,7 @@ if numel(detectorResults.scores) == 1
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
         tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -317,7 +317,7 @@ else
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
             detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
         catch err
             fprintf('ERROR: %s\n', err.message);
         end
