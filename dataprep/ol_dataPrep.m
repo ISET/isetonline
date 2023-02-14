@@ -4,7 +4,7 @@
 % using PBRT & re-processed for multiple illuminants. The
 % output is designed to be used by ISETOnline
 %
-% It does several things that should be separated:
+% It does several things that could be separated:
 % * Reads ISET scenes
 % * computes an Optical Image (OI)
 %   (currently using default optics)
@@ -13,46 +13,36 @@
 % * runs YOLO on each version of a sensorImage
 % * writes to metadata.json
 % * writes supporting files to web folders
-% * writes to sensorImage collection
+% * (if useDB == true) writes to sensorImage collection in ISETdb.
 %
-
-% Optionally can store in a mongoDB set of collections, in addition
-% to the file system by specifying useDB
 %
 % D. Cardinal, Stanford University, 2022
 %
 
-% NOTE: Currently we create each sensor with the ISETCam resolution,
-%       but that is not the same as the actual resolution of the products
-
-%% Currently we process one scenario
-% If we're using isetdb() then this should work, as we incrementally
-% add the needed files & sensorImage db docs, with metadata being
-% exported from our complete collection of them
+%% Currently we process one scenario at a time
 
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
+% Currently we have 3 lighting scenarios
 %scenarioName = 'nighttime';
+%scenarioName = 'nighttime_No_Streetlamps';
 scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
 % This is the place where our Web app expects to find web-accessible
 % Data files when running our dev environment locally. For production
-% use, it, along with the static "build" folder need to be copied over.
+% use, it, along with the static "build" folder need to be copied over
+% to the web server
 outputFolder = fullfile(onlineRootPath,'simcam','public');
 if ~isfolder(outputFolder)
     mkdir(outputFolder);
 end
 
 % Need to make db optional, as not everyone will be set up for it.
-useDB = true; % false;
+useDB = true;
 
-% We can either process pre-computed optical images
-% or synthetic scenes that have been rendered through a pinhole by PBRT
-% that Zhenyi is having Denesh render
-usePreComputedOI = false;
-
+% We processed synthetic scenes that have been rendered through a pinhole by PBRT
 % If we're using a database, typically it is the ISET default
 if useDB
     ourDB = isetdb();
