@@ -46,6 +46,7 @@ p = inputParser();
 
 % If we only want a single class
 addParameter(p, 'class', '');
+addParameter(p, 'distancerange', []);
 
 varargin = ieParamFormat(varargin);
 p.parse(varargin{:});
@@ -69,36 +70,33 @@ end
 
 GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
 
-% number of sensor images that have matching classes
-numValid = 0;
-
-resultTable = table();
-
 % ii is image iterator
 % numValid is how many images have useful data
 % jj is GTObjects iterator
 % kk is YOLO  iterator
 
 % clear out old data
-tmpBoxes = {};
-labelData = [];
-scoreData = {};
 ourScoreData = [];
 ourLabelData = [];
 
+% filter for distance range if needed
+if ~isempty(p.Results.distancerange)
+    filteredImages = arrayfun(@(x) (x.closestTarget.distance > p.Results.distancerange(1)), sensorImages);
+    filteredImages = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);    
+end
 
-for ii = 1:numel(sensorImages)
+for ii = 1:numel(filteredImages)
 
     % YOLO is in sensor pixels, we need to scale to match scene pixels
-    detectorResults = scaleDetectorResults(sensorImages(ii));
+    detectorResults = scaleDetectorResults(filteredImages(ii));
 
     %fprintf("Processing image %s\n", sensorImages(ii).scenename);
     if singleClass
         % cT has label, bbox, distance, name
-        GTObjects = sensorImages(ii).closestTarget;
+        GTObjects = filteredImages(ii).closestTarget;
     else
         % GTO has rows of: label, bbox2d, catID, distance
-        GTObjects = sensorImages(ii).GTObjects;
+        GTObjects = filteredImages(ii).GTObjects;
     end
 
     if singleClass
