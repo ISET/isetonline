@@ -45,7 +45,7 @@ else
     fQueryImageID = sprintf("{""sceneID"":""%s""}", sceneID);
 
     % Can't just put our object name here apparently?
-    gtQuery = sprintf("{""$set"":{""GTObjects"":%s}}", jsonencode(forDoc.GTObjects));
+    gtQuery = sprintf("{""$set"":{""GTObjects"":%s}}", jsonencode(forDoc.GTObject));
     targetQuery = sprintf("{""$set"":{""closestTarget"":%s}}", jsonencode(forDoc.closestTarget));
 
     for ii = 1:numel(useCollections)

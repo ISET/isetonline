@@ -8,7 +8,7 @@
 
 % Can optionally recreate the ground truth in our EXR scenes
 % or just update our sensor images or some other collection
-gtRecreate = false;
+gtRecreate = true;
 if gtRecreate
     projectName = 'Ford'; % we currently use folders per project
     projectFolder = fullfile(iaFileDataRoot('local', true), projectName);
@@ -43,8 +43,12 @@ for ii = 1:numel(ourScenes)
         [GTObjects, closestTarget] = olGetGroundTruth([], 'instanceFile', instanceFile, ...
             'additionalFile', additionalFile);
     % Store whatever ground truth we can calculate
-    ourScenes{ii}.GTObject = GTObjects;
-    ourScenes{ii}.closestTarget = closestTarget;
+    try
+        ourScenes(ii).GTObject = GTObjects;
+    catch err
+        fprintf('Failed assigning ground truth with error: %s\n', err.message);
+    end
+    ourScenes(ii).closestTarget = closestTarget;
     else
         % We already have ground truth in our SceneEXR
     end

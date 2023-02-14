@@ -8,6 +8,15 @@ function [ap, precision, recall] = ol_apCompute(sensorImages, varargin)
 %             Each cell: (.label, .bbox2d, .catId, .distance)
 %         .YOLOData (.bboxes, .scores, .labels) -- arrays of matching size
 
+% The case we've tested is filtering for the class of the closest target
+% in the image ground truth. We then compare that to the bounding box
+% images of the same class that our found by our detector (currently
+% YOLOv4). If there are none or there is no overlap, we score it as a 0.
+
+% Otherwise we calculate IoU and compare it to a threshold.
+% When finished you can use the ploting code below to plot precision and
+% recall and show the Average Precision for that class.
+
 %{
 % Test code:
 ourDB = isetdb(); 
@@ -17,14 +26,17 @@ target = 'truck';
 queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
-% for debugging
-%sensorImages = sensorImages(1:50);
+% for debugging we can limit how many images to save time
+sensorImages = sensorImages(1:4);
+
+% Rely on Matlab to do most of the heavy-lifting math
 [ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
 
+% Visualize the results
 figure;
 plot(recall, precision);
 grid on
-title(sprintf('Average precision = %.1f', ap))
+title(sprintf('AP for class %s = %.1f', target, ap))
 
 %}
 
@@ -80,7 +92,7 @@ for ii = 1:numel(sensorImages)
     % YOLO is in sensor pixels, we need to scale to match scene pixels
     detectorResults = scaleDetectorResults(sensorImages(ii));
 
-    fprintf("Processing image %s\n", sensorImages(ii).scenename);
+    %fprintf("Processing image %s\n", sensorImages(ii).scenename);
     if singleClass
         % cT has label, bbox, distance, name
         GTObjects = sensorImages(ii).closestTarget;
@@ -294,7 +306,7 @@ if numel(detectorResults.scores) == 1
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
         tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -305,7 +317,7 @@ else
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
             detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
         catch err
             fprintf('ERROR: %s\n', err.message);
         end
