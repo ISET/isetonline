@@ -23,7 +23,7 @@ if gtRecreate
     useCollection{1} = 'autoScenesEXR';
     useCollection{2} = 'sensorImages';
 else
-    % we already have gt in autoScenesEXR, but we want to 
+    % we already have gt in autoScenesEXR, but we want to
     % update sensorImages based on it
     useCollection{1} = 'sensorImages';
 end
@@ -33,22 +33,25 @@ ourDB = isetdb();
 % Retrieve all of our scenes
 ourScenes = ourDB.docFind('autoScenesEXR',[]);
 
-for ii = 1:numel(ourScenes)
-    
+sceneRange = numel(ourScenes);
+% for debugging
+sceneRange = 100;
+for ii = 1:sceneRange
+
     if gtRecreate
         % we recalculate the ground truth right from the .exr files
-        instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes(ii).sceneID));
-        additionalFile = fullfile(infoFolder, sprintf('%s.txt', ourScenes(ii).sceneID));
+        instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes{ii}.sceneID));
+        additionalFile = fullfile(infoFolder, sprintf('%s.txt', ourScenes{ii}.sceneID));
 
         [GTObjects, closestTarget] = olGetGroundTruth([], 'instanceFile', instanceFile, ...
             'additionalFile', additionalFile);
-    % Store whatever ground truth we can calculate
-    try
-        ourScenes(ii).GTObject = GTObjects;
-    catch err
-        fprintf('Failed assigning ground truth with error: %s\n', err.message);
-    end
-    ourScenes(ii).closestTarget = closestTarget;
+        % Store whatever ground truth we can calculate
+        try
+            ourScenes{ii}.GTObject = GTObjects;
+            ourScenes{ii}.closestTarget = closestTarget;
+        catch err
+            fprintf('Failed assigning ground truth with error: %s\n', err.message);
+        end
     else
         % We already have ground truth in our SceneEXR
     end

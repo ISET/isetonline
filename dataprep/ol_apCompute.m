@@ -68,10 +68,7 @@ else
     resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
 end
 
-GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
-
 % ii is image iterator
-% numValid is how many images have useful data
 % jj is GTObjects iterator
 % kk is YOLO  iterator
 
@@ -83,6 +80,8 @@ ourLabelData = [];
 if ~isempty(p.Results.distancerange)
     filteredImages = arrayfun(@(x) (x.closestTarget.distance > p.Results.distancerange(1)), sensorImages);
     filteredImages = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);    
+else
+    filteredImages = sensorImages;
 end
 
 for ii = 1:numel(filteredImages)

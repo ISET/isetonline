@@ -41,7 +41,7 @@ instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5
-headerLines = 4;
+headerLines = 5;
 objectslist = readlines(options.additionalFile);
 objectslist = objectslist((headerLines+1):end);
 
@@ -102,7 +102,7 @@ for ii = 1:numel(objectslist)
     if pos(3)<10 || pos(4)<10
         continue
     end
-    if pos(4)>500 && pos(3)>960
+    if pos(4)>1000 && pos(3)>1500
         continue
     end
     if area <= 0 % Not sure how this can happen if we have height & width
