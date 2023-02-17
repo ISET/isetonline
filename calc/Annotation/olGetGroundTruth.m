@@ -14,9 +14,6 @@ function [GTObjects, closestTarget] = olGetGroundTruth(scene, varargin)
 %   that has a map of object instances to pixels
 % additionalFile is a text file with the list of objects in the scene
 
-% TBD: Allow passing in of depthmap, so we can compare to instance map
-%      and get a depth number for each object of interest
-
 p = inputParser;
 addParameter(p,'instanceFile','',@ischar);
 addParameter(p,'additionalFile','',@ischar);
@@ -58,7 +55,8 @@ objectIndex = 1;
 
 % Calculate this once to save time
 imageEXR = replace(options.instanceFile,'instanceID','skymap');
-useDepthMap = piReadEXR(imageEXR, 'dataType','zdepth');
+% try reading all depth channels at once
+useDepthMap = piReadEXR(imageEXR, 'dataType','alldepth');
 
 
 
@@ -127,7 +125,7 @@ for ii = 1:numel(objectslist)
         GTObjects(objectIndex).distance = ...
             min(scene.depthMap(instanceMap == ii),[],"all");
     else
-        % change depth to zdepth so things work faster
+        % change depth to depth so things work faster
         GTObjects(objectIndex).distance = ...
             min(useDepthMap(instanceMap == ii),[],"all");
     end

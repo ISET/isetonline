@@ -35,7 +35,7 @@ ourScenes = ourDB.docFind('autoScenesEXR',[]);
 
 sceneRange = numel(ourScenes);
 % for debugging
-sceneRange = 501:1500;
+sceneRange = 1:10;
 for ii = sceneRange
 
     if gtRecreate
