@@ -38,15 +38,15 @@ if ~isopen(obj.connection)
 else
 
     % Can't use . notation for an _ field
-    docID = getfield(forDoc{1},'_id');
-    sceneID = forDoc{1}.sceneID;
+    docID = getfield(forDoc,'_id');
+    sceneID = forDoc.sceneID;
 
     fQueryOID = sprintf("{""_id"":{""$oid"":""%s""}}", docID);
     fQueryImageID = sprintf("{""sceneID"":""%s""}", sceneID);
 
     % Can't just put our object name here apparently?
-    gtQuery = sprintf("{""$set"":{""GTObjects"":%s}}", jsonencode(forDoc{1}.GTObject));
-    targetQuery = sprintf("{""$set"":{""closestTarget"":%s}}", jsonencode(forDoc{1}.closestTarget));
+    gtQuery = sprintf("{""$set"":{""GTObjects"":%s}}", jsonencode(forDoc.GTObject));
+    targetQuery = sprintf("{""$set"":{""closestTarget"":%s}}", jsonencode(forDoc.closestTarget));
 
     for ii = 1:numel(useCollections)
         % These could be combined when we get adventurous

@@ -31,8 +31,10 @@ GTObjects = []; % make sure we return a value
 catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
 % These categories are 1 less than in the paper, but maybe
 % that is how they've been coded in the Blender exported scenes?
-catIds   = [0, 91, 2, 5, 7, 1, 3];
-dataDict = dictionary(catNames, catIds);
+% paper catIDs
+catIDs   = [1, 19, 3, 6, 8, 2, 4];
+% Zhenyi's catIds   = [0, 91, 2, 5, 7, 1, 3];
+dataDict = dictionary(catNames, catIDs);
 
 instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 
@@ -107,7 +109,7 @@ for ii = 1:numel(objectslist)
     if pos(3)<10 || pos(4)<10
         continue
     end
-    if pos(4)>1000 && pos(3)>1500
+    if pos(4)>500 && pos(3)>1000
         continue
     end
     if area <= 0 % Not sure how this can happen if we have height & width
