@@ -35,20 +35,20 @@ ourScenes = ourDB.docFind('autoScenesEXR',[]);
 
 sceneRange = numel(ourScenes);
 % for debugging
-sceneRange = 501:1500;
+sceneRange = 1:10;
 for ii = sceneRange
 
     if gtRecreate
         % we recalculate the ground truth right from the .exr files
-        instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes{ii}.sceneID));
-        additionalFile = fullfile(infoFolder, sprintf('%s.txt', ourScenes{ii}.sceneID));
+        instanceFile = fullfile(EXRFolder, sprintf('%s_instanceID.exr', ourScenes(ii).sceneID));
+        additionalFile = fullfile(infoFolder, sprintf('%s.txt', ourScenes(ii).sceneID));
 
         [GTObjects, closestTarget] = olGetGroundTruth([], 'instanceFile', instanceFile, ...
             'additionalFile', additionalFile);
         % Store whatever ground truth we can calculate
         try
-            ourScenes{ii}.GTObject = GTObjects;
-            ourScenes{ii}.closestTarget = closestTarget;
+            ourScenes(ii).GTObject = GTObjects;
+            ourScenes(ii).closestTarget = closestTarget;
         catch err
             fprintf('Failed assigning ground truth with error: %s\n', err.message);
         end
