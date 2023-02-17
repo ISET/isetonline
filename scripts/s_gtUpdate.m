@@ -35,8 +35,8 @@ ourScenes = ourDB.docFind('autoScenesEXR',[]);
 
 sceneRange = numel(ourScenes);
 % for debugging
-sceneRange = 100;
-for ii = 1:sceneRange
+sceneRange = 501:1500;
+for ii = sceneRange
 
     if gtRecreate
         % we recalculate the ground truth right from the .exr files

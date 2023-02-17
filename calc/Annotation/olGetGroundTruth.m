@@ -55,6 +55,13 @@ closestTarget.bbox = [];
 
 % Some objects won't be written out, so start an index
 objectIndex = 1;
+
+% Calculate this once to save time
+imageEXR = replace(options.instanceFile,'instanceID','skymap');
+useDepthMap = piReadEXR(imageEXR, 'dataType','zdepth');
+
+
+
 for ii = 1:numel(objectslist)
 
     name = objectslist{ii};
@@ -120,8 +127,7 @@ for ii = 1:numel(objectslist)
         GTObjects(objectIndex).distance = ...
             min(scene.depthMap(instanceMap == ii),[],"all");
     else
-        imageEXR = replace(options.instanceFile,'instanceID','skymap');
-        useDepthMap = piReadEXR(imageEXR, 'dataType','depth');
+        % change depth to zdepth so things work faster
         GTObjects(objectIndex).distance = ...
             min(useDepthMap(instanceMap == ii),[],"all");
     end
