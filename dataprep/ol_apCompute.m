@@ -60,7 +60,7 @@ end
 
 % Allocate a table to store image detection results, one per row
 if singleClass
-    resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'cell','cell'});
+    resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'double','cell'});
 else
     resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
 end
@@ -203,7 +203,7 @@ for ii = 1:numel(filteredImages)
             try
                 scoreData = bestScore;
                 BBoxes(imgIndex) = {cell2mat(bestBox)};
-                Results(imgIndex) = transpose(scoreData);
+                Results(imgIndex) = scoreData;
             catch
                 % pause
                 Results(imgIndex) = {[0]};
@@ -309,7 +309,7 @@ if numel(detectorResults.scores) == 1
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
         tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -320,7 +320,7 @@ else
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
             detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
         catch err
             fprintf('ERROR: %s\n', err.message);
         end
