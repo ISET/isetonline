@@ -78,11 +78,12 @@ ourLabelData = [];
 % filter for distance range if needed
 if ~isempty(p.Results.distancerange)
     filteredImages = arrayfun(@(x) (x.closestTarget.distance > p.Results.distancerange(1)), sensorImages);
-    filteredImages = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);    
+    filteredImages = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);
 else
     filteredImages = sensorImages;
 end
 
+imgIndex = 0;
 for ii = 1:numel(filteredImages)
 
     % YOLO is in sensor pixels, we need to scale to match scene pixels
@@ -92,9 +93,19 @@ for ii = 1:numel(filteredImages)
     if singleClass
         % cT has label, bbox, distance, name
         GTObjects = filteredImages(ii).closestTarget;
+        if  matches(GTObjects(:).label, ourClass) == true
+            % we have an image that includes our class
+            imgValid = true;
+            imgIndex = imgIndex + 1;
+        else
+            imgValid = false;
+            continue
+        end
     else
         % GTO has rows of: label, bbox2d, catID, distance
         GTObjects = filteredImages(ii).GTObjects;
+        imgValid = true;
+        imgIndex = imgIndex + 1;
     end
 
     if singleClass
@@ -127,11 +138,11 @@ for ii = 1:numel(filteredImages)
 
     GTBoxes = double(GTBoxes);
     if ~singleClass
-        GTTable(ii,1) = {GTBoxes};
-        GTTable(ii,2) = {GTLabels};
+        GTTable(imgIndex,1) = {GTBoxes};
+        GTTable(imgIndex,2) = {GTLabels};
     else
-        GTTable{ii,1} = {GTBoxes};
-        GTTable{ii,2} = {GTLabels};
+        GTTable{imgIndex,1} = {GTBoxes};
+        GTTable{imgIndex,2} = {GTLabels};
     end
 
     % Now we need to massage our detector results from their DB layout
@@ -153,22 +164,21 @@ for ii = 1:numel(filteredImages)
         maxOverlap = 0; % default
 
         for ll = 1:numel(matchingBoxes)
-            tmpOverlap = max(bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
-                cell2mat(tmpBox)));
+            tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
+                cell2mat(tmpBox));
             if tmpOverlap > maxOverlap
                 maxOverlap = tmpOverlap;
 
                 try
-                % bestBox and bestScore get the best fit we have
-                bestBox = matchingBoxes{ll};
-                bestScore = matchingScores(ll);
+                    % bestBox and bestScore get the best fit we have
+                    bestBox = matchingBoxes{ll};
+                    bestScore = matchingScores(ll);
+
                 catch err
                     fprintf("Error %s on boxes\n", err.message);
                 end
             end
         end
-
-        % Now we have the best fit bounding box
 
     else
         % we need to work harder to do calcs: TBD!
@@ -178,10 +188,6 @@ for ii = 1:numel(filteredImages)
 
     tmpBoxes = [];
 
-
-    % Assume valid unless we have cases to throw it away
-    imgValid = true;
-    numValid = ii;
     if singleClass
         % we may have what we need. GTStruct is the closestTarget
         % and bestBox and bestScore are the closest we have
@@ -190,22 +196,22 @@ for ii = 1:numel(filteredImages)
         %    imgValid = true;
         %    numValid = numValid + 1;
         %end
-        
+
         % We found something
         if maxOverlap > 0
             % Increment the valid image count
             try
                 scoreData = bestScore;
-                BBoxes(numValid) = {cell2mat(bestBox)};
-                Results(numValid) = transpose(scoreData);
+                BBoxes(imgIndex) = {cell2mat(bestBox)};
+                Results(imgIndex) = transpose(scoreData);
             catch
                 % pause
-                Results(numValid) = {[0]};
+                Results(imgIndex) = {[0]};
             end
         else
-            Results(numValid) = {[0]};
+            Results(imgIndex) = {[0]};
             % Maybe an empty bbox works, but this one should get a 0 anyway
-            BBoxes(numValid) = {[1 1 1 1]}; % Not sure what to put here?
+            BBoxes(imgIndex) = {[]}; % Not sure what to put here?
         end
     else
         if ~isequal(class(allLabelData),'cell')
@@ -241,15 +247,15 @@ for ii = 1:numel(filteredImages)
             % Increment the valid image count
             % numValid = numValid + 1;
             try
-                scoreData = ourScoreData(numValid);
-                labelData = {ourLabelData(numValid)};
-                BBoxes(numValid) = {tmpBoxes};
+                scoreData = ourScoreData(imgIndex);
+                labelData = {ourLabelData(imgIndex)};
+                BBoxes(imgIndex) = {tmpBoxes};
                 if empty(scoreData)
-                    Results(numValid) = {[0]};
+                    Results(imgIndex) = {[0]};
                 else
-                    Results(numValid) = {transpose(scoreData)};
+                    Results(imgIndex) = {transpose(scoreData)};
                 end
-                Labels(numValid) = transpose(labelData);
+                Labels(imgIndex) = transpose(labelData);
             catch
                 % pause
             end
@@ -291,21 +297,19 @@ sensor = ourDB.docFind(dbTable, queryString);
 sceneSize = sensorImage.sceneSize;
 
 detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
-% try not scaling now
 
-
+% Scale to [height width] multiplier
 sensorSize = [sensor.rows sensor.cols];
-
 scaleRatio = [double(sceneSize{1}) / double(sensorSize(1)), double(sceneSize{2}) / double(sensorSize(2))];
-
 
 % If we only have one bbox we have to handle it differently, apparently
 if numel(detectorResults.scores) == 1
     try
+        %columns, rows, width, height
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
         tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -316,7 +320,7 @@ else
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
             detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
         catch err
             fprintf('ERROR: %s\n', err.message);
         end

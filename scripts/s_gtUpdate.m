@@ -35,8 +35,8 @@ ourScenes = ourDB.docFind('autoScenesEXR',[]);
 
 sceneRange = numel(ourScenes);
 % for debugging
-sceneRange = 1:10;
-for ii = sceneRange
+sceneRange = 1201:numel(ourScenes);
+parfor ii = sceneRange
 
     if gtRecreate
         % we recalculate the ground truth right from the .exr files
@@ -57,7 +57,8 @@ for ii = sceneRange
     end
 
     % now update the document in the DB
-    ourDB.gtUpdate(useCollection, ourScenes(ii));
+    threadDB = idb();
+    threadDB.gtUpdate(useCollection, ourScenes(ii));
     fprintf("Processed scene #: %d\n", ii);
 end
 

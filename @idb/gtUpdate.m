@@ -63,7 +63,8 @@ else
     %% Update sensorImages as well
     % At this point we should update the ground truth in all the sensor
     % images that rely on our EXR scene
-
+    
+    % Use s_gtPushToImages
 
 end
 end

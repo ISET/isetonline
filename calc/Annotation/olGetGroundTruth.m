@@ -28,19 +28,18 @@ GTObjects = []; % make sure we return a value
 %% Set Categories that we support currently (out of the 80 or so total)
 %    One reason not to support them all is some like tree & rock
 %    would "just get in the way"
-catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorcycle"];
+catNames = ["person", "deer", "car", "bus", "truck", "bicycle", "motorbike"];
 % These categories are 1 less than in the paper, but maybe
 % that is how they've been coded in the Blender exported scenes?
 % paper catIDs
-catIDs   = [1, 19, 3, 6, 8, 2, 4];
-% Zhenyi's catIds   = [0, 91, 2, 5, 7, 1, 3];
+catIDs   = [0, 91, 2, 5, 7, 1, 3];
 dataDict = dictionary(catNames, catIDs);
 
 instanceMap = piReadEXR(options.instanceFile, 'data type','instanceId');
 
 %% Read in our entire list of rendered objects
 % First four lines are text metadata, so clip to start at line 5
-headerLines = 5;
+headerLines = 4;
 objectslist = readlines(options.additionalFile);
 objectslist = objectslist((headerLines+1):end);
 
@@ -52,53 +51,61 @@ closestTarget.bbox = [];
 %% Iterate on objects, filtering for the ones we want
 %  and then building annotations
 
-% Some objects won't be written out, so start an index
-objectIndex = 1;
 
 % Calculate this once to save time
 imageEXR = replace(options.instanceFile,'instanceID','skymap');
 % try reading all depth channels at once
 useDepthMap = piReadEXR(imageEXR, 'dataType','alldepth');
 
-
-
+% For objects that we actually want
+foundObjects = 0;
+% Allow an offset for headerlines
 for ii = 1:numel(objectslist)
 
     name = objectslist{ii};
     % get rid of text we don't want
     name = erase(name,{'ObjectInstance ', '"', '_m'});
     %     fprintf(seg_FID, '%d %s \n',ii, name);
+    numPlusName = split(name, ' ');
 
+    if numel(numPlusName) <2
+        continue;
+    end
+    objectIndex = str2num(numPlusName{1});
+    objectName = numPlusName{2};
     % Consolidate some categories, as needed
     % fprintf("Found: %s\n", name);
-    if contains(lower(name), {'car'})
+    if contains(lower(objectName), {'car'})
         label = 'car';
         catId = dataDict('car');
-    elseif contains(lower(name),'deer')
+    elseif contains(lower(objectName),'deer')
         label = 'deer';
         catId = dataDict('deer');
-    elseif contains(lower(name),{'person','pedestrian'})
+    elseif contains(lower(objectName),{'person','pedestrian'})
         label = 'person';
         catId = dataDict('person');
-    elseif contains(lower(name), 'bus')
+    elseif contains(lower(objectName), 'bus')
         label = 'bus';
         catId = dataDict('bus');
-    elseif contains(lower(name), 'truck')
+    elseif contains(lower(objectName), 'truck')
         label = 'truck';
         catId = dataDict('truck');
-    elseif contains(lower(name), {'bicycle','bike', 'biker', 'cyclist'})
+    elseif contains(lower(objectName), {'bicycle','bike', 'biker', 'cyclist'})
         label = 'bicycle';
         catId = dataDict('bicycle');
         % alternates + one allowance for possible mis-spelling
-    elseif contains(lower(name), {'motorcycle','motorbike', 'otorbike'})
-        label = 'motorcycle';
-        catId = dataDict('motorcycle');
+    elseif contains(lower(objectName), {'motorcycle','motorbike', 'otorbike'})
+        label = 'motorbike';
+        catId = dataDict('motorbike');
     else % We can add other categories here as needed
         continue;
     end
-    
-    [occluded, ~, bbox2d, segmentation, area] = piAnnotationGet(instanceMap,ii,options.offset);
-    if isempty(bbox2d), continue;end % no location
+
+    % There is a weird offset needed here
+    [occluded, ~, bbox2d, segmentation, area] = piAnnotationGet(instanceMap,objectIndex,options.offset);
+    if isempty(bbox2d)
+        continue
+    end % no location or hidden
 
     % Convert bbox format as needed (x, y, width, height)
     pos = [bbox2d.xmin bbox2d.ymin ...
@@ -115,32 +122,27 @@ for ii = 1:numel(objectslist)
     if area <= 0 % Not sure how this can happen if we have height & width
         continue
     end
-
+    foundObjects = foundObjects + 1;
     % Build our object data structure
-    GTObjects(objectIndex).label = label;
-    GTObjects(objectIndex).bbox2d = pos;
-    GTObjects(objectIndex).catId = catId;
+    GTObjects(foundObjects).label = label;
+    GTObjects(foundObjects).bbox2d = pos;
+    GTObjects(foundObjects).catId = catId;
 
     % Also Compute the distance to the object.
     % Currently we use its minimum distance
-    if ~isempty(scene)
-        GTObjects(objectIndex).distance = ...
-            min(scene.depthMap(instanceMap == ii),[],"all");
-    else
-        % change depth to depth so things work faster
-        GTObjects(objectIndex).distance = ...
-            min(useDepthMap(instanceMap == ii),[],"all");
-    end
+    GTObjects(foundObjects).distance = min(useDepthMap(instanceMap == ii),[],"all");
     
     % NOTE: To calculate AP, we want to have the closest target object
     %       along with distance and bounding box. 
-    if GTObjects(objectIndex).distance < closestTarget.distance
-        closestTarget.label = label;
-        closestTarget.distance = GTObjects(objectIndex).distance;
-        closestTarget.bbox = pos;
-        closestTarget.name = name;
+    if GTObjects(foundObjects).distance < closestTarget.distance
+        % only say we're closer if we have a real distance
+        if GTObjects(foundObjects).distance > 1
+            closestTarget.distance = GTObjects(foundObjects).distance;
+            closestTarget.label = label;
+            closestTarget.bbox = pos;
+            closestTarget.name = name;
+        end
     end
-    objectIndex = objectIndex + 1;
 
 end
 
