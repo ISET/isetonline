@@ -7,7 +7,8 @@
 % It does several things that could be separated:
 % * Reads ISET scenes
 % * computes an Optical Image (OI)
-%   (currently using default optics)
+%   (currently using shift-invariant optics, with focal
+%    length adjusted for the size of our auto sensors)
 % * creates sensorImages for each chosen sensor
 %   (currently AE, burst, and bracket for each)
 % * runs YOLO on each version of a sensorImage
