@@ -52,18 +52,14 @@ if ~isempty(p.Results.class)
     ourClass = p.Results.class;
     singleClass = true;
 else
-    singleClass = false;
+    error("ol_apCompute requires a class name");
 end
 
 % FOR DEBUGGING
 %sensorImages = sensorImages(1:10);
 
 % Allocate a table to store image detection results, one per row
-if singleClass
-    resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'double','cell'});
-else
-    resultTable = table('Size',[numel(sensorImages) 3],'VariableTypes',{'cell','cell','cell'});
-end
+resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'double','cell'});
 
 GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
 
@@ -90,29 +86,18 @@ for ii = 1:numel(filteredImages)
     detectorResults = scaleDetectorResults(filteredImages(ii));
 
     %fprintf("Processing image %s\n", sensorImages(ii).scenename);
-    if singleClass
-        % cT has label, bbox, distance, name
-        GTObjects = filteredImages(ii).closestTarget;
-        if  matches(GTObjects(:).label, ourClass) == true
-            % we have an image that includes our class
-            imgValid = true;
-            imgIndex = imgIndex + 1;
-        else
-            imgValid = false;
-            continue
-        end
-    else
-        % GTO has rows of: label, bbox2d, catID, distance
-        GTObjects = filteredImages(ii).GTObjects;
+    % cT has label, bbox, distance, name
+    GTObjects = filteredImages(ii).closestTarget;
+    if  matches(GTObjects(:).label, ourClass) == true
+        % we have an image that includes our class
         imgValid = true;
         imgIndex = imgIndex + 1;
+    else
+        imgValid = false;
+        continue
     end
 
-    if singleClass
-        GTStruct = GTObjects;
-    else
-        GTStruct = [GTObjects{:}];
-    end
+    GTStruct = GTObjects;
     GTBoxes = [];
     GTLabels = {};
 
@@ -121,11 +106,7 @@ for ii = 1:numel(filteredImages)
     for jj = 1:numel(GTObjects)
 
         % This gets us a 2 x N matrix of boxes
-        if singleClass
-            tmpBox = GTStruct(jj).bbox;
-        else
-            tmpBox = GTStruct(jj).bbox2d;
-        end
+        tmpBox = GTStruct(jj).bbox;
         GTBoxes= [GTBoxes; [tmpBox{:}]];
 
         tmpLabel = GTStruct(jj).label;
@@ -137,129 +118,68 @@ for ii = 1:numel(filteredImages)
     GTLabels = transpose(string(GTLabels));
 
     GTBoxes = double(GTBoxes);
-    if ~singleClass
-        GTTable(imgIndex,1) = {GTBoxes};
-        GTTable(imgIndex,2) = {GTLabels};
-    else
-        GTTable{imgIndex,1} = {GTBoxes};
-        GTTable{imgIndex,2} = {GTLabels};
-    end
+    GTTable{imgIndex,1} = {GTBoxes};
+    GTTable{imgIndex,2} = {GTLabels};
 
     % Now we need to massage our detector results from their DB layout
     % (multiclass needs cells with categoricals, to match Ground Truth)
     % HOWEVER, if we have "found" something with a different class
     %          then the call fails, so we need to weed those out. Sigh.
     %
+    % For singleClass we need to find the closest match YOLO object
+    % and _only_ compare it. We pick the one with max Overlap
 
-    if singleClass
-        % For singleClass we need to find the closest match YOLO object
-        % and _only_ compare it. We pick the one with max Overlap
+    % Match Label -- returns indices of YOLO results for our class
+    matchingElements = matches(detectorResults.labels, ourClass);
+    matchingBoxes = detectorResults.bboxes(matchingElements);
+    matchingScores = detectorResults.scores(matchingElements);
 
-        % Match Label -- returns indices of YOLO results for our class
-        matchingElements = matches(detectorResults.labels, ourClass);
-        matchingBoxes = detectorResults.bboxes(matchingElements);
-        matchingScores = detectorResults.scores(matchingElements);
+    % Now pick best fit of the matching elements
+    maxOverlap = 0; % default
 
-        % Now pick best fit of the matching elements
-        maxOverlap = 0; % default
+    for ll = 1:numel(matchingBoxes)
+        tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
+            cell2mat(tmpBox));
+        if tmpOverlap > maxOverlap
+            maxOverlap = tmpOverlap;
 
-        for ll = 1:numel(matchingBoxes)
-            tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
-                cell2mat(tmpBox));
-            if tmpOverlap > maxOverlap
-                maxOverlap = tmpOverlap;
+            try
+                % bestBox and bestScore get the best fit we have
+                bestBox = matchingBoxes{ll};
+                bestScore = matchingScores(ll);
 
-                try
-                    % bestBox and bestScore get the best fit we have
-                    bestBox = matchingBoxes{ll};
-                    bestScore = matchingScores(ll);
-
-                catch err
-                    fprintf("Error %s on boxes\n", err.message);
-                end
+            catch err
+                fprintf("Error %s on boxes\n", err.message);
             end
         end
-
-    else
-        % we need to work harder to do calcs: TBD!
-        allLabelData = detectorResults.labels;
-        allScoreData = detectorResults.scores;
     end
+
 
     tmpBoxes = [];
 
-    if singleClass
-        % we may have what we need. GTStruct is the closestTarget
-        % and bestBox and bestScore are the closest we have
+    % we may have what we need. GTStruct is the closestTarget
+    % and bestBox and bestScore are the closest we have
 
-        %if ~isempty(GTStruct)
-        %    imgValid = true;
-        %    numValid = numValid + 1;
-        %end
+    %if ~isempty(GTStruct)
+    %    imgValid = true;
+    %    numValid = numValid + 1;
+    %end
 
-        % We found something
-        if maxOverlap > 0
-            % Increment the valid image count
-            try
-                scoreData = bestScore;
-                BBoxes(imgIndex) = {cell2mat(bestBox)};
-                Results(imgIndex) = scoreData;
-            catch
-                % pause
-                Results(imgIndex) = {[0]};
-            end
-        else
+    % We found something
+    if maxOverlap > 0
+        % Increment the valid image count
+        try
+            scoreData = bestScore;
+            BBoxes(imgIndex) = {cell2mat(bestBox)};
+            Results(imgIndex) = scoreData;
+        catch
+            % pause
             Results(imgIndex) = {[0]};
-            % Maybe an empty bbox works, but this one should get a 0 anyway
-            BBoxes(imgIndex) = {[]}; % Not sure what to put here?
         end
     else
-        if ~isequal(class(allLabelData),'cell')
-            allLabelData = {allLabelData}; % make into a cell
-        end
-
-        for kk = 1:numel(allLabelData)
-
-            if max(matches(allLabelData{kk}, GTLabels)) == 0 % non-matched class
-                % do nothing
-
-            else % okay to process
-                try
-                    tmpBoxes = [tmpBoxes; cell2mat(detectorResults.bboxes{kk})];
-                    % We want score & label to be cell arrays, like boxes
-                    ourScoreData = [ourScoreData allScoreData{kk}]; %#ok<*AGROW>
-                    ourLabelData = [ourLabelData; cellstr(allLabelData{kk})];
-
-                    %imgValid = true;
-                catch
-                    fprintf("failed processing image %s\n", sensorImages(ii).scenename);
-                    %imgValid = false;
-                    % This is an issue as we've already added the GT to the
-                    % blds?
-                    continue;
-                end
-            end
-        end
-        % If the image has 1 or more targets worth processing
-        % (?? We might miss the case where YOLO detects nothing?)
-        if imgValid
-            % We're now assuming all valid, so no need to increment here
-            % Increment the valid image count
-            % numValid = numValid + 1;
-            try
-                scoreData = ourScoreData(imgIndex);
-                labelData = {ourLabelData(imgIndex)};
-                BBoxes(imgIndex) = {tmpBoxes};
-                if empty(scoreData)
-                    Results(imgIndex) = {[0]};
-                else
-                    Results(imgIndex) = {transpose(scoreData)};
-                end
-                Labels(imgIndex) = transpose(labelData);
-            catch
-                % pause
-            end
-        end
+        Results(imgIndex) = {[0]};
+        % Maybe an empty bbox works, but this one should get a 0 anyway
+        BBoxes(imgIndex) = {[]}; % Not sure what to put here?
     end
 
 end
@@ -271,13 +191,9 @@ blds = boxLabelDatastore(GTTable);
 Results = transpose(Results);
 BBoxes = transpose(BBoxes);
 
-if singleClass
-    resultTable = table(BBoxes,Results);
-else
-    resultTable = table(BBoxes,Results,Labels);
-end
+resultTable = table(BBoxes,Results);
 
-useThreshold = .1; % default is .5
+useThreshold = .5; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
 
