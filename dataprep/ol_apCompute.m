@@ -22,12 +22,12 @@ function [ap, precision, recall] = ol_apCompute(sensorImages, varargin)
 ourDB = isetdb(); 
 dbTable = 'sensorImages';
 filter = 'closestTarget.label';
-target = 'truck';
+target = 'car';
 queryString = sprintf("{""closestTarget.label"": ""%s""}", target);
 sensorImages = ourDB.docFind(dbTable, queryString);
 
 % Rely on Matlab to do most of the heavy-lifting math
-[ap, precision, recall] = ol_apCompute(sensorImages, 'class','truck');
+[ap, precision, recall] = ol_apCompute(sensorImages, 'class',target);
 
 % Visualize the results
 figure;
@@ -58,11 +58,6 @@ end
 % FOR DEBUGGING
 %sensorImages = sensorImages(1:10);
 
-% Allocate a table to store image detection results, one per row
-resultTable = table('Size',[numel(sensorImages) 2],'VariableTypes',{'double','cell'});
-
-GTTable = table('Size', [numel(sensorImages) 2], 'VariableTypes',{'cell', 'cell'});
-
 % ii is image iterator
 % jj is GTObjects iterator
 % kk is YOLO  iterator
@@ -73,13 +68,21 @@ ourLabelData = [];
 
 % filter for distance range if needed
 if ~isempty(p.Results.distancerange)
-    filteredImages = arrayfun(@(x) (x.closestTarget.distance > p.Results.distancerange(1)), sensorImages);
-    filteredImages = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);
+    minIndices = arrayfun(@(x) (x.closestTarget.distance > p.Results.distancerange(1)), sensorImages);
+    filteredImages = sensorImages(minIndices);
+    maxIndices = arrayfun(@(x) (x.closestTarget.distance < p.Results.distancerange(2)), filteredImages);
+    filteredImages = filteredImages(maxIndices);
 else
     filteredImages = sensorImages;
 end
 
+% Allocate a table to store image detection results, one per row
+resultTable = table('Size',[numel(filteredImages) 2],'VariableTypes',{'double','cell'});
+
+GTTable = table('Size', [numel(filteredImages) 2], 'VariableTypes',{'cell', 'cell'});
+
 imgIndex = 0;
+Results = {};
 for ii = 1:numel(filteredImages)
 
     % YOLO is in sensor pixels, we need to scale to match scene pixels
@@ -130,30 +133,34 @@ for ii = 1:numel(filteredImages)
     % and _only_ compare it. We pick the one with max Overlap
 
     % Match Label -- returns indices of YOLO results for our class
-    matchingElements = matches(detectorResults.labels, ourClass);
-    matchingBoxes = detectorResults.bboxes(matchingElements);
-    matchingScores = detectorResults.scores(matchingElements);
-
-    % Now pick best fit of the matching elements
     maxOverlap = 0; % default
+    matchingElements = matches(detectorResults.labels, ourClass);
+    if numel(matchingElements) == 0
+        % We don't have a match at all
+        fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
+    else
+        matchingBoxes = detectorResults.bboxes(matchingElements);
+        matchingScores = detectorResults.scores(matchingElements);
 
-    for ll = 1:numel(matchingBoxes)
-        tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
-            cell2mat(tmpBox));
-        if tmpOverlap > maxOverlap
-            maxOverlap = tmpOverlap;
+        % Now pick best fit of the matching elements
 
-            try
-                % bestBox and bestScore get the best fit we have
-                bestBox = matchingBoxes{ll};
-                bestScore = matchingScores(ll);
+        for ll = 1:numel(matchingBoxes)
+            tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
+                cell2mat(tmpBox));
+            if tmpOverlap > maxOverlap
+                maxOverlap = tmpOverlap;
 
-            catch err
-                fprintf("Error %s on boxes\n", err.message);
+                try
+                    % bestBox and bestScore get the best fit we have
+                    bestBox = matchingBoxes{ll};
+                    bestScore = matchingScores(ll);
+
+                catch err
+                    fprintf("Error %s on boxes\n", err.message);
+                end
             end
         end
     end
-
 
     tmpBoxes = [];
 
@@ -169,12 +176,17 @@ for ii = 1:numel(filteredImages)
     if maxOverlap > 0
         % Increment the valid image count
         try
-            scoreData = bestScore;
+            if isequal(class(bestScore), 'double')
+                scoreData = {bestScore};
+            else
+                scoreData = bestScore(1);
+            end
             BBoxes(imgIndex) = {cell2mat(bestBox)};
             Results(imgIndex) = scoreData;
         catch
             % pause
             Results(imgIndex) = {[0]};
+            BBoxes(imgIndex) = {[]};
         end
     else
         Results(imgIndex) = {[0]};
@@ -225,7 +237,7 @@ if numel(detectorResults.scores) == 1
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
         tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(1);
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -236,7 +248,7 @@ else
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
             detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(1);
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
         catch err
             fprintf('ERROR: %s\n', err.message);
         end
