@@ -277,7 +277,7 @@ else
     resultTable = table(BBoxes,Results,Labels);
 end
 
-useThreshold = .5; % default is .5
+useThreshold = .1; % default is .5
 [ap,recall,precision] = evaluateDetectionPrecision(resultTable, blds, useThreshold);
 end
 
