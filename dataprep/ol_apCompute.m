@@ -226,18 +226,33 @@ sceneSize = sensorImage.sceneSize;
 
 detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
 
-% Scale to [height width] multiplier
-sensorSize = [sensor.rows sensor.cols];
-scaleRatio = [double(sceneSize{1}) / double(sensorSize(1)), double(sceneSize{2}) / double(sensorSize(2))];
+% Scale to [width height] multiplier
+sensorSize = double([sensor.rows sensor.cols]);
+% sceneSize is in columns, rows
+scaleRatioVertical = double(sceneSize{1}) / double(sensorSize(1));
+scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize(2));
 
+% Now figure out crop factor adjustment as needed
+sensorAspect = double((sensorSize(1) / sensorSize(2)));
+sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
+
+% Handle the case where the top and bottom are padded
+if sensorAspect > sceneAspect
+    simSensorHeight = sensorSize(1) * scaleRatioHorizontal;
+    vOffset = (sensorSize(1) * scaleRatioVertical - simSensorHeight) / 2;
+else
+    % should handle the other case eventually
+    vOffset = 0;
+end
 % If we only have one bbox we have to handle it differently, apparently
 if numel(detectorResults.scores) == 1
     try
-        %columns, rows, width, height
-        tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatio(2);
-        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatio(1);
-        tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatio(2);
-        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatio(2);
+        % bboxes are:
+        %columns (from left), rows (from top), width, height
+        tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatioHorizontal;
+        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatioVertical + vOffset;
+        tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatioHorizontal;
+        tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatioHorizontal;
         detectorResults.bboxes = tmpBoxes;
     catch err
         fprintf('ERROR: %s\n', err.message);
@@ -245,10 +260,13 @@ if numel(detectorResults.scores) == 1
 else
     for qq = 1:numel(detectorResults.bboxes)
         try
-            detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2}) * scaleRatio(1);
-            detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatio(2);
-            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatio(2);
+            %fprintf("Sensor: %s \n", sensorName)
+            %celldisp(detectorResults.bboxes{qq}, "Original")
+            detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatioHorizontal;
+            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2})  * scaleRatioVertical +vOffset;
+            detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatioHorizontal;
+            detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatioHorizontal;
+            %celldisp(detectorResults.bboxes{qq}, "Scaled")
         catch err
             fprintf('ERROR: %s\n', err.message);
         end

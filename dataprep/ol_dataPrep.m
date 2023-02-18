@@ -99,7 +99,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3000;
+sceneNumberLimit = 3;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
@@ -268,6 +268,8 @@ end
 %% For each OI process through all the sensors we have
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
+% To force recreation of sensor images
+useDBCache = false;
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
@@ -312,7 +314,7 @@ for iii = 1:numel(sensorFiles)
     %% NB Need more fields: project & scenario in key
     keyQuery = sprintf("{""sceneID"": ""%s"", ""sensorname"" : ""%s"", ""scenario"" : ""%s""}", ...
         oi.metadata.sceneID, sensor.name, scenarioName);
-    if ourDB.exists('sensorImages', keyQuery)
+    if ourDB.exists('sensorImages', keyQuery) && useDBCache
         continue;
     end
 
