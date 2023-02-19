@@ -239,7 +239,7 @@ sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
 % Handle the case where the top and bottom are padded
 if sensorAspect > sceneAspect
     simSensorHeight = sensorSize(1) * scaleRatioHorizontal;
-    vOffset = -1 * (simSensorHeight - sensorSize(1)) / 2;
+    vOffset = double(sceneSize{1} - simSensorHeight) / 2;
 else
     % should handle the other case eventually
     vOffset = 0;
