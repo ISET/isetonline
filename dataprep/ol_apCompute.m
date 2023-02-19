@@ -156,7 +156,7 @@ for ii = 1:numel(filteredImages)
         % Now pick best fit of the matching elements, by
         % finding the largest overlap we can
         for ll = 1:numel(matchingBoxes)
-            
+
             % Calculate IoU for ground truth & detected
             tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
                 cell2mat(tmpBox));
@@ -219,6 +219,8 @@ end
 
 function detectorResults = scaleDetectorResults(sensorImage)
 % We need to scale YOLOData to match ther resolution of the GT Scene
+% and the aspect ratio, since the YOLOdata was captured in a sensor image
+% that has the sensor resolution and aspect ratio.
 ourDB = isetdb();
 dbTable = 'sensors';
 
@@ -241,15 +243,30 @@ scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize(2));
 sensorAspect = double((sensorSize(1) / sensorSize(2)));
 sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
 
-% Handle the case where the top and bottom are padded
-if sensorAspect > sceneAspect
+% Handle the case where the top and bottom are padded because our sensor
+% is "more square" than our 1080p scenes. If we had massively horizontal
+% sensors we'd need to do the equivalent for left & right
+if sensorAspect > sceneAspect % sensor "taller" than scene
     simSensorHeight = sensorSize(1) * scaleRatioHorizontal;
+
+    % Establish how far to offset the sensor YOLO data so that the top
+    % left corner matches (0,0) in the scene ground truth
     vOffset = double(sceneSize{1} - simSensorHeight) / 2;
 else
     % should handle the other case eventually
     vOffset = 0;
 end
+
+% Scale any and all bounding boxes we have been given
 % If we only have one bbox we have to handle it differently, apparently
+
+% Current assumption is that the sensor is more square than the scene, so
+% when it captures the OI of the scene, there is banding at top and bottom,
+% and that the resulting image needs to be scaled according to the
+% horizontal difference in resolution (adjusted for the padding)
+
+% NB This seems to be working well for the MT Auto sensor, but with odd
+%    effects for the AP sensor
 if numel(detectorResults.scores) == 1
     try
         % bboxes are:
