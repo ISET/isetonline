@@ -26,8 +26,8 @@
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
 %scenarioName = 'nighttime';
-%scenarioName = 'nighttime_No_Streetlamps';
-scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
+scenarioName = 'nighttime_No_Streetlamps';
+%scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -99,7 +99,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3;
+sceneNumberLimit = 3000;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';

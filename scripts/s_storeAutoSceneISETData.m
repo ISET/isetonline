@@ -9,7 +9,7 @@
 % builds on Zhenyi & Devesh's scenes and renders
 
 projectName = 'Ford'; % we currently use folders per project
-scenarioName = 'nighttime'; % default for now, need to make a parameter
+scenarioName = 'nighttime_No_StreetLamps'; % default for now, need to make a parameter
 
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName); 
 EXRFolder = fullfile(projectFolder, 'SceneEXRs');
@@ -27,9 +27,10 @@ try
 catch
 end
 
-for ii = 1:numel(sceneDataFiles)
-    load(fullfile(sceneDataFiles(ii).folder, ...
+parfor ii = 1:numel(sceneDataFiles)
+    meta = load(fullfile(sceneDataFiles(ii).folder, ...
         sceneDataFiles(ii).name)); % get sceneMeta struct
+    scene = meta.scene;
 
     % start with scene metadata
     sceneMeta = scene.metadata;
@@ -54,6 +55,7 @@ for ii = 1:numel(sceneDataFiles)
     % instance and depth maps are too large as currently stored
     sceneMeta.instanceMap = [];
     sceneMeta.depthMap = [];
-    ourDB.store(sceneMeta, 'collection', useCollection);
+    threadDB = idb();
+    threadDB.store(sceneMeta, 'collection', useCollection);
 end
 

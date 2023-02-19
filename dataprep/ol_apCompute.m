@@ -228,7 +228,7 @@ detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
 
 % Scale to [width height] multiplier
 sensorSize = double([sensor.rows sensor.cols]);
-% sceneSize is in columns, rows
+% sceneSize is in  rows, columns
 scaleRatioVertical = double(sceneSize{1}) / double(sensorSize(1));
 scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize(2));
 
@@ -250,7 +250,7 @@ if numel(detectorResults.scores) == 1
         % bboxes are:
         %columns (from left), rows (from top), width, height
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatioHorizontal;
-        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatioVertical + vOffset;
+        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatioHorizontal + vOffset;
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatioHorizontal;
         tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatioHorizontal;
         detectorResults.bboxes = tmpBoxes;
@@ -263,7 +263,7 @@ else
             %fprintf("Sensor: %s \n", sensorName)
             %celldisp(detectorResults.bboxes{qq}, "Original")
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatioHorizontal;
-            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2})  * scaleRatioVertical +vOffset;
+            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2})  * scaleRatioHorizontal +vOffset;
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatioHorizontal;
             detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatioHorizontal;
             %celldisp(detectorResults.bboxes{qq}, "Scaled")
