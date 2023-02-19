@@ -2,6 +2,8 @@ function [ap, precision, recall] = ol_apCompute(sensorImages, varargin)
 %OL_APCOMPUTE Compute Average Precision for one or more sensorImages
 
 % Extract one or more sensorImages to get GTObjects and YOLO
+% Scale & crop YOLO data from sensor size to scene size and aspect ratio
+
 % Example .sceneID: 1112154540
 %         .sensorname: MTV9V024-RGB
 %         .GTObjects (Table with entries for each object)
@@ -86,6 +88,8 @@ Results = {};
 for ii = 1:numel(filteredImages)
 
     % YOLO is in sensor pixels, we need to scale to match scene pixels
+    % This routine has been troublesome because of varying aspect ratios
+    % in addition to resolution, so a place to look if there are issues
     detectorResults = scaleDetectorResults(filteredImages(ii));
 
     %fprintf("Processing image %s\n", sensorImages(ii).scenename);
@@ -93,10 +97,9 @@ for ii = 1:numel(filteredImages)
     GTObjects = filteredImages(ii).closestTarget;
     if  matches(GTObjects(:).label, ourClass) == true
         % we have an image that includes our class
-        imgValid = true;
         imgIndex = imgIndex + 1;
     else
-        imgValid = false;
+        % increments ii, but not imgIndex
         continue
     end
 
@@ -110,7 +113,7 @@ for ii = 1:numel(filteredImages)
 
         % This gets us a 2 x N matrix of boxes
         tmpBox = GTStruct(jj).bbox;
-        GTBoxes= [GTBoxes; [tmpBox{:}]];
+        GTBoxes= [GTBoxes; [tmpBox{:}]]; %#ok<*AGROW> 
 
         tmpLabel = GTStruct(jj).label;
         % fprintf("jj is: %d\n",jj);
@@ -134,43 +137,45 @@ for ii = 1:numel(filteredImages)
 
     % Match Label -- returns indices of YOLO results for our class
     maxOverlap = 0; % default
+
+    % Find any YOLO results that match the class we are looking for
     matchingElements = matches(detectorResults.labels, ourClass);
+
     if numel(matchingElements) == 0
+        % This if case can be good for debugging, if there is an issue
+        % with the YOLO detectors results
         % We don't have a match at all
         fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
     else
+
+        % Get the bounding boxes and scores for the matching elements
+        % using the scaled detector results
         matchingBoxes = detectorResults.bboxes(matchingElements);
         matchingScores = detectorResults.scores(matchingElements);
 
-        % Now pick best fit of the matching elements
-
+        % Now pick best fit of the matching elements, by
+        % finding the largest overlap we can
         for ll = 1:numel(matchingBoxes)
+            
+            % Calculate IoU for ground truth & detected
             tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
                 cell2mat(tmpBox));
             if tmpOverlap > maxOverlap
-                maxOverlap = tmpOverlap;
-
                 try
                     % bestBox and bestScore get the best fit we have
                     bestBox = matchingBoxes{ll};
                     bestScore = matchingScores(ll);
-
+                    maxOverlap = tmpOverlap;
                 catch err
+                    % failed to parse the box, so no score
                     fprintf("Error %s on boxes\n", err.message);
                 end
             end
         end
     end
 
-    tmpBoxes = [];
-
     % we may have what we need. GTStruct is the closestTarget
     % and bestBox and bestScore are the closest we have
-
-    %if ~isempty(GTStruct)
-    %    imgValid = true;
-    %    numValid = numValid + 1;
-    %end
 
     % We found something
     if maxOverlap > 0
