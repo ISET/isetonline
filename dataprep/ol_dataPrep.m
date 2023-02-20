@@ -263,9 +263,9 @@ parfor ii = 1:numScenes
     end
 end
 
-% Since the metadata is only read by our code, we place it in the code folder tree
-% instead of the public data folder -- when we generate from scratch
-%jsonwrite(fullfile(privateDataFolder,'metadata.json'), imageMetadataArray);
+% TBD: Threading support ...
+% For parfor, we need to pull out the YOLO Detection and run it here
+% on the entire array of images at once.
 
 % Added support for incremental updates, by pulling all the
 % imageMetadata out of the sensorimage collection
@@ -463,7 +463,7 @@ for iii = 1:numel(sensorFiles)
     % Note: To use parfor we'll have to pull this out and run
     % as an array call on the detector, as it doesn't seem to be
     % thread-safe
-    
+
     % ----------- Cut here:) -- needs to be threaded
     % Use YOLO & get back annotated image plus
     % found objects. By themselves they don't offer distance,
