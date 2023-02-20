@@ -415,17 +415,6 @@ for iii = 1:numel(sensorFiles)
     ipLocalJPEG_bracket = fullfile(outputFolder,'images',ipJPEGName_bracket);
     ipLocalThumbnail = fullfile(outputFolder,'images',ipThumbnailName);
 
-
-    % Do the same for our YOLO version filenames
-    ipYOLOName = [baseFileName '-YOLO.jpg'];
-    ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
-    ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
-
-    % "Local" is our ISET filepath, not the website path
-    ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
-    ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
-    ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
-
     % Create a default IP so we can see some baseline image
     ip_ae = ipCreate('ourIP',sensor_ae);
     % For RCCC we need to set the IP differently
@@ -457,11 +446,25 @@ for iii = 1:numel(sensorFiles)
     bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, 'cropborder', true);
 
     % We also want to save a YOLO-annotated version of each
+    ipYOLOName = [baseFileName '-YOLO.jpg'];
+    ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
+    ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
+
+    % "Local" is our ISET filepath, not the website path
+    ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
+    ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
+    ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
+
     % Generate images to use for YOLO
     img_for_YOLO = imread(outputFile);
     img_for_YOLO_burst = imread(burstFile);
     img_for_YOLO_bracket = imread(bracketFile);
 
+    % Note: To use parfor we'll have to pull this out and run
+    % as an array call on the detector, as it doesn't seem to be
+    % thread-safe
+    
+    % ----------- Cut here:) -- needs to be threaded
     % Use YOLO & get back annotated image plus
     % found objects. By themselves they don't offer distance,
     % although they do give us a bounding box, from which it might
@@ -470,16 +473,10 @@ for iii = 1:numel(sensorFiles)
     % However, the img_for_YOLO is at a lower resolution, so it will
     % take some fiddling to align it with objects in the GT scene.
     [img_YOLO, YOLO_Objects] = ol_YOLOCompute(img_for_YOLO);
-
-    sensor_ae.metadata.YOLOData = YOLO_Objects;
-
-    % For Average Precision we want a GT table and a YOLO table
-    % with each row containing a bounding box and a label
-    % The YOLO version should/can also include score
-
-    % Don't know if we need to write these version out separately
     [img_YOLO_burst, YOLO_Objects_Burst] = ol_YOLOCompute(img_for_YOLO_burst);
     [img_YOLO_bracket, YOLO_Objects_Bracket] = ol_YOLOCompute(img_for_YOLO_bracket);
+
+    sensor_ae.metadata.YOLOData = YOLO_Objects;
     sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
     sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 
@@ -490,6 +487,8 @@ for iii = 1:numel(sensorFiles)
     imwrite(imageCropBorder(img_YOLO), ipLocalYOLO);
     imwrite(imageCropBorder(img_YOLO_burst), ipLocalYOLO_burst);
     imwrite(imageCropBorder(img_YOLO_bracket), ipLocalYOLO_bracket);
+
+    % ----------- End of section that needs to be threaded
 
     % we could also save without an IP if we want
     %sensorSaveImage(sensor, sensorJPEG  ,'rgb');

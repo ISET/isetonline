@@ -2,10 +2,10 @@ function [annotatedImage, YOLO_Objects] = ol_YOLOCompute(img)
 %ol_YOLOCompute Run YOLO object detector on an image
 %   Returns annotated image and an array of found objects
 
-% For threading, I think we may need to instantiate a new detector
-% each time we are called
-ourDetector = [];
-%persistent ourDetector;
+% To run in parallel, we'll want to expand this to handle
+% an array of images
+
+persistent ourDetector;
 detectorType = "csp-darknet53-coco"; %"tiny-yolov4-coco";
 if isempty(ourDetector)
     ourDetector = yolov4ObjectDetector(detectorType);
