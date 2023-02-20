@@ -4,8 +4,7 @@ function [annotatedImage, YOLO_Objects] = ol_YOLOCompute(img)
 
 % For threading, I think we may need to instantiate a new detector
 % each time we are called
-ourDetector = [];
-%persistent ourDetector;
+persistent ourDetector;
 detectorType = "csp-darknet53-coco"; %"tiny-yolov4-coco";
 if isempty(ourDetector)
     ourDetector = yolov4ObjectDetector(detectorType);

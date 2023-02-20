@@ -101,7 +101,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 30;
+sceneNumberLimit = 3000;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
@@ -116,12 +116,13 @@ end
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-% parfor may also cause blank images?
-parfor ii = 1:numScenes
+% parfor may also cause blank images because YOLO isn't thread safe?
+for ii = 1:numScenes
 
     % If we use parfor, each thread needs a db connection
-    threadDB = idb();
-
+    %threadDB = idb();
+    threadDB = ourDB;
+    
     ourScene = load(sceneFileNames{ii}, 'scene');
     ourScene = ourScene.scene; % we get a nested variable for some reason
 
@@ -557,6 +558,17 @@ for iii = 1:numel(sensorFiles)
     imageMetadata = [imageMetadata sensor_ae.metadata]; %#ok<AGROW>
 
 end
+end
+
+%% Batch process object detection after images are calculated
+function processYOLO()
+    % We need to decide whether to pass the full images, or just
+    % the filenames (more efficient, but more coding)
+
+    % We want to iterate over the sensorImages we've been "given"
+    % All the file names should already be there, so we need go
+    % generate the YOLOData & annotated images for each of them.
+    
 end
 
 %% Export lenses to JSON files for our users
