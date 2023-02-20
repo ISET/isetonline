@@ -25,8 +25,8 @@
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
-%scenarioName = 'nighttime';
-scenarioName = 'nighttime_No_Streetlamps';
+scenarioName = 'nighttime';
+%scenarioName = 'nighttime_No_Streetlamps';
 %scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
@@ -71,7 +71,9 @@ exportLenses(outputFolder, privateDataFolder, ourDB)
 %% Start assembling metadata
 % The Metadata Array is the non-image portion of those, which
 % is small enough to be kept in a single file & used for filtering
-imageMetadataArray = [];
+if ~useDB
+    imageMetadataArray = [];
+end
 
 % prior to using lenses we use default optics, but need to change
 % the focal length (I think) to match the sensor size + FOV.
@@ -99,7 +101,7 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3000;
+sceneNumberLimit = 30;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
@@ -111,12 +113,15 @@ end
 
 % our scenes are pre-rendered .exr files for various illuminants
 % that have been combined into ISETcam scenes for evaluation
-% USE parfor except for debugging
-oiComputed = []; % shifting to single OI to save memory
 
-% Currently we can't use parfor because we concatenate onto
+% Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-for ii = 1:numScenes
+% parfor may also cause blank images?
+parfor ii = 1:numScenes
+
+    % If we use parfor, each thread needs a db connection
+    threadDB = idb();
+
     ourScene = load(sceneFileNames{ii}, 'scene');
     ourScene = ourScene.scene; % we get a nested variable for some reason
 
@@ -153,7 +158,7 @@ for ii = 1:numScenes
 
         % this code sometimes has parse errors so use a try block
         try
-            [GTObjects, closestTarget] = ourDB.gtGetFromScene('auto',sceneID);
+            [GTObjects, closestTarget] = threadDB.gtGetFromScene('auto',sceneID);
             ourScene.metadata.GTObject = GTObjects;
             ourScene.metadata.closestTarget = closestTarget;
 
@@ -164,6 +169,7 @@ for ii = 1:numScenes
             annotatedImage = annotateImageWithObjects(img_for_GT, GTObjects);
             img_GT = annotatedImage;
         catch
+            annotatedImage = img_for_GT;
             img_GT = oiShowImage(oiComputed, -3, 2.2);
             ourScene.metadata.closestTarget = [];
             warning("gtGet failed on %s", sceneID);
@@ -187,8 +193,13 @@ for ii = 1:numScenes
     end
 
     % Write out the GT image as a nice "visual" of the scene
-    imwrite(imageCropBorder(img_for_GT), ipLocalOI);
-            
+    % or nothing if the image is empty for some reason
+    if ~isempty(img_for_GT)
+        imwrite(imageCropBorder(img_for_GT), ipLocalOI);
+    else
+        fprintf("Empty GT image: %s\n", img_for_GT);
+    end
+
     % Add ground truth to output metadata
     if ~isempty(GTObjects) && isfield(GTObjects,'label')
         GTStruct = GTObjects; % already a struct
@@ -235,15 +246,21 @@ for ii = 1:numScenes
 
     % LOOP THROUGH THE SENSORS HERE
     imageMetadata = processSensors(oi, sensorFiles, outputFolder, ...
-        baseMetadata, ourDB);
+        baseMetadata, threadDB);
 
     % Not all sensorimages will have the same
     % metadata fields, so we need to put them in a cell struct
     % ImageMetaData is actually an array (per sensor)
-    for jj=1:numel(imageMetadata)
-        imageMetadataArray{end+1} = imageMetadata(jj);
-    end
 
+    % if we are threaded, we can't use this
+    % and if we have a db, we don't need it
+    if ~useDB 
+    
+    % Can't even have this here if we want parfor
+    %    for jj=1:numel(imageMetadata)
+    %        imageMetadataArray{end+1} = imageMetadata(jj);
+    %    end
+    end
 end
 
 % Since the metadata is only read by our code, we place it in the code folder tree
@@ -268,7 +285,7 @@ end
 %% For each OI process through all the sensors we have
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
-% To force recreation of sensor images
+% To force (or not) recreation of sensor images
 useDBCache = false;
 imageMetadata = baseMetadata;
 
@@ -467,6 +484,9 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 
     % Write out our annotated image
+    if isempty(img_YOLO)
+        fprintf("No YOLO for Image: %s \n", oi.metadata.sceneID);
+    end
     imwrite(imageCropBorder(img_YOLO), ipLocalYOLO);
     imwrite(imageCropBorder(img_YOLO_burst), ipLocalYOLO_burst);
     imwrite(imageCropBorder(img_YOLO_bracket), ipLocalYOLO_bracket);
