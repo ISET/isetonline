@@ -8,6 +8,9 @@ if isempty(ourDetector)
     ourDetector = yolov4ObjectDetector(detectorType);
 end
 
+if ~isequal(class(inputImages), 'cell')
+    inputImages =  {inputImages};
+end
 [bboxes, scores, labels] = detect(ourDetector, cell2mat(inputImages));
 
 YOLO_Objects.bboxes = bboxes;
