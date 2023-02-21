@@ -2,14 +2,24 @@ classdef scenario < handle
     %SCENARIO Specific set of experimental conditions
     %   Draws on our database of scenes and assets
     %{
-        Currently we have a database of EXR files that represent
-        individual lighting components of rendered PBRT scenes.
 
-        These are then turned into ISET Scenes using a set of
+        We have a library of Recipes, currently created in Blender
+        as ISET3d @recipe objects. Scenarios flow from there.
+
+        The first (optional) customization step is edits to the @recipe.
+        For example, changing the camera position.
+
+        There is an (optional) step where light sources are 
+        differentiated so that each @recipe becomes several.
+
+        The resulting recipes are written using piWrite() to .pbrt
+
+        They can then be rendered into EXR files that represent
+        the radiance from the now-modified original @recipe.
+
+        These .EXR files can be turned into ISET scenes, either each
+        alone, or for example using a set of
         weights on each of the light sources.
-
-        Currently flare isn't calculated at that stage, but instead
-        we use oiCompute with an optic + piFlareApply to get an OI.
 
         The original scenario is "nighttime"
 
