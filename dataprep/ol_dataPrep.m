@@ -25,9 +25,9 @@
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
-scenarioName = 'nighttime';
+%scenarioName = 'nighttime';
 %scenarioName = 'nighttime_No_Streetlamps';
-%scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
+scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -92,7 +92,7 @@ datasetFolder = fullfile(iaFileDataRoot('local',true),projectName);
 % same for all scenarios as it is the input data
 EXRFolder = fullfile(datasetFolder, 'SceneEXRs');
 
-% scenes are actually synthetic and have already been rendered 
+% scenes are actually synthetic and have already been rendered
 % typically using makeScenesFromRenders.m
 sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 
@@ -117,12 +117,12 @@ end
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
 % parfor may also cause blank images because YOLO isn't thread safe?
-for ii = 1:numScenes
+parfor ii = 1:numScenes
 
     % If we use parfor, each thread needs a db connection
-    %threadDB = idb();
-    threadDB = ourDB;
-    
+    threadDB = idb();
+    %threadDB = ourDB;
+
     ourScene = load(sceneFileNames{ii}, 'scene');
     ourScene = ourScene.scene; % we get a nested variable for some reason
 
@@ -132,7 +132,7 @@ for ii = 1:numScenes
 
     % Preserve size for later use in resizing
     ourScene.metadata.sceneSize = sceneGet(ourScene,'size');
-    ourScene.metadata.sceneID = sceneID; 
+    ourScene.metadata.sceneID = sceneID;
     ourScene.metadata.scenario = scenarioName;
 
     % In our case we render the scene through our default
@@ -255,19 +255,16 @@ for ii = 1:numScenes
 
     % if we are threaded, we can't use this
     % and if we have a db, we don't need it
-    if ~useDB 
-    
-    % Can't even have this here if we want parfor
-    %    for jj=1:numel(imageMetadata)
-    %        imageMetadataArray{end+1} = imageMetadata(jj);
-    %    end
+    if ~useDB
+
+        % Can't even have this here if we want parfor
+        %    for jj=1:numel(imageMetadata)
+        %        imageMetadataArray{end+1} = imageMetadata(jj);
+        %    end
     end
 end
 
-% TBD: Threading support ...
-% For parfor, we need to pull out the YOLO Detection and run it here
-% on the entire array of images at once.
-
+% To use 
 % Added support for incremental updates, by pulling all the
 % imageMetadata out of the sensorimage collection
 % NOTE: This assumes that all the needed preview files are still
@@ -386,20 +383,11 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata = appendStruct(sensor_ae.metadata, oi.metadata);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
 
-    % See how long this takes in case we want
-    % to allow users to do it in real-time on our server
-    tic;
-    % This is where we need to sync up resolution
-    % We are going to annotate the sensor output
-    % But the sensors have differing resolutions
-    % So we will need to resize before we analyze
     sensor_ae = sensorCompute(sensor_ae,oi);
-
     sensor_burst = sensorCompute(sensor_burst,oiBurst);
     sensor_bracket = sensorCompute(sensor_bracket,oi);
-    toc;
 
-    % Here we save the preview images
+    % Save the preview images
     % We use the fullfile for local write
     % and just the filename for web use
     % May need to get fancier with #frames in filename!
@@ -446,6 +434,13 @@ for iii = 1:numel(sensorFiles)
     burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, 'cropborder', true);
     bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, 'cropborder', true);
 
+
+    % prepare for doing yolo in batch after db updates
+    sensor_ae.metadata.YOLO.aeFileName = outputFile;
+    sensor_ae.metadata.YOLO.burstFileName = burstFile;
+    sensor_ae.metadata.YOLO.bracketFileName = bracketFile;
+
+    % Try to set YOLO image files here
     % We also want to save a YOLO-annotated version of each
     ipYOLOName = [baseFileName '-YOLO.jpg'];
     ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
@@ -456,43 +451,7 @@ for iii = 1:numel(sensorFiles)
     ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
     ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
 
-    % Generate images to use for YOLO
-    img_for_YOLO = imread(outputFile);
-    img_for_YOLO_burst = imread(burstFile);
-    img_for_YOLO_bracket = imread(bracketFile);
-
-    % Note: To use parfor we'll have to pull this out and run
-    % as an array call on the detector, as it doesn't seem to be
-    % thread-safe
-
-    % ----------- Cut here:) -- needs to be threaded
-    % Use YOLO & get back annotated image plus
-    % found objects. By themselves they don't offer distance,
-    % although they do give us a bounding box, from which it might
-    % be possible to compute distance.
-
-    % However, the img_for_YOLO is at a lower resolution, so it will
-    % take some fiddling to align it with objects in the GT scene.
-    [img_YOLO, YOLO_Objects] = ol_YOLOCompute(img_for_YOLO);
-    [img_YOLO_burst, YOLO_Objects_Burst] = ol_YOLOCompute(img_for_YOLO_burst);
-    [img_YOLO_bracket, YOLO_Objects_Bracket] = ol_YOLOCompute(img_for_YOLO_bracket);
-
-    sensor_ae.metadata.YOLOData = YOLO_Objects;
-    sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
-    sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
-
-    % Write out our annotated image
-    if isempty(img_YOLO)
-        fprintf("No YOLO for Image: %s \n", oi.metadata.sceneID);
-    end
-    imwrite(imageCropBorder(img_YOLO), ipLocalYOLO);
-    imwrite(imageCropBorder(img_YOLO_burst), ipLocalYOLO_burst);
-    imwrite(imageCropBorder(img_YOLO_bracket), ipLocalYOLO_bracket);
-
-    % ----------- End of section that needs to be threaded
-
-    % we could also save without an IP if we want
-    %sensorSaveImage(sensor, sensorJPEG  ,'rgb');
+    processYOLO(sensor_ae, outputFolder, baseFileName);
 
     % Generate a quick thumbnail
     thumbnail = imread(ipLocalJPEG);
@@ -560,14 +519,66 @@ end
 end
 
 %% Batch process object detection after images are calculated
-function processYOLO()
-    % We need to decide whether to pass the full images, or just
-    % the filenames (more efficient, but more coding)
+function processYOLO(sensor_ae, outputFolder, baseFileName)
 
-    % We want to iterate over the sensorImages we've been "given"
-    % All the file names should already be there, so we need go
-    % generate the YOLOData & annotated images for each of them.
-    
+% We need to decide whether to pass the full images, or just
+% the filenames (more efficient, but more coding)
+
+% We want to iterate over the sensorImages we've been "given"
+% All the file names should already be there, so we need go
+% generate the YOLOData & annotated images for each of them.
+% seems to need: sensor_ae, outputFolder, and baseFileName
+
+% Either per sensorImage, or per sensorImage + capture?
+
+% Try to set YOLO image files here
+% We also want to save a YOLO-annotated version of each
+ipYOLOName = [baseFileName '-YOLO.jpg'];
+ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
+ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
+
+% "Local" is our ISET filepath, not the website path
+ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
+ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
+ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
+
+% Use YOLO & get back annotated image plus
+% found objects. By themselves they don't offer distance,
+% although they do give us a bounding box, from which it might
+% be possible to compute distance.
+
+% Generate images to use for YOLO
+img_for_YOLO = imread(sensor_ae.metadata.YOLO.aeFileName);
+img_for_YOLO_burst = imread(sensor_ae.metadata.YOLO.burstFileName);
+img_for_YOLO_bracket = imread(sensor_ae.metadata.YOLO.bracketFileName);
+
+% When we are in batch/parallel mode, want to create an array here!
+
+% NOTE: img_YOLO is now a cell array, so we can calculate in batch
+[img_YOLO, YOLO_Objects] = ol_YOLOCompute({img_for_YOLO});
+[img_YOLO_burst, YOLO_Objects_Burst] = ol_YOLOCompute({img_for_YOLO_burst});
+[img_YOLO_bracket, YOLO_Objects_Bracket] = ol_YOLOCompute({img_for_YOLO_bracket});
+
+sensor_ae.metadata.YOLOData = YOLO_Objects;
+sensor_ae.metadata.YOLOData_Burst = YOLO_Objects_Burst;
+sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
+
+% Write out our annotated image
+if isempty(img_YOLO)
+    fprintf("No YOLO for Image: %s \n", oi.metadata.sceneID);
+end
+if ~isempty(img_YOLO{1})
+    imwrite(imageCropBorder(img_YOLO{1}), ipLocalYOLO);
+end
+if ~isempty(img_YOLO_burst{1})
+    imwrite(imageCropBorder(img_YOLO_burst{1}), ipLocalYOLO_burst);
+end
+if ~isempty(img_YOLO_bracket{1})
+    imwrite(imageCropBorder(img_YOLO_bracket{1}), ipLocalYOLO_bracket);
+end
+% Once we go parallel, need to write out the database entry here!
+
+
 end
 
 %% Export lenses to JSON files for our users
