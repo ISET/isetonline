@@ -1,4 +1,9 @@
-% Simple script to create DB Documents for the Ford scene recipes
+% Simple script to create DB Documents for the
+% Scenes (@recipe .MAT files) that have been rendered into
+% lighting specific .EXR files.
+%
+% At some point when we also have other recipe customizations
+% like camera position, we can extend this
 %
 % Recipes for the Ford project were created using multiple
 % different light sources for each scene. So we have several
@@ -11,8 +16,7 @@ projectName = 'Ford'; % we currently use folders per project
 projectFolder = fullfile(iaFileDataRoot('local', true), projectName);
 sceneRecipeFolder =  fullfile(projectFolder, 'SceneRecipes');
 
-% These files have some information, but aren't strictly necessary
-% for storing the recipes
+% These are the recipes from the scenes exported from Blender
 sceneMetadataFiles = dir(fullfile(sceneRecipeFolder,'*.mat'));
 
 % For this project, recipes are stored as <ID>_<lighting>.pbrt
@@ -24,14 +28,19 @@ sceneSuffixes = {'skymap', 'otherlights', 'headlights', ...
     'streetlights'};
 
 % Store in our collection of rendered auto scenes (.EXR files)
-useCollection = 'autoScenesRecipes';
+pbrtCollection = 'autoScenesPBRT';
+recipeCollection = 'autoScenesRecipe';
 
 % open the default ISET database
 ourDB = isetdb();
 
-% create auto recipes collection if needed
+% create auto recipes collections if needed
 try
-    createCollection(ourDB.connection,useCollection);
+    createCollection(ourDB.connection,recipeCollection);
+catch
+end
+try
+    createCollection(ourDB.connection,recipeCollection);
 catch
 end
 
@@ -41,23 +50,25 @@ for ii = 1:numel(sceneMetadataFiles)
     ne = sceneMetadataFiles(ii).name;
     [~, n, e] = fileparts(sceneMetadataFiles(ii).name);
 
+    % Project-specific metadata
+    ourRecipe.project = "Ford Motor Company";
+    ourRecipe.creator = "Zhenyi Liu";
+    ourRecipe.sceneSource = "Blender";
+    ourRecipe.sceneID = n;
+
+    % First store the original @recipe info
+    ourDB.store(ourRecipe, 'collection', recipeCollection);
+
     for jj = 1:numel(sceneSuffixes)
 
         recipeFile = fullfile(p,[n '_' sceneSuffixes{jj} '.pbrt']);
         if isfile(recipeFile)
-            ourRecipe = [];
-
-            % Project-specific metadata
-            ourRecipe.project = "Ford Motor Company";
-            ourRecipe.creator = "Zhenyi Liu";
-            ourRecipe.sceneSource = "Blender";
 
             % Scene specific metadata
-            ourRecipe.sceneID = n;
             ourRecipe.lightingType = sceneSuffixes{jj};
             ourRecipe.fileName = recipeFile;
 
-            ourDB.store(ourRecipe, 'collection', useCollection);
+            ourDB.store(ourRecipe, 'collection', pbrtCollection);
         end
     end
 end
