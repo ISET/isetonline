@@ -15,8 +15,10 @@ assets = ourDB.find(assetCollection);
 images = {};
 
 for ii = 1:numel(assets)
-    if ~isempty(assets(ii).thumbnail) % we've found a thumbnail to display
+    if ~isempty(assets(ii).thumbnail) && isfile(assets(ii).thumbnail)% we've found a thumbnail to display
         images(end+1) = {assets(ii).thumbnail}; %#ok<SAGROW> 
+    else
+        % no image available -- should show a blank placeholder if possible
     end
 end
 

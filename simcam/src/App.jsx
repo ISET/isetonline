@@ -5,10 +5,6 @@ import React, { useState, useRef, useCallback, useEffect } from "react";
 // import { useEffect, useMemo } from 'react'
 import "react-dom";
 
-// DevExtreme Components
-import Button from "devextreme-react/button";
-import DataGrid, { RemoteOperations } from "devextreme-react/data-grid";
-
 import { AgGridReact } from "ag-grid-react"; // the AG Grid React Component
 // import MyStatusPanel from './myStatusPanel.jsx';
 
@@ -47,8 +43,6 @@ import Box from "@mui/material/Box";
 import Slider from "@mui/material/Slider";
 
 // JSON Editor
-// Has an issue with .js for ESM, so commenting
-// out in this branch
 // import SvelteJSONEditor from "./sveltejsoneditor";
 import "./styles.css";
 
@@ -63,32 +57,13 @@ import { Annotorious } from "@recogito/annotorious";
 import "@recogito/annotorious/dist/annotorious.min.css";
 import { breakpoints } from "@mui/system";
 
-// DevExtreme DataGrid inits
-import { createStore } from "devextreme-aspnet-data-nojquery";
-
-// DevExtreme Init Stuff -- says it needs polyfill
-// const MongoClient = require("mongodb").MongoClient;
-// const query = require("devextreme-query-mongodb");
-
-// FIX!
-const serviceUrl = "https://mydomain.com/MyDataService";
-
-const remoteDataSource = createStore({
-  key: "ID",
-  loadUrl: serviceUrl + "/GetAction",
-  insertUrl: serviceUrl + "/InsertAction",
-  updateUrl: serviceUrl + "/UpdateAction",
-  deleteUrl: serviceUrl + "/DeleteAction",
-});
-
 // Load our rendered sensor images
 // They are located in sub-folders under /public
+// NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
 let imageDir = "/images/"; // Should use /public by default?
-let oiDir = "/oi/";
-let sensorDir = dataDir + "sensors/";
+let sensorDir = "./data/sensors/";
 
-let jsonUrl = "metadata.json";
 let imageMetaData = require(dataDir + "metadata.json");
 var imageData;
 
@@ -106,11 +81,26 @@ let selectedImage = {
 // get sensorimage data from the metadata.json file.
 // however, it is a map/collection, so we need to index into it first.
 var rows = [];
-var newRow = [];
-var imageData;
+var CT = [];
+var CTDistance = 1000000;
 
 for (let rr = 0; rr < imageMetaData.length; rr++) {
-  imageData = imageMetaData[rr]; // hope this works:)
+  imageData = imageMetaData[rr];
+
+  // closestTarget seems a bit flakey, so check for existence
+  if (imageData.hasOwnProperty('closestTarget')){
+    CT = imageData.closestTarget;
+    if (CT.hasOwnProperty('distance')){
+      CTDistance = CT.distance;
+    } else {
+      CTDistance = 1000000
+    }
+  } else {
+    CT = [];
+    CTDistance = 1000000;
+  }
+  
+
   // Read image objects into grid rows
   // Some visible, some hidden for other uses
   let newRow = [
@@ -124,9 +114,13 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       lens: imageData.opticsname,
       sensor: imageData.sensorname,
+      scenarioName: imageData.scenario,
 
       // pre-load sensor objects
-      sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
+      // sensorDir sometimes errors here? 
+      // sensorObject: require(sensorDir + imageData.sensorFile + ".json"),
+      // make it just the sensor json name for now!
+      sensorFileName: /sensors/ + imageData.sensorFile + ".json",
 
       // Used to set the file for the preview window
       preview: imageDir + imageData.web.jpegName,
@@ -143,11 +137,18 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
       YOLOBurstPreview: imageDir + imageData.web.burstYOLOName,
       YOLOBracketPreview: imageDir + imageData.web.bracketYOLOName,
 
+      // FLARE previews should go here once we have them
+      //
+
       // Used for download files
       jpegFile: imageData.web.jpegName,
       sensorRawFile: imageDir + imageData.sensorRawFile,
       sensorRawName: imageData.sensorRawFile,
-      oiName: imageData.oiFile,
+
+      // This is kind of broken. We don't (yet) write out the correct filename
+      // So we hard-code it based on the 
+      // oiFileName: imageData.web.oiName,
+      oiImageName: imageData.scenename + '-OI.png',
 
       // Used for other metadata properties
       eTime: imageData.exposureTime,
@@ -155,29 +156,51 @@ for (let rr = 0; rr < imageMetaData.length; rr++) {
 
       // Pixel info
       pixel: imageData.pixel,
- 
+
       // Ground Truth Objects & Statistics
       GTObjects: imageData.GTObjects,
       GTStats: imageData.Stats,
       GTLabels: imageData.Stats.uniqueLabels,
-      GTDistance: Number(imageData.Stats.minDistance),
+      GTDistance: Number(CTDistance),
 
-      lightSources: getLightParams(imageData)
-      
+      // Closest Target data
+      closestTarget: CT,
+      closestLabel: CT.label,
+
+      // Text version of lighting parameters
+      lightSources: getLightParams(imageData),
+
+      // Each lighting parameter broken out
+      lightSky: imageData.lightingParams.skyL_wt,
+      lightHead: imageData.lightingParams.headL_wt,
+      lightStreet: imageData.lightingParams.streetL_wt,
+      lightFlare: imageData.lightingParams.flare,
+      lightOther: imageData.lightingParams.otherL_wt,
+      lightLuminance: imageData.lightingParams.meanLuminance,
+
+      // These need to come form the underlying scene when we generate
+      // the sensorImage collection in the db.
+      // project: imageData.project,
+      // scenario: imageData.scenario,
     },
   ];
   rows = rows.concat(newRow);
 }
 
 function getLightParams(imageData) {
-  var lightSources = '';
+  var lightSources = "";
   if (typeof imageData.lightingParams != "undefined") {
-    lightSources = "Sky: " + imageData.lightingParams.skyL_wt 
-      + " Head: " + imageData.lightingParams.headL_wt 
-      + " Street: " + imageData.lightingParams.streetL_wt 
-      + " Flare: " + imageData.lightingParams.flare
-    }
-    return lightSources;
+    lightSources =
+      "Sky: " +
+      imageData.lightingParams.skyL_wt +
+      " Head: " +
+      imageData.lightingParams.headL_wt +
+      " Street: " +
+      imageData.lightingParams.streetL_wt +
+      " Flare: " +
+      imageData.lightingParams.flare;
+  }
+  return lightSources;
 }
 
 var userSensorContent = "";
@@ -192,7 +215,6 @@ function updateUserSensor(newContent) {
 const App = () => {
   // Ref to the image DOM element
   const imgEl = useRef();
-  const computedEl = useRef();
 
   // The current Annotorious instance
   const [anno, setAnno] = useState();
@@ -285,6 +307,8 @@ const App = () => {
       field: "scene",
       width: 128,
       filter: true,
+      sortable: true,
+      resizable: true,
       tooltipField: "Filter and Sort by Scene name",
     },
 
@@ -293,6 +317,8 @@ const App = () => {
       headerName: "Objects",
       field: "GTLabels",
       filter: true,
+      sortable: true,
+      resizable: true,
       tooltipField: "Objects in Scene",
       hide: false,
     },
@@ -300,7 +326,9 @@ const App = () => {
     {
       headerName: "Distance",
       field: "GTDistance",
-      filter: 'agNumberColumnFilter',
+      width: 96,
+      filter: "agNumberColumnFilter",
+      sortable: true,
       tooltipField: "Minimum Object Distance",
       hide: false,
       valueFormatter: formatDistance,
@@ -310,16 +338,98 @@ const App = () => {
       headerName: "Lens Used",
       field: "lens",
       filter: true,
+      sortable: true,
+      resizable: true,
       tooltipField: "Filter and sort by lens",
       hide: true,
     },
     {
       headerName: "Sensor",
       field: "sensor",
+      width: 128,
       filter: true,
+      sortable: true,
+      resizable: true,
       tooltipField: "Filter and sort by sensor",
     },
-    { headerName: "Light Sources", field:"lightSources"},
+    {
+      headerName: "Scenario",
+      field: "scenarioName",
+      width: 128,
+      filter: true,
+      sortable: true,
+      resizable: true,
+      tooltipField: "Filter and sort by lighting scenario",
+    },
+    // Don't display text light sources if we display all of them separately
+    {
+      headerName: "Light Sources",
+      field: "lightSources",
+      filter: true,
+      sortable: true,
+      resizable: true,
+      tooltipField: "Text version of light weightings",
+      hide: true,
+    },
+
+    // Additional fields that may be useful for sorting & filtering
+    {
+      headerName: "Closest",
+      field: "closestLabel",
+      width: 128, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Skylight",
+      field: "lightSky",
+      width: 96, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "StreetLamps",
+      field: "lightStreet",
+      width: 96, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Headlights",
+      field: "lightHead",
+      width: 96, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Other Light",
+      field: "lightOther",
+      width: 96, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Flare",
+      field: "lightFlare",
+      width: 96, 
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+    {
+      headerName: "Luminance",
+      field: "lightLuminance",
+      width: 128,
+      sortable: true,
+      resizable: true,
+      filter: true,
+    },
+
     // Hidden fields for addtional info
     { headerName: "Preview", field: "preview", hide: true },
     { headerName: "jpegName", field: "jpegName", hide: true },
@@ -347,9 +457,9 @@ const App = () => {
     var distance = params.value;
     distance = distance.toFixed(1);
     if (distance < 10000) {
-      return distance + ' m';
+      return distance + " m";
     } else {
-      return 'none';
+      return "none";
     }
   }
   const fSlider = useRef([]); // This will be the preview image element & Slider
@@ -378,7 +488,7 @@ const App = () => {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         sensor: userSensorContent,
-        oiFile: selectedRow.current.oiName,
+        oiName: selectedRow.current.oiFileName,
         name: selectedRow.current.name,
       }),
     };
@@ -505,7 +615,10 @@ const App = () => {
 
     // load the selected sensor in case the user wants
     // to modify its parameters and recompute
-    var factorySensorFile = selectedRow.current.sensorObject.sensorFileName;
+    //
+    var factorySensorFile = selectedRow.current.sensorFileName;
+    // I don't think we need the sensor object until we allow editing
+    // var sensorObject = require(factorySensorFile);
     var dataPrepSensorFile = factorySensorFile.replace(
       ".json",
       "-Baseline.json"
@@ -585,9 +698,9 @@ const App = () => {
         dlName = selectedRow.current.jpegFile;
         break;
       case "dlOI":
-        // Some OI may be too large, but so far so good
-        dlPath = oiDir + selectedRow.current.oiName;
-        dlName = selectedRow.current.oiName;
+        // Currently an RGB of the OI processed using HDR
+        dlPath = imageDir + selectedRow.current.oiImageName;
+        dlName = selectedRow.current.oiImageName;
         break;
       default:
       // Nothing
@@ -629,10 +742,6 @@ const App = () => {
   const [showEditor, setShowEditor] = useState(true);
   const [readOnly, setReadOnly] = useState(false);
 
-  const sayHelloWorld = () => {
-    alert("Hello world!");
-  };
-
   // JSX (e.g. HTML +) STARTS HERE
   // -----------------------------
 
@@ -645,16 +754,15 @@ const App = () => {
         </CCol>
         <CCol xs={4}>
           <CImage width="300" src="/glyphs/Vista_Lab_Logo.png"></CImage>
-          <h2>ISET Camera Simulator</h2>
+          <h2>ISET Online</h2>
         </CCol>
         <CCol xs={7}>
           <p>
-            <br></br>Select a scene, a lens, and a sensor, to get a
-            highly-accurate simulated image. From there you can download the
-            Voltage response that can be used to evaluate your own image
-            processing pipeline, or a JPEG with a simple rendering, or the
-            original optical image if you want to do further analysis on your
-            own.
+            <br></br>Choose from our library of scenes to get a highly-accurate
+            simulated image as it would be rendered using a selected sensor. You
+            can see the Ground Truth of objects in the scene, as well as the
+            results from YOLOv4 using auto-exposure, burst, and bracketing. You can sort
+            and filter on any column(s) in the table.
           </p>
         </CCol>
       </CRow>
@@ -757,6 +865,7 @@ const App = () => {
             </CCol>
           </CRow>
           <CRow>
+            {/* We don't currently use a sensor editor, but it is surprisingly hard to comment out a block that includes comments:) */}
             <CCol>
               {/* JSON Editor for sensor object */}
               <div className="App" style={{ width: 300 }}>
@@ -822,6 +931,8 @@ const App = () => {
                 id="computedImage"
                 rounded
                 thumbnail
+                width={400}
+                height={300}
                 src={computedImage}
               />
             </CCol>
@@ -905,27 +1016,27 @@ const App = () => {
           <CRow>
             <h5>Download:</h5>
             <CButtonGroup>
-              <CTooltip content="This is the full sensor object, including its response in volts.">
+              <CTooltip content="Sensor object, including its response in volts.">
                 <CButton
                   id="dlSensorVolts"
+                  variant="outline"
+                  onClick={buttonDownload}
+                >
+                  Sensor Object
+                </CButton>
+              </CTooltip>
+              <CTooltip content="Example RGB result (JPEG) after processing the sensor data.">
+                <CButton
+                  id="dlIPRGB"
                   variant="outline"
                   onClick={buttonDownload}
                 >
                   Sensor Image
                 </CButton>
               </CTooltip>
-              <CTooltip content="This is an example RGB result after processing the sensor data.">
-                <CButton
-                  id="dlIPRGB"
-                  variant="outline"
-                  onClick={buttonDownload}
-                >
-                  Processed Image
-                </CButton>
-              </CTooltip>
-              <CTooltip content="This is the irradiance on the film plane of the scene viewed throug the lens.">
+              <CTooltip content="A visual (JPEG) of the scene lit using this Scenario.">
                 <CButton id="dlOI" variant="outline" onClick={buttonDownload}>
-                  Optical Image
+                  Image of Scene
                 </CButton>
               </CTooltip>
             </CButtonGroup>
@@ -963,7 +1074,7 @@ const App = () => {
 
       <CFooter>
         <div>
-          <span>&copy; 2022 VistaLab, Stanford University</span>
+          <span>&copy; 2022-2023 VistaLab, Stanford University</span>
         </div>
         <div>
           <span>...</span>

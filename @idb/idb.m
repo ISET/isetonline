@@ -14,11 +14,12 @@ classdef idb < handle
     methods (Static)
         function defaultDB = ISETdb()
             persistent ISETdb;
-            if ~exist(ISETdb, 'var')
+            if ~exist('ISETdb', 'var')
                 ISETdb = [];
             end
             if isempty(ISETdb)
                 defaultDB = idb();
+                ISETdb = defaultDB;
             else
                 defaultDB = ISETdb;
             end
@@ -86,7 +87,6 @@ classdef idb < handle
                 obj.connection = mongoc(obj.dbServer, obj.dbPort, obj.dbName);
                 % sometimes this doesn't work the first time, but
                 % I don't know why. Try a pause
-                pause(1);
                 if isopen(obj.connection)
                     % ASSUME already created: obj.createSchema;
                     return; % not sure how we signal trouble?
