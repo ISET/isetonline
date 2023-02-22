@@ -284,7 +284,7 @@ end
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 % To force (or not) recreation of sensor images
-useDBCache = false;
+useDBCache = true;
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
@@ -622,7 +622,9 @@ for ii = 1:numel(sensorFiles)
 
     % stash the name so we can load it into the web ui
     sensor.sensorFileName = [sName '.json'];
-    jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    if ~isfile(fullfile(outputFolder,'sensors',[sName '.json']))
+        jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    end
     jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
 
     % We want to write these to the sensor database also

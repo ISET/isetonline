@@ -29,7 +29,7 @@ sceneSuffixes = {'skymap', 'otherlights', 'headlights', ...
 
 % Store in our collection of rendered auto scenes (.EXR files)
 pbrtCollection = 'autoScenesPBRT';
-recipeCollection = 'autoScenesRecipe';
+recipeCollection = 'autoScenesRecipes';
 
 % open the default ISET database
 ourDB = isetdb();
