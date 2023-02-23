@@ -17,7 +17,7 @@ projectFolder = fullfile(iaFileDataRoot('local', true), projectName);
 sceneRecipeFolder =  fullfile(projectFolder, 'SceneRecipes');
 
 % These are the recipes from the scenes exported from Blender
-sceneMetadataFiles = dir(fullfile(sceneRecipeFolder,'*.mat'));
+sceneRecipeFiles = dir(fullfile(sceneRecipeFolder,'*.mat'));
 
 % For this project, recipes are stored as <ID>_<lighting>.pbrt
 % with <ID> being one of the numbered scenes reference in a .mat file
@@ -29,7 +29,7 @@ sceneSuffixes = {'skymap', 'otherlights', 'headlights', ...
 
 % Store in our collection of rendered auto scenes (.EXR files)
 pbrtCollection = 'autoScenesPBRT';
-recipeCollection = 'autoScenesRecipes';
+recipeCollection = 'autoScenesRecipe';
 
 % open the default ISET database
 ourDB = isetdb();
@@ -40,21 +40,29 @@ try
 catch
 end
 try
-    createCollection(ourDB.connection,recipeCollection);
+    createCollection(ourDB.connection,pbrtCollection);
 catch
 end
 
-for ii = 1:numel(sceneMetadataFiles)
+for ii = 1:numel(sceneRecipeFiles)
 
-    p = sceneMetadataFiles(ii).folder;
-    ne = sceneMetadataFiles(ii).name;
-    [~, n, e] = fileparts(sceneMetadataFiles(ii).name);
+    % clear these
+    ourRecipe.lightingType = {};
+    ourRecipe.fileName = '';
+    if isfield(ourRecipe, '_id')
+        ourRecipe = rmfield(ourRecipe,'_id');
+    end
+    p = sceneRecipeFiles(ii).folder;
+    ne = sceneRecipeFiles(ii).name;
+    [~, n, e] = fileparts(sceneRecipeFiles(ii).name);
 
     % Project-specific metadata
     ourRecipe.project = "Ford Motor Company";
     ourRecipe.creator = "Zhenyi Liu";
     ourRecipe.sceneSource = "Blender";
     ourRecipe.sceneID = n;
+    ourRecipe.recipeFile = fullfile(sceneRecipeFiles(ii).folder, ...
+        sceneRecipeFiles(ii).name);
 
     % First store the original @recipe info
     ourDB.store(ourRecipe, 'collection', recipeCollection);
@@ -64,6 +72,9 @@ for ii = 1:numel(sceneMetadataFiles)
         recipeFile = fullfile(p,[n '_' sceneSuffixes{jj} '.pbrt']);
         if isfile(recipeFile)
 
+            if isfield(ourRecipe, '_id')
+                ourRecipe = rmfield(ourRecipe,'_id');
+            end
             % Scene specific metadata
             ourRecipe.lightingType = sceneSuffixes{jj};
             ourRecipe.fileName = recipeFile;
