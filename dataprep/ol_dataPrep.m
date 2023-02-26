@@ -430,9 +430,9 @@ for iii = 1:numel(sensorFiles)
     ip_bracket = ipCompute(ip_bracket, sensor_bracket);
 
     % save an RGB JPEG using our default IP so we can show a preview
-    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, 'cropborder', true);
-    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, 'cropborder', true);
-    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, 'cropborder', true);
+    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, false, false, 'cropborder', true);
+    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false, 'cropborder', true);
+    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false, 'cropborder', true);
 
 
     % prepare for doing yolo in batch after db updates
