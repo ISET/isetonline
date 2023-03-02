@@ -90,11 +90,15 @@ for ii = 1:numel(filteredImages)
     % YOLO is in sensor pixels, we need to scale to match scene pixels
     % This routine has been troublesome because of varying aspect ratios
     % in addition to resolution, so a place to look if there are issues
-    detectorResults = scaleDetectorResults(filteredImages(ii));
+    if iscell(filteredImages)
+        detectorResults = scaleDetectorResults(filteredImages{ii});
+        GTObjects = filteredImages{ii}.closestTarget;
+    else
+        detectorResults = scaleDetectorResults(filteredImages(ii));
+        GTObjects = filteredImages(ii).closestTarget;
+    end
 
-    %fprintf("Processing image %s\n", sensorImages(ii).scenename);
     % cT has label, bbox, distance, name
-    GTObjects = filteredImages(ii).closestTarget;
     if  matches(GTObjects(:).label, ourClass) == true
         % we have an image that includes our class
         imgIndex = imgIndex + 1;
@@ -145,7 +149,11 @@ for ii = 1:numel(filteredImages)
         % This if case can be good for debugging, if there is an issue
         % with the YOLO detectors results
         % We don't have a match at all
-        fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
+        if iscell(filteredImages)
+            fprintf("No match in image: %s\n", filteredImages{ii}.sceneID);
+        else
+            fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
+        end
     else
 
         % Get the bounding boxes and scores for the matching elements
@@ -231,7 +239,12 @@ queryString = sprintf("{""name"": ""%s""}", sensorName);
 sensor = ourDB.docFind(dbTable, queryString);
 sceneSize = sensorImage.sceneSize;
 
-detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+if isfield(sensorImage,'YOLOData')
+    detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+else
+    fprintf("Warning: No Yolo Data for %s\n", sensorImage.sceneID);
+    detectorResults = [];
+end
 
 % Scale to [width height] multiplier
 sensorSize = double([sensor.rows sensor.cols]);
@@ -294,6 +307,7 @@ else
         end
     end
 end
+
 
 end
 
