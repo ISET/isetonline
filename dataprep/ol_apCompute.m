@@ -58,7 +58,7 @@ else
 end
 
 % FOR DEBUGGING
-%sensorImages = sensorImages(1:10);
+sensorImages = sensorImages(1:10);
 
 % ii is image iterator
 % jj is GTObjects iterator
@@ -264,7 +264,7 @@ if sensorAspect > sceneAspect % sensor "taller" than scene
 
     % Establish how far to offset the sensor YOLO data so that the top
     % left corner matches (0,0) in the scene ground truth
-    vOffset = double(sceneSize{1} - simSensorHeight) / 2;
+    vOffset = (sensorSize(1) - (sensorSize(2) * sceneAspect)) /2;
 else
     % should handle the other case eventually
     vOffset = 0;
@@ -285,7 +285,7 @@ if numel(detectorResults.scores) == 1
         % bboxes are:
         %columns (from left), rows (from top), width, height
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatioHorizontal;
-        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatioHorizontal + vOffset;
+        tmpBoxes{1}{2} = (double(detectorResults.bboxes{2}) - vOffset) * scaleRatioHorizontal;
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatioHorizontal;
         tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatioHorizontal;
         detectorResults.bboxes = tmpBoxes;
@@ -296,9 +296,9 @@ else
     for qq = 1:numel(detectorResults.bboxes)
         try
             %fprintf("Sensor: %s \n", sensorName)
-            %celldisp(detectorResults.bboxes{qq}, "Original")
+            origBoxes = detectorResults.bboxes{qq};
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatioHorizontal;
-            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2})  * scaleRatioHorizontal +vOffset;
+            detectorResults.bboxes{qq}{2} = (double(detectorResults.bboxes{qq}{2}) - vOffset)  * scaleRatioHorizontal;
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatioHorizontal;
             detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatioHorizontal;
             %celldisp(detectorResults.bboxes{qq}, "Scaled")
