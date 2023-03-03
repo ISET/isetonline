@@ -284,7 +284,7 @@ end
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 % To force (or not) recreation of sensor images
-useDBCache = true;
+useDBCache = false;
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
@@ -429,29 +429,35 @@ for iii = 1:numel(sensorFiles)
         ip_bracket.demosaic.method = 'analog rccc'; end
     ip_bracket = ipCompute(ip_bracket, sensor_bracket);
 
-    % save an RGB JPEG using our default IP so we can show a preview
-    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, false, false, 'cropborder', true);
-    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false, 'cropborder', true);
-    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false, 'cropborder', true);
-
+    % save an RGB JPEG default IP for use with YOLO
+    % We may save a cropped version later for better display
+    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, false, false);
+    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false);
+    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false);
 
     % prepare for doing yolo in batch after db updates
     sensor_ae.metadata.YOLO.aeFileName = outputFile;
     sensor_ae.metadata.YOLO.burstFileName = burstFile;
     sensor_ae.metadata.YOLO.bracketFileName = bracketFile;
 
-    % Try to set YOLO image files here
+    % Set filenames for output YOLO image files here
     % We also want to save a YOLO-annotated version of each
     ipYOLOName = [baseFileName '-YOLO.jpg'];
     ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
     ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
 
+    %{
     % "Local" is our ISET filepath, not the website path
     ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
     ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
     ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
-
+    %}
     processYOLO(sensor_ae, outputFolder, baseFileName);
+
+    % save a cropped version of our RGB JPEG using our default IP so we can show a preview
+    ipSaveImage(ip_ae, ipLocalJPEG, false, false, 'cropborder', true);
+    ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false, 'cropborder', true);
+    ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false, 'cropborder', true);
 
     % Generate a quick thumbnail
     thumbnail = imread(ipLocalJPEG);
