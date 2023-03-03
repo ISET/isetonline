@@ -1,4 +1,10 @@
-% Render & Export objects for use in ISETOnline
+% ol_dataPrep takes Scenes & produces a ready-to-view website
+% for ISETOnline. It's roughly composed of these four steps:
+%
+% 1) Image (via oi, sensor, ip) folders of ISET Scene objects
+% 2) Analyze (retrieve ground truth, use YOLO for detection)
+% 3) Export images for use in ISETOnline
+% 4) Update sensorImages collection in isetdb().
 %
 % Supports  scenes generated
 % using PBRT & re-processed for multiple illuminants. The
@@ -111,12 +117,11 @@ for ii = 1:numScenes
     jj = jj+1;
 end
 
-% our scenes are pre-rendered .exr files for various illuminants
-% that have been combined into ISETcam scenes for evaluation
+% our scenes are typically rendered from project recipes into
+% ISETCam scene objects (stored in .mat files)
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-% parfor may also cause blank images because YOLO isn't thread safe?
 parfor ii = 1:numScenes
 
     % If we use parfor, each thread needs a db connection
