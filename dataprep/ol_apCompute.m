@@ -58,7 +58,7 @@ else
 end
 
 % FOR DEBUGGING
-sensorImages = sensorImages(1:10);
+%sensorImages = sensorImages(1:10);
 
 % ii is image iterator
 % jj is GTObjects iterator
@@ -277,6 +277,14 @@ end
 % when it captures the OI of the scene, there is banding at top and bottom,
 % and that the resulting image needs to be scaled according to the
 % horizontal difference in resolution (adjusted for the padding)
+
+if isempty(detectorResults)
+    warning("Need to handle empty detector results!");
+    detectorResults.bboxes{1} = {1, 1, 1, 1};
+    detectorResults.labels = '';
+    detectorResults.scores = [];
+    return
+end
 
 % NB This seems to be working well for the MT Auto sensor, but with odd
 %    effects for the AP sensor
