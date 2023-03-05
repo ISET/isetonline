@@ -27,7 +27,7 @@ switch (p.Results.type)
     case 'filedata'
         dataRoot = getpref('isetauto', 'filedataroot', '');
 
-    case 'resources'
+    case {'resources', 'Resources'}
         % These are a bit of a guess, but based on acorn fs
             if ispc
                 dataRoot = fullfile(dataDrive, 'data','iset','Resources');
