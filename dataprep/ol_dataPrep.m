@@ -122,7 +122,7 @@ end
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-parfor ii = 1:numScenes
+for ii = 1:numScenes
 
     % If we use parfor, each thread needs a db connection
     threadDB = idb();
@@ -338,7 +338,9 @@ for iii = 1:numel(sensorFiles)
         continue;
     end
 
-
+    %% Oops -- This alters sensor rows & cols
+    % Which means subsequent .size doesn't equal sensor size
+    % But this is helpful in making all the images display in a similar way
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
@@ -613,6 +615,9 @@ function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
     'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
+
+% debug the ar sensor
+sensorFiles = {'ar0132atSensorRGB.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
