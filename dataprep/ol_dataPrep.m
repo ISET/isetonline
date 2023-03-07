@@ -386,6 +386,9 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata = baseMetadata; % initialize with generic value
     sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
 
+    % Our actual capture won't be the same as the native sensor resolution
+    sensor_ae.metadata.imgSize = sensorGet(sensor_ae,'size');
+
     % merge metadata from the OI with our own
     sensor_ae.metadata = appendStruct(sensor_ae.metadata, oi.metadata);
     jsonwrite(fullfile(outputFolder,'sensors',[sName '-Baseline.json']), sensor_ae);
@@ -446,6 +449,7 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata.YOLO.aeFileName = outputFile;
     sensor_ae.metadata.YOLO.burstFileName = burstFile;
     sensor_ae.metadata.YOLO.bracketFileName = bracketFile;
+    sensor_ae_metadata.YOLO.imgSize = sensorGet(sensor_ae,'size');
 
     % Set filenames for output YOLO image files here
     % We also want to save a YOLO-annotated version of each
