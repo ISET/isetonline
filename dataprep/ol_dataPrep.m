@@ -449,7 +449,7 @@ for iii = 1:numel(sensorFiles)
     sensor_ae.metadata.YOLO.aeFileName = outputFile;
     sensor_ae.metadata.YOLO.burstFileName = burstFile;
     sensor_ae.metadata.YOLO.bracketFileName = bracketFile;
-    sensor_ae_metadata.YOLO.imgSize = sensorGet(sensor_ae,'size');
+    sensor_ae.metadata.YOLO.imgSize = sensorGet(sensor_ae,'size');
 
     % Set filenames for output YOLO image files here
     % We also want to save a YOLO-annotated version of each
@@ -519,6 +519,7 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     if ~isempty(ourDB)
+        % .store won't update an existing document
         ourDB.store(sensor_ae.metadata,"collection","sensorImages");
     end
 
@@ -619,9 +620,6 @@ function sensorFiles = exportSensors(outputFolder, privateDataFolder, ourDB)
 % 'ar0132atSensorRGBW.mat',     'NikonD100Sensor.mat'
 sensorFiles = {'MT9V024SensorRGB.mat', ... % 'imx363.mat',...
     'ar0132atSensorRGB.mat'}; %, 'ar0132atSensorRCCC.mat'};
-
-% debug the ar sensor
-sensorFiles = {'ar0132atSensorRGB.mat'};
 
 % Currently we want to keep a copy of sensors in /public for user
 % download, and one is src/data for us to use for the UI as needed
