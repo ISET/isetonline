@@ -98,6 +98,17 @@ for ii = 1:numel(filteredImages)
         GTObjects = filteredImages(ii).closestTarget;
     end
 
+    %% Pseuo-code that uses Matlabs bbox function(s)
+    %{
+        % [precision,recall] = bboxPrecisionRecall(bboxes,groundTruthBboxes,threshold)
+    %}
+
+    detectorBoxes = arrayfun(@(x) cell2mat(x.bboxes),detectorResults(ii));
+    [precision, recall] = bboxPrecisionRecall( detectorBoxes , ...
+        filteredImages(ii).GTObjects);
+    fprintf("Precision: %.2d, Recall: %.2d\n",precision, recall);
+    
+    %% Bespoke Closest Target algorithm
     % cT has label, bbox, distance, name
     if  matches(GTObjects(:).label, ourClass) == true
         % we have an image that includes our class
