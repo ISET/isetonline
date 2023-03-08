@@ -100,14 +100,13 @@ for ii = 1:numel(filteredImages)
 
     %% Pseuo-code that uses Matlabs bbox function(s)
     %{
-        % [precision,recall] = bboxPrecisionRecall(bboxes,groundTruthBboxes,threshold)
-    %}
 
     detectorBoxes = arrayfun(@(x) cell2mat(x.bboxes),detectorResults(ii));
     [precision, recall] = bboxPrecisionRecall( detectorBoxes , ...
         filteredImages(ii).GTObjects);
     fprintf("Precision: %.2d, Recall: %.2d\n",precision, recall);
-    
+    %}
+
     %% Bespoke Closest Target algorithm
     % cT has label, bbox, distance, name
     if  matches(GTObjects(:).label, ourClass) == true
@@ -239,16 +238,9 @@ end
 function detectorResults = scaleDetectorResults(sensorImage)
 % We need to scale YOLOData to match ther resolution of the GT Scene
 % and the aspect ratio, since the YOLOdata was captured in a sensor image
-% that has the sensor resolution and aspect ratio.
-ourDB = isetdb();
-dbTable = 'sensors';
+% that has a modified sensor resolution and aspect ratio.
 
-% Find the sensor so we can get its size
-sensorName = sensorImage.sensorname;
-
-queryString = sprintf("{""name"": ""%s""}", sensorName);
-sensor = ourDB.docFind(dbTable, queryString);
-sceneSize = sensorImage.sceneSize;
+sceneSize = sensorImage.YOLO.imgSize;
 
 if isfield(sensorImage,'YOLOData')
     detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
