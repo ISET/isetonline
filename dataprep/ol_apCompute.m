@@ -240,7 +240,9 @@ function detectorResults = scaleDetectorResults(sensorImage)
 % and the aspect ratio, since the YOLOdata was captured in a sensor image
 % that has a modified sensor resolution and aspect ratio.
 
-sceneSize = sensorImage.YOLO.imgSize;
+% Scale to [width height] multiplier
+sceneSize = sensorImage.sceneSize;
+sensorSize = sensorImage.YOLO.imgSize;
 
 if isfield(sensorImage,'YOLOData')
     detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
@@ -249,25 +251,23 @@ else
     detectorResults = [];
 end
 
-% Scale to [width height] multiplier
-sensorSize = double([sensor.rows sensor.cols]);
 % sceneSize is in  rows, columns
-scaleRatioVertical = double(sceneSize{1}) / double(sensorSize(1));
-scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize(2));
+scaleRatioVertical = double(sceneSize{1}) / double(sensorSize{1});
+scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize{2});
 
 % Now figure out crop factor adjustment as needed
-sensorAspect = double((sensorSize(1) / sensorSize(2)));
-sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
+sensorAspect = double((sensorSize{1} / sensorSize{2}));
+sceneAspect = double(sceneSize{1} / sceneSize{2});
 
 % Handle the case where the top and bottom are padded because our sensor
 % is "more square" than our 1080p scenes. If we had massively horizontal
 % sensors we'd need to do the equivalent for left & right
 if sensorAspect > sceneAspect % sensor "taller" than scene
-    simSensorHeight = sensorSize(1) * scaleRatioHorizontal;
+    simSensorHeight = sensorSize{1} * scaleRatioHorizontal;
 
     % Establish how far to offset the sensor YOLO data so that the top
     % left corner matches (0,0) in the scene ground truth
-    vOffset = (sensorSize(1) - (sensorSize(2) * sceneAspect)) /2;
+    vOffset = (sensorSize{1} - (sensorSize{2} * sceneAspect)) /2;
 else
     % should handle the other case eventually
     vOffset = 0;
