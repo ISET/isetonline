@@ -127,7 +127,8 @@ for ii = 1:numel(filteredImages)
 
         % This gets us a 2 x N matrix of boxes
         tmpBox = GTStruct(jj).bbox;
-        GTBoxes= [GTBoxes; [tmpBox{:}]]; %#ok<*AGROW> 
+        tmpBox = cellfun(@(x) double(x), tmpBox);
+        GTBoxes= [GTBoxes; tmpBox]; %#ok<*AGROW> 
 
         tmpLabel = GTStruct(jj).label;
         % fprintf("jj is: %d\n",jj);
@@ -175,13 +176,14 @@ for ii = 1:numel(filteredImages)
         % finding the largest overlap we can
         for ll = 1:numel(matchingBoxes)
 
+            ourMatch = cellfun(@(x) double(x), matchingBoxes{ll});
+
             % Calculate IoU for ground truth & detected
-            tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
-                cell2mat(tmpBox));
+            tmpOverlap = bboxOverlapRatio(ourMatch, tmpBox);
             if tmpOverlap > maxOverlap
                 try
                     % bestBox and bestScore get the best fit we have
-                    bestBox = matchingBoxes{ll};
+                    bestBox = ourMatch;
                     bestScore = matchingScores(ll);
                     maxOverlap = tmpOverlap;
                 catch err
@@ -204,7 +206,7 @@ for ii = 1:numel(filteredImages)
             else
                 scoreData = bestScore(1);
             end
-            BBoxes(imgIndex) = {cell2mat(bestBox)};
+            BBoxes(imgIndex) = {bestBox};
             Results(imgIndex) = scoreData;
         catch
             % pause
@@ -256,8 +258,8 @@ scaleRatioVertical = double(sceneSize{1}) / double(sensorSize{1});
 scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize{2});
 
 % Now figure out crop factor adjustment as needed
-sensorAspect = double((sensorSize{1} / sensorSize{2}));
-sceneAspect = double(sceneSize{1} / sceneSize{2});
+sensorAspect = double(sensorSize{1}) / double(sensorSize{2});
+sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
 
 % Handle the case where the top and bottom are padded because our sensor
 % is "more square" than our 1080p scenes. If we had massively horizontal
