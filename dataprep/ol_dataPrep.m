@@ -31,9 +31,9 @@
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
-%scenarioName = 'nighttime';
+scenarioName = 'nighttime';
 %scenarioName = 'nighttime_No_Streetlamps';
-scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
+%scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -463,7 +463,7 @@ for iii = 1:numel(sensorFiles)
     ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
     ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
     %}
-    processYOLO(sensor_ae, outputFolder, baseFileName);
+    sensor_ae = processYOLO(sensor_ae, outputFolder, baseFileName);
 
     % save a cropped version of our RGB JPEG using our default IP so we can show a preview
     ipSaveImage(ip_ae, ipLocalJPEG, false, false, 'cropborder', true);
@@ -537,7 +537,7 @@ end
 end
 
 %% Batch process object detection after images are calculated
-function processYOLO(sensor_ae, outputFolder, baseFileName)
+function sensor_ae = processYOLO(sensor_ae, outputFolder, baseFileName)
 
 % We need to decide whether to pass the full images, or just
 % the filenames (more efficient, but more coding)
