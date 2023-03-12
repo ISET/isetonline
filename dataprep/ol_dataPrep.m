@@ -31,9 +31,9 @@
 % Need to decide if we want to allow multiple/all
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
-scenarioName = 'nighttime';
+%scenarioName = 'nighttime';
 %scenarioName = 'nighttime_No_Streetlamps';
-%scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
+scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
@@ -112,6 +112,7 @@ numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
 jj = 1;
+
 for ii = 1:numScenes
     sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
     jj = jj+1;
@@ -122,8 +123,9 @@ end
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-for ii = 1:numScenes
+parfor ii = 1:numScenes
 
+    fprintf("Scene %d\n", ii)
     % If we use parfor, each thread needs a db connection
     threadDB = idb();
     %threadDB = ourDB;
@@ -142,8 +144,13 @@ for ii = 1:numScenes
 
     % In our case we render the scene through our default
     % (shift-invariant) optics so that we have an OI to work with
-    oiComputed = oiCompute(ourScene, oiDefault);
-
+    try
+        oiComputed = oiCompute(ourScene, oiDefault);
+    catch EX
+        % this sometimes fails on orange for no known reason
+        fprintf("OI Compute failed on scene: %s.\n",sceneID);
+        continue;
+    end
     % Get rid of the oi border so we match the original
     % scene for better viewing & ground truth matching
     oiComputed = oiCrop(oiComputed,'border');
@@ -289,7 +296,7 @@ end
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 % To force (or not) recreation of sensor images
-useDBCache = false;
+useDBCache = true;
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
@@ -585,13 +592,13 @@ sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 if isempty(img_YOLO)
     fprintf("No YOLO for Image: %s \n", oi.metadata.sceneID);
 end
-if ~isempty(img_YOLO{1})
+if ~isempty(img_YOLO{1}) && ~isempty(imageCropBorder(img_YOLO{1}))
     imwrite(imageCropBorder(img_YOLO{1}), ipLocalYOLO);
 end
-if ~isempty(img_YOLO_burst{1})
+if ~isempty(img_YOLO_burst{1}) && ~isempty(imageCropBorder(img_YOLO_burst{1}))
     imwrite(imageCropBorder(img_YOLO_burst{1}), ipLocalYOLO_burst);
 end
-if ~isempty(img_YOLO_bracket{1})
+if ~isempty(img_YOLO_bracket{1}) && ~isempty(imageCropBorder(img_YOLO_bracket{1}))
     imwrite(imageCropBorder(img_YOLO_bracket{1}), ipLocalYOLO_bracket);
 end
 % Once we go parallel, need to write out the database entry here!
