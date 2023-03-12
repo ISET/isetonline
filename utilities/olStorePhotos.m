@@ -1,12 +1,24 @@
 function result = olStorePhotos(folderpath, varargin)
 %OLSTOREPHOTOS Store info about a folder of photos in isetdb()
 
+%{ 
+% Examples:
+   olStorePhotos('/acorn/data/iset/source_images/pixel4a/night_images/20230225', 'type', 'OpenCamera');
+   olStorePhotos('/acorn/data/iset/source_images/pixel4a/night_images/20221106', 'type', 'OpenCamera');
+   olStorePhotos('/acorn/data/iset/source_images/pixel4a/night_images/20221113', 'type', 'OpenCamera');
+   olStorePhotos('/acorn/data/iset/source_images/pixel4a/night_images/20221119', 'type', 'OpenCamera');
+   olStorePhotos('/acorn/data/iset/source_images/pixel4a/night_images/20221120', 'type', 'OpenCamera');
+
+%}
+
+% D. Cardinal, Stanford University, 2023
+
 p = inputParser;
 
 p.addParameter('type','');
 p.addParameter('note','');
 
-p.parse(folderpath, varargin{:});
+p.parse(varargin{:});
 
 if ~isfolder(folderpath)
     warning("Folder %s doesn't exist. \n", folderpath);
@@ -48,13 +60,24 @@ switch photoType
         rawFiles = dir(fullfile(folderpath,'*.dng'));
         % This gives us bits we have to assemble
         for ii = 1: numel(rawFiles)
-            rawFile = fullfile(rawFiles(ii).folder, rawFiles(ii).file);
+            rawFile = fullfile(rawFiles(ii).folder, rawFiles(ii).name);
+
+            try
+                % Some files may be corrupted, so need try/catch
             photoDoc.rawData = imfinfo(rawFile);
 
             [p, n, ~ ] = fileparts(rawFile);
             jpegFile = fullfile(p, [n '.jpg']);
-            photoDoc.jpegData = imfInfo(jpegFile);
+            photoDoc.jpegData = imfinfo(jpegFile);
+
+            photoDoc.rawFile = rawFile;
+            photoDoc.jpegFile = jpegFile;
+
             ourDB.store(photoDoc,"collection",photoCollection);
+            catch MEX
+                warning(MEX.identifier, "%s", MEX.message);
+            end
+
         end
 
 end
