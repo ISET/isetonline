@@ -1,4 +1,10 @@
-% Render & Export objects for use in ISETOnline
+% ol_dataPrep takes Scenes & produces a ready-to-view website
+% for ISETOnline. It's roughly composed of these four steps:
+%
+% 1) Image (via oi, sensor, ip) folders of ISET Scene objects
+% 2) Analyze (retrieve ground truth, use YOLO for detection)
+% 3) Export images for use in ISETOnline
+% 4) Update sensorImages collection in isetdb().
 %
 % Supports  scenes generated
 % using PBRT & re-processed for multiple illuminants. The
@@ -106,19 +112,20 @@ numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
 jj = 1;
+
 for ii = 1:numScenes
     sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
     jj = jj+1;
 end
 
-% our scenes are pre-rendered .exr files for various illuminants
-% that have been combined into ISETcam scenes for evaluation
+% our scenes are typically rendered from project recipes into
+% ISETCam scene objects (stored in .mat files)
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-% parfor may also cause blank images because YOLO isn't thread safe?
 parfor ii = 1:numScenes
 
+    fprintf("Scene %d\n", ii)
     % If we use parfor, each thread needs a db connection
     threadDB = idb();
     %threadDB = ourDB;
@@ -137,8 +144,13 @@ parfor ii = 1:numScenes
 
     % In our case we render the scene through our default
     % (shift-invariant) optics so that we have an OI to work with
-    oiComputed = oiCompute(ourScene, oiDefault);
-
+    try
+        oiComputed = oiCompute(ourScene, oiDefault);
+    catch EX
+        % this sometimes fails on orange for no known reason
+        fprintf("OI Compute failed on scene: %s.\n",sceneID);
+        continue;
+    end
     % Get rid of the oi border so we match the original
     % scene for better viewing & ground truth matching
     oiComputed = oiCrop(oiComputed,'border');
@@ -284,7 +296,7 @@ end
 function imageMetadata = processSensors(oi, sensorFiles, outputFolder, baseMetadata, ourDB)
 
 % To force (or not) recreation of sensor images
-useDBCache = false;
+useDBCache = true;
 imageMetadata = baseMetadata;
 
 % Kind of lame as our test OIs don't really have good metadata
@@ -333,7 +345,9 @@ for iii = 1:numel(sensorFiles)
         continue;
     end
 
-
+    %% Oops -- This alters sensor rows & cols
+    % Which means subsequent .size doesn't equal sensor size
+    % But this is helpful in making all the images display in a similar way
     if ~isequaln(oiGet(oi,'focalLength'),NaN())
         hFOV = oiGet(oi,'hfov');
         sensor = sensorSetSizeToFOV(sensor,hFOV,oi);
@@ -378,6 +392,9 @@ for iii = 1:numel(sensorFiles)
     % so we want to write them out for use in our Sensor Editor
     sensor_ae.metadata = baseMetadata; % initialize with generic value
     sensor_ae.metadata.web.sensorBaselineFileName = [sName '-Baseline.json'];
+
+    % Our actual capture won't be the same as the native sensor resolution
+    sensor_ae.metadata.imgSize = sensorGet(sensor_ae,'size');
 
     % merge metadata from the OI with our own
     sensor_ae.metadata = appendStruct(sensor_ae.metadata, oi.metadata);
@@ -429,29 +446,36 @@ for iii = 1:numel(sensorFiles)
         ip_bracket.demosaic.method = 'analog rccc'; end
     ip_bracket = ipCompute(ip_bracket, sensor_bracket);
 
-    % save an RGB JPEG using our default IP so we can show a preview
-    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, 'cropborder', true);
-    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, 'cropborder', true);
-    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, 'cropborder', true);
-
+    % save an RGB JPEG default IP for use with YOLO
+    % We may save a cropped version later for better display
+    outputFile = ipSaveImage(ip_ae, ipLocalJPEG, false, false);
+    burstFile = ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false);
+    bracketFile = ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false);
 
     % prepare for doing yolo in batch after db updates
     sensor_ae.metadata.YOLO.aeFileName = outputFile;
     sensor_ae.metadata.YOLO.burstFileName = burstFile;
     sensor_ae.metadata.YOLO.bracketFileName = bracketFile;
+    sensor_ae.metadata.YOLO.imgSize = sensorGet(sensor_ae,'size');
 
-    % Try to set YOLO image files here
+    % Set filenames for output YOLO image files here
     % We also want to save a YOLO-annotated version of each
     ipYOLOName = [baseFileName '-YOLO.jpg'];
     ipYOLOName_burst = [baseFileName 'YOLO-burst.jpg'];
     ipYOLOName_bracket = [baseFileName 'YOLO-bracket.jpg'];
 
+    %{
     % "Local" is our ISET filepath, not the website path
     ipLocalYOLO = fullfile(outputFolder,'images',ipYOLOName);
     ipLocalYOLO_burst = fullfile(outputFolder,'images',ipYOLOName_burst);
     ipLocalYOLO_bracket = fullfile(outputFolder,'images',ipYOLOName_bracket);
+    %}
+    sensor_ae = processYOLO(sensor_ae, outputFolder, baseFileName);
 
-    processYOLO(sensor_ae, outputFolder, baseFileName);
+    % save a cropped version of our RGB JPEG using our default IP so we can show a preview
+    ipSaveImage(ip_ae, ipLocalJPEG, false, false, 'cropborder', true);
+    ipSaveImage(ip_burst, ipLocalJPEG_burst, false, false, 'cropborder', true);
+    ipSaveImage(ip_bracket, ipLocalJPEG_bracket, false, false, 'cropborder', true);
 
     % Generate a quick thumbnail
     thumbnail = imread(ipLocalJPEG);
@@ -502,6 +526,7 @@ for iii = 1:numel(sensorFiles)
     % mongo doesn't manage docs > 16MB, so sensor data doesn't fit,
     % but it can manage our metadata
     if ~isempty(ourDB)
+        % .store won't update an existing document
         ourDB.store(sensor_ae.metadata,"collection","sensorImages");
     end
 
@@ -519,7 +544,7 @@ end
 end
 
 %% Batch process object detection after images are calculated
-function processYOLO(sensor_ae, outputFolder, baseFileName)
+function sensor_ae = processYOLO(sensor_ae, outputFolder, baseFileName)
 
 % We need to decide whether to pass the full images, or just
 % the filenames (more efficient, but more coding)
@@ -567,13 +592,13 @@ sensor_ae.metadata.YOLOData_Bracket = YOLO_Objects_Bracket;
 if isempty(img_YOLO)
     fprintf("No YOLO for Image: %s \n", oi.metadata.sceneID);
 end
-if ~isempty(img_YOLO{1})
+if ~isempty(img_YOLO{1}) && ~isempty(imageCropBorder(img_YOLO{1}))
     imwrite(imageCropBorder(img_YOLO{1}), ipLocalYOLO);
 end
-if ~isempty(img_YOLO_burst{1})
+if ~isempty(img_YOLO_burst{1}) && ~isempty(imageCropBorder(img_YOLO_burst{1}))
     imwrite(imageCropBorder(img_YOLO_burst{1}), ipLocalYOLO_burst);
 end
-if ~isempty(img_YOLO_bracket{1})
+if ~isempty(img_YOLO_bracket{1}) && ~isempty(imageCropBorder(img_YOLO_bracket{1}))
     imwrite(imageCropBorder(img_YOLO_bracket{1}), ipLocalYOLO_bracket);
 end
 % Once we go parallel, need to write out the database entry here!
@@ -622,7 +647,9 @@ for ii = 1:numel(sensorFiles)
 
     % stash the name so we can load it into the web ui
     sensor.sensorFileName = [sName '.json'];
-    jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    if ~isfile(fullfile(outputFolder,'sensors',[sName '.json']))
+        jsonwrite(fullfile(outputFolder,'sensors',[sName '.json']), sensor);
+    end
     jsonwrite(fullfile(privateDataFolder,'sensors',[sName '.json']), sensor);
 
     % We want to write these to the sensor database also
