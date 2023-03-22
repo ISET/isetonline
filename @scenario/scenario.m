@@ -71,7 +71,7 @@ classdef scenario < handle
         filteredData; % filtered for scenario, etc. in Matlab
 
         scenarioInput;
-        scenarioParameters;
+        lightingParameters;
     end
 
     methods(Static)
@@ -94,7 +94,7 @@ classdef scenario < handle
             addParameter(p,'sourceproject',''); % e.g. Ford
             addParameter(p,'sourcetype','autoscenesiset',@ischar);
             addParameter(p,'sourcescenario',''); % allow just 1 for now
-            addParameter(p,'lightinparameters',[]);
+            addParameter(p,'lightingparameters',[]);
 
             parse(p,varargin{:});
 
