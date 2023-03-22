@@ -51,8 +51,14 @@ classdef scenario < handle
 
     properties
         scenarioName;
-        scenarioProject;
-        scenarioType;
+        sourceProject;
+        sourceType;
+        sourceCollection; % set when data is loaded
+
+        sourceScenario; % set to limit source data to an existing scenario
+        sourceData; % data loaded for processing by .loadData
+        filteredData; % filtered for scenario, etc. in Matlab
+
         scenarioInput;
         scenarioParameters;
     end
@@ -63,33 +69,63 @@ classdef scenario < handle
             p = inputParser;
             varargin = ieParamFormat(varargin);
             addParameter(p,'scenarioname','defaultScenario');
-            addParameter(p,'scenarioproject','ISET'); % e.g. Ford
-            addParameter(p,'scenariotype','isetscene',@ischar);
-            addParameter(p,'scenarioinput',[]);
+            addParameter(p,'sourceproject',''); % e.g. Ford
+            addParameter(p,'sourcetype','autoscenesiset',@ischar);
+            addParameter(p,'sourcescenario',''); % allow just 1 for now
             addParameter(p,'scenarioparameters',[]);
 
             parse(p,varargin{:});
 
             obj.scenarioName = p.Results.scenarioname;
-            obj.scenarioProject = p.Results.scenarioproject;
-            obj.scenarioType = p.Results.scenariotype;
-            obj.scenarioInput = p.Results.scenarioinput;
+            obj.sourceProject = p.Results.sourceproject;
+
+            % SourceType is the type of data we start with
+            % It is used to specify the isetdb collection we query
+            obj.sourceType = p.Results.sourcetype;
+            obj.sourceScenario = p.Results.sourcescenario;
             obj.scenarioParameters = p.Results.scenarioparameters;
-
-            switch obj.scenarioType
-                case 'isetscene'
-                    fprintf("Start with an iset scene");
-                case 'exrscene'
-                    fprintf("Start with an exr scene");
-
-            end
 
         end
 
+        function loadData(obj)
+            % ScenarioSourceType
+            switch obj.sourceType
+                case 'autoscenesrecipe'
+                    obj.sourceCollection = 'autoScenesRecipe';
+                    fprintf("Start with an ISET recipe -- usually from Blender");
+                case 'autoscenespbrt'
+                    fprintf("Start with a prbrt exported version iset scene");
+                    obj.sourceCollection = 'autoScenesPBRT';
+                case 'autoscenesiset'
+                    fprintf("Start with an iset scene");
+                    obj.sourceCollection = 'autoScenesISET';
+                case 'autoscenesexr'
+                    fprintf("Start with an exr scene");
+                    obj.sourceCollection = 'autoScenesEXR';
+            end
+            ourDB = isetdb();
+            if ~isempty(obj.sourceProject)
+                queryString = sprintf("{""project"": ""%s""}", obj.sourceProject);
+            else
+                queryString = '';
+            end
+            obj.sourceData = ourDB.docFind(obj.sourceCollection, queryString);
+            fprintf("Found %d images\n",numel(obj.sourceData));
+
+            %% Filtering by scenario
+            if ~isempty(obj.sourceScenario)
+                filteredIndex = cellfun(@(x) matches(x.scenario, obj.sourceScenario), obj.sourceData);
+                obj.filteredData = obj.sourceData(filteredIndex);
+            else
+                obj.filteredData = obj.sourceData;
+            end
+            fprintf("Filtered %d images\n",numel(obj.filteredData));
+
+        end
 
         function print(obj)
             %PRINT See what we hae
-            obj
+            disp(obj)
         end
     end
 end
