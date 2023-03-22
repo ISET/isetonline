@@ -1,4 +1,4 @@
-function resourceDir = piDirGet(resourceType)
+function resourceDir = olDirGet(resourceType)
 % Returns default directory of a resource type.
 % 
 % Synopsis
