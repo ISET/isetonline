@@ -44,6 +44,8 @@ classdef scenario < handle
             loadedScenes = useScenario.loadData;
             fprintf('Loaded: %d scenes. First Scene:\n', numel(loadedScenes));
             disp(loadedScenes{1});
+            useScenario.save(); % writes to /data/scenarios
+            % useScenario.writeToDB(); % Not implemented yet
 
         Initial Example Use Case (DJC):
         Create Scenario to Experiment with flare on some of our Auto scenes:
@@ -148,8 +150,9 @@ classdef scenario < handle
         end
 
         % Save to Scenarios Folder (at least by default
-        function save(obj)            
-            jsonwrite(fullfile(olDirGet('scenarios'),obj.scenarioName,obj));
+        function save(obj)   
+            jsonObj = jsonencode(obj);
+            jsonwrite(fullfile(olDirGet('scenarios'),[obj.scenarioName '.json']),jsonObj);
         end
 
     end
