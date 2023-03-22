@@ -36,7 +36,7 @@ classdef scenario < handle
         -- (When appropriate) Create metadata.json for ISETOnline
 
         EXAMPLE:
-            useScenario = scenario();
+            useScenario = scenario(); % can also set params in create call
             useScenario.scenarioName = 'SomethingNew';
             useScenario.sourceProject = 'Ford';
             useScenario.sourceType = 'autoscenesiset';
@@ -47,7 +47,7 @@ classdef scenario < handle
             useScenario.save(); % writes to /data/scenarios
             % useScenario.writeToDB(); % Not implemented yet
 
-        Initial Example Use Case (DJC):
+        Initial Hypothetical Use Case (DJC):
         Create Scenario to Experiment with flare on some of our Auto scenes:
         -- Start with our AutoSceneISET scenes (or a sub-set)
         -- oiCompute with optics (generic or lens)
@@ -75,11 +75,13 @@ classdef scenario < handle
     end
 
     methods(Static)
-        function createFromFile(fileName)
-            % There should be a way to do this without
-            % specifying every attribute.
-
-            % Look in data/scenarios by default
+        function scenarioObject = loadFromFile(fileName)
+            if ~isfile(fileName)
+                % Look in data/scenarios by default
+                fileName = fullfile(olDirGet('scenarios'),[fileName '.mat']);
+            end
+            scenarioParent = load(fileName,'obj');
+            scenarioObject = scenarioParent.obj;
         end
     end
 
@@ -151,8 +153,7 @@ classdef scenario < handle
 
         % Save to Scenarios Folder (at least by default
         function save(obj)   
-            jsonObj = jsonencode(obj);
-            jsonwrite(fullfile(olDirGet('scenarios'),[obj.scenarioName '.json']),jsonObj);
+            save(fullfile(olDirGet('scenarios'),[obj.scenarioName '.mat']),'obj');
         end
 
     end
