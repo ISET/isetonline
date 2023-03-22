@@ -1,6 +1,6 @@
 classdef scenario < handle
     %SCENARIO Specific set of experimental conditions
-    %   Draws on our database of scenes and assets
+    %   Draws on our database of scenes and images
     %{
 
         We have a library of Recipes, currently created in Blender
@@ -34,6 +34,15 @@ classdef scenario < handle
         -- OI to SensorImage using a sensor
         -- (When appropriate) Store sensorImage in ISETdb
         -- (When appropriate) Create metadata.json for ISETOnline
+
+        EXAMPLE:
+            useScenario = scenario();
+            useScenario.scenarioName = 'SomethingNew';
+            useScenario.sourceProject = 'Ford';
+            useScenario.sourceType = 'autoscenesiset';
+            useScenario.sourceScenario = 'nighttime';
+            loadedScenes = useScenario.loadData;
+            fprintf('Loaded: %d scenes\n', numel(loadedScenes));
 
         Initial Example Use Case (DJC):
         Create Scenario to Experiment with flare on some of our Auto scenes:
@@ -95,7 +104,7 @@ classdef scenario < handle
 
         end
 
-        function loadData(obj)
+        function filteredData = loadData(obj)
             % ScenarioSourceType
             switch obj.sourceType
                 case 'autoscenesrecipe'
@@ -128,6 +137,7 @@ classdef scenario < handle
                 obj.filteredData = obj.sourceData;
             end
             fprintf("Filtered %d images\n",numel(obj.filteredData));
+            filteredData = obj.filteredData;
 
         end
 
@@ -137,8 +147,8 @@ classdef scenario < handle
         end
 
         % Save to Scenarios Folder (at least by default
-        function save(obj)
-            jsonwrite(fName,obj);
+        function save(obj)            
+            jsonwrite(fullfile(olDirGet('scenarios'),obj.scenarioName,obj));
         end
 
     end
