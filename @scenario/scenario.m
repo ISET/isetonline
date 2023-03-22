@@ -75,6 +75,9 @@ classdef scenario < handle
 
         scenarioInput;
         lightingParameters;
+        
+        sensors; % set of sensors to use for capturing
+        lenses; % lenses to use for capturing
 
         % We keep track of data at whichever stages of the workflow are
         % needed, don't know how to set up sub-fields here so just make 
@@ -117,6 +120,7 @@ classdef scenario < handle
 
             % Initialize data to null -- rough cut of categories
             obj.data.scenesRecipe = [];
+            obj.data.scenesEXR = [];
             obj.data.scenesPBRT = [];
             obj.data.scenesISET = [];
             obj.data.sensorImages = [];
@@ -129,24 +133,33 @@ classdef scenario < handle
             switch obj.sourceType
                 case 'autoscenesrecipe'
                     obj.sourceCollection = 'autoScenesRecipe';
-                    fprintf("Start with an ISET recipe -- usually from Blender");
+                    resultsField = 'scenesRecipe';
                 case 'autoscenespbrt'
-                    fprintf("Start with a prbrt exported version iset scene");
                     obj.sourceCollection = 'autoScenesPBRT';
+                    resultsField = 'scenesPBRT';
                 case 'autoscenesiset'
-                    fprintf("Start with an iset scene");
                     obj.sourceCollection = 'autoScenesISET';
+                    resultsField = 'scenesISET';
                 case 'autoscenesexr'
-                    fprintf("Start with an exr scene");
                     obj.sourceCollection = 'autoScenesEXR';
+                    resultsField = 'scenesEXR';
+                case 'sensorimages'
+                    obj.sourceCollection = 'sensorImages';
+                    resultsField = 'sensorImages';
             end
+
+            % Open a conection to the database and query for the desired
+            % data
             ourDB = isetdb();
             if ~isempty(obj.sourceProject)
                 queryString = sprintf("{""project"": ""%s""}", obj.sourceProject);
             else
                 queryString = '';
             end
+            % leave original source data here, 'cuz ?
             obj.sourceData = ourDB.docFind(obj.sourceCollection, queryString);
+            obj = setfield(obj, ['data.' resultsField]);
+
             fprintf("Found %d images\n",numel(obj.sourceData));
 
             %% Filtering by scenario
