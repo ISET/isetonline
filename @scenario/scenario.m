@@ -6,7 +6,7 @@ classdef scenario < handle
         We have a library of Recipes, currently created in Blender
         as ISET3d @recipe objects stored in .mat files. 
 
-        Scenarios flow from there.
+        Scenarios can flow from there, or start later in the pipeling.
 
         The first (optional) customization step is edits to the @recipe.
         For example, changing the camera position.
@@ -35,9 +35,8 @@ classdef scenario < handle
         -- (When appropriate) Store sensorImage in ISETdb
         -- (When appropriate) Create metadata.json for ISETOnline
 
-        Initial Use Case (DJC):
-        @Scenario or @Experiment?
-        Experiment with flare on some of our Auto scenes:
+        Initial Example Use Case (DJC):
+        Create Scenario to Experiment with flare on some of our Auto scenes:
         -- Start with our AutoSceneISET scenes (or a sub-set)
         -- oiCompute with optics (generic or lens)
         -- piFlareApply calc
