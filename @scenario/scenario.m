@@ -94,7 +94,7 @@ classdef scenario < handle
             addParameter(p,'sourceproject',''); % e.g. Ford
             addParameter(p,'sourcetype','autoscenesiset',@ischar);
             addParameter(p,'sourcescenario',''); % allow just 1 for now
-            addParameter(p,'scenarioparameters',[]);
+            addParameter(p,'lightinparameters',[]);
 
             parse(p,varargin{:});
 
@@ -105,7 +105,7 @@ classdef scenario < handle
             % It is used to specify the isetdb collection we query
             obj.sourceType = p.Results.sourcetype;
             obj.sourceScenario = p.Results.sourcescenario;
-            obj.scenarioParameters = p.Results.scenarioparameters;
+            obj.lightingParameters = p.Results.lightingparameters;
 
         end
 
@@ -145,6 +145,45 @@ classdef scenario < handle
             filteredData = obj.filteredData;
 
         end
+
+        % Start with a (Blender-generated) .mat recipe and create
+        % a pbrt version. 
+        function recipeToPBRT(obj)
+            % Or we could just read it, let the user edit it, and write it
+            % If we have lighting or other attributes, might need to
+            % generate several of these
+        end
+
+        function pbrtToISET(obj)
+            % Starting with one or more pbrt recipes, create a scene
+            % or if needed a combined scene using some form of weighting
+            % scene(s) = piRender(...)
+            % piSceneAdd(scene(s))
+        end
+
+        function sceneAnalyze(obj)
+            % If we can, calculate ground truth and closest target
+            % only needed if we aren't starting with pre-run scenes
+        end
+
+        function createSensorImages(obj)
+            % This is where we render the iset scene through one or 
+            % more optics and sensors
+
+            % Right now we run YOLO at the same time
+        end
+
+        function evaluatePreTrained(obj)
+            % room to evaluate sensors, etc. via mAP
+        end
+
+        function train(obj)
+            % TBD
+        end
+
+        function evaluateTrained(obj)
+            % see how well the training did
+        end 
 
         function print(obj)
             %PRINT See what we hae
