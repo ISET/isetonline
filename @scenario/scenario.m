@@ -42,7 +42,8 @@ classdef scenario < handle
             useScenario.sourceType = 'autoscenesiset';
             useScenario.sourceScenario = 'nighttime';
             loadedScenes = useScenario.loadData;
-            fprintf('Loaded: %d scenes\n', numel(loadedScenes));
+            fprintf('Loaded: %d scenes. First Scene:\n', numel(loadedScenes));
+            disp(loadedScenes{1});
 
         Initial Example Use Case (DJC):
         Create Scenario to Experiment with flare on some of our Auto scenes:
