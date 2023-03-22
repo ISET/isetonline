@@ -158,7 +158,7 @@ classdef scenario < handle
             end
             % leave original source data here, 'cuz ?
             obj.sourceData = ourDB.docFind(obj.sourceCollection, queryString);
-            obj = setfield(obj, ['data.' resultsField]);
+            obj = setfield(obj.data, resultsField, obj.sourceData);
 
             fprintf("Found %d images\n",numel(obj.sourceData));
 
