@@ -62,6 +62,15 @@ classdef scenario < handle
         scenarioParameters;
     end
 
+    methods(Static)
+        function createFromFile(fileName)
+            % There should be a way to do this without
+            % specifying every attribute.
+
+            % Look in data/scenarios by default
+        end
+    end
+
     methods
         function obj = scenario(varargin)
             %SCENARIO Construct an instance of this class
@@ -126,6 +135,12 @@ classdef scenario < handle
             %PRINT See what we hae
             disp(obj)
         end
+
+        % Save to Scenarios Folder (at least by default
+        function save(obj)
+            jsonwrite(fName,obj);
+        end
+
     end
 end
 
