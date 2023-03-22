@@ -27,9 +27,7 @@ classdef scenario < handle
         The original scenario is "nighttime"
 
         Conceptually, scenarios can include one or more of the following:
-        -- Recipe to .EXR  or ISET3d Scene using PBRT-v4
-        -- EXR Scene to ISET Scene using weights
-        (Does this turn into an @experiment at this point?)
+        -- Recipe to PBRT to Scene/EXR to sensorImages
         -- ISET Scene to OI using optics and/or Flare
         -- OI to SensorImage using a sensor
         -- (When appropriate) Store sensorImage in ISETdb
