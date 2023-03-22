@@ -67,11 +67,19 @@ classdef scenario < handle
         sourceCollection; % set when data is loaded
 
         sourceScenario; % set to limit source data to an existing scenario
+
+        % This is probably wrong, I think we need to load data in the
+        % appropriate "slot"
         sourceData; % data loaded for processing by .loadData
         filteredData; % filtered for scenario, etc. in Matlab
 
         scenarioInput;
         lightingParameters;
+
+        % We keep track of data at whichever stages of the workflow are
+        % needed, don't know how to set up sub-fields here so just make 
+        % a parent?
+        data;
     end
 
     methods(Static)
@@ -107,6 +115,13 @@ classdef scenario < handle
             obj.sourceScenario = p.Results.sourcescenario;
             obj.lightingParameters = p.Results.lightingparameters;
 
+            % Initialize data to null -- rough cut of categories
+            obj.data.scenesRecipe = [];
+            obj.data.scenesPBRT = [];
+            obj.data.scenesISET = [];
+            obj.data.sensorImages = [];
+            obj.data.imagesTrained = [];
+            
         end
 
         function filteredData = loadData(obj)
