@@ -4,7 +4,9 @@ classdef scenario < handle
     %{
 
         We have a library of Recipes, currently created in Blender
-        as ISET3d @recipe objects. Scenarios flow from there.
+        as ISET3d @recipe objects stored in .mat files. 
+
+        Scenarios flow from there.
 
         The first (optional) customization step is edits to the @recipe.
         For example, changing the camera position.
@@ -12,19 +14,20 @@ classdef scenario < handle
         There is an (optional) step where light sources are 
         differentiated so that each @recipe becomes several.
 
-        The resulting recipes are written using piWrite() to .pbrt
+        The resulting recipes are written using piWrite() to .pbrt 'scenes'
 
         They can then be rendered into EXR files that represent
         the radiance from the now-modified original @recipe.
 
-        These .EXR files can be turned into ISET scenes, either each
-        alone, or for example using a set of
-        weights on each of the light sources.
+        These .EXR files can be turned into ISET scenes. If light sources or 
+        other aspects have been broken out, they can either be recombined
+        using the EXR renders, or having each rendered into a scene and
+        using piSceneAdd().
 
         The original scenario is "nighttime"
 
         Conceptually, scenarios can include one or more of the following:
-        -- Recipe to EXR Scene using PBRT-v4
+        -- Recipe to .EXR  or ISET3d Scene using PBRT-v4
         -- EXR Scene to ISET Scene using weights
         (Does this turn into an @experiment at this point?)
         -- ISET Scene to OI using optics and/or Flare
@@ -43,6 +46,9 @@ classdef scenario < handle
         -- Do something interesting with the results:)
 
     %}
+
+    % D.Cardinal, Stanford University, 2023
+
     properties
         scenarioName;
         scenarioProject;
@@ -57,7 +63,7 @@ classdef scenario < handle
             p = inputParser;
             varargin = ieParamFormat(varargin);
             addParameter(p,'scenarioname','defaultScenario');
-            addParameter(p,'scenarioproject','ISET');
+            addParameter(p,'scenarioproject','ISET'); % e.g. Ford
             addParameter(p,'scenariotype','isetscene',@ischar);
             addParameter(p,'scenarioinput',[]);
             addParameter(p,'scenarioparameters',[]);
