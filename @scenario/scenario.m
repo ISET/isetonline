@@ -127,7 +127,8 @@ classdef scenario < handle
         end
 
         function filteredData = loadData(obj)
-            % ScenarioSourceType
+            % Based on ScenarioSourceType load the appropriate initial data
+            % set records from isetdb.
             switch obj.sourceType
                 case 'autoscenesrecipe'
                     obj.sourceCollection = 'autoScenesRecipe';
@@ -146,7 +147,7 @@ classdef scenario < handle
                     resultsField = 'sensorImages';
             end
 
-            % Open a conection to the database and query for the desired
+            % Open a conection to our ISET database and query for the desired
             % data
             ourDB = isetdb();
             if ~isempty(obj.sourceProject)
@@ -154,7 +155,8 @@ classdef scenario < handle
             else
                 queryString = '';
             end
-            % leave original source data here, 'cuz ?
+            % leave original source data for legacy, but it should now also
+            % wind up in the correct "slot" under data for use.
             obj.sourceData = ourDB.docFind(obj.sourceCollection, queryString);
             obj = setfield(obj.data, resultsField, obj.sourceData);
 
