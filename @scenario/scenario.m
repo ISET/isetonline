@@ -3,31 +3,37 @@ classdef scenario < handle
     %   Draws on our database of scenes and images
     %{
 
-        We have a library of Recipes, currently created in Blender
-        as ISET3d @recipe objects stored in .mat files. 
+        We have a library of Recipes, currently using assets created in Blender
+        and turned into ISET3d @recipe objects stored in .mat files
+        (by using Zhenyi's scene creation scripts). 
 
-        Scenarios can flow from there, or start later in the pipeling.
+        Scenarios can flow from there, or start later in the pipeline.
 
         The first (optional) customization step is edits to the @recipe.
         For example, changing the camera position.
 
         There is an (optional) step where light sources are 
-        differentiated so that each @recipe becomes several.
+        differentiated so that each @recipe becomes several @recipes
+        (one per light source in this case).
 
-        The resulting recipes are written using piWrite() to .pbrt 'scenes'
+        The resulting recipe(s) are written using piWrite() to .pbrt 'scenes'
 
-        They can then be rendered into EXR files that represent
-        the radiance from the now-modified original @recipe.
+        Those scenes can then be rendered into EXR files that represent
+        the radiance from the now-modified original @recipe, or directly
+        into ISET scene structs. [.pbrt -> scene -> sceneAdd() is the
+        currently preferred approach]
 
-        These .EXR files can be turned into ISET scenes. If light sources or 
+        If the output of pbrt is .EXR files they can be then be turned into 
+        ISET scenes. If light sources or 
         other aspects have been broken out, they can either be recombined
         using the EXR renders, or having each rendered into a scene and
-        using piSceneAdd().
+        using sceneAdd().
 
         The original scenario is "nighttime"
 
         Conceptually, scenarios can include one or more of the following:
-        -- Recipe to PBRT to Scene/EXR to sensorImages
+        -- (Possible Future): Scene Assembly
+        -- @Recipe to PBRT to Scene to sensorImages
         -- ISET Scene to OI using optics and/or Flare
         -- OI to SensorImage using a sensor
         -- (When appropriate) Store sensorImage in ISETdb
