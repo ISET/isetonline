@@ -64,6 +64,15 @@ classdef scenario < handle
 
     % D.Cardinal, Stanford University, 2023
 
+    %{
+        chatGPT's useful description:
+This is a MATLAB class definition for a scenario object that is used for specifying experimental conditions for a set of images. The comments provide an overview of the class functionality, including the different steps involved in the process of creating and rendering scenes.
+The class has a number of properties that include the scenario name, source project, source type, source collection, source scenario, scenario input, lighting parameters, sensors, lenses, and data. There are also methods for loading a scenario object from a file and for constructing an instance of the class.
+The loadData method is used to load the appropriate initial data set records from isetdb. The loadFromFile method loads a saved scenario object from a file. The save method writes the scenario object to a file, and the writeToDB method writes the scenario object to the isetdb.
+The scenario class is designed to allow customization of iset3d scene recipes, and rendering of the customized scenes using PBRT rendering engine. The class also supports applying optics and flares to the ISET scene, simulating an optical image, rendering through a sensor, and storing the resulting sensor image in isetdb.
+There is also an example provided that shows how to create a scenario object and perform some basic operations on it, including loading data, printing the loaded data, and saving the scenario object to a file.
+    %}
+
     properties
         scenarioName;
         sourceProject;
