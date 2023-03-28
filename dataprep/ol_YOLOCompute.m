@@ -19,7 +19,7 @@ YOLO_Objects.labels = labels;
 
 annotatedImages = {};
 % now build annotated image to return
-for ii = 1:numel(YOLO_Objects)
+for ii = 1:numel(inputImages)
     try
     annotatedImage = insertObjectAnnotation(inputImages{ii},'Rectangle', ...
         YOLO_Objects(ii).bboxes, YOLO_Objects(ii).labels);

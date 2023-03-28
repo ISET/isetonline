@@ -11,7 +11,7 @@ function documents = docFind(obj,collection, useQuery)
 %
 % Examples:
 %{
-   ourDB.find('autoScenesEXR');
+   ourDB.docFind('autoScenesEXR');
 
    dbTable = 'autoScenesEXR';
    % sceneIDs are unique for auto scenes

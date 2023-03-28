@@ -90,11 +90,25 @@ for ii = 1:numel(filteredImages)
     % YOLO is in sensor pixels, we need to scale to match scene pixels
     % This routine has been troublesome because of varying aspect ratios
     % in addition to resolution, so a place to look if there are issues
-    detectorResults = scaleDetectorResults(filteredImages(ii));
+    if iscell(filteredImages)
+        detectorResults = scaleDetectorResults(filteredImages{ii});
+        GTObjects = filteredImages{ii}.closestTarget;
+    else
+        detectorResults = scaleDetectorResults(filteredImages(ii));
+        GTObjects = filteredImages(ii).closestTarget;
+    end
 
-    %fprintf("Processing image %s\n", sensorImages(ii).scenename);
+    %% Pseuo-code that uses Matlabs bbox function(s)
+    %{
+
+    detectorBoxes = arrayfun(@(x) cell2mat(x.bboxes),detectorResults(ii));
+    [precision, recall] = bboxPrecisionRecall( detectorBoxes , ...
+        filteredImages(ii).GTObjects);
+    fprintf("Precision: %.2d, Recall: %.2d\n",precision, recall);
+    %}
+
+    %% Bespoke Closest Target algorithm
     % cT has label, bbox, distance, name
-    GTObjects = filteredImages(ii).closestTarget;
     if  matches(GTObjects(:).label, ourClass) == true
         % we have an image that includes our class
         imgIndex = imgIndex + 1;
@@ -113,7 +127,8 @@ for ii = 1:numel(filteredImages)
 
         % This gets us a 2 x N matrix of boxes
         tmpBox = GTStruct(jj).bbox;
-        GTBoxes= [GTBoxes; [tmpBox{:}]]; %#ok<*AGROW> 
+        tmpBox = cellfun(@(x) double(x), tmpBox);
+        GTBoxes= [GTBoxes; tmpBox]; %#ok<*AGROW> 
 
         tmpLabel = GTStruct(jj).label;
         % fprintf("jj is: %d\n",jj);
@@ -145,7 +160,11 @@ for ii = 1:numel(filteredImages)
         % This if case can be good for debugging, if there is an issue
         % with the YOLO detectors results
         % We don't have a match at all
-        fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
+        if iscell(filteredImages)
+            fprintf("No match in image: %s\n", filteredImages{ii}.sceneID);
+        else
+            fprintf("No match in image: %s\n", filteredImages(ii).sceneID);
+        end
     else
 
         % Get the bounding boxes and scores for the matching elements
@@ -157,13 +176,14 @@ for ii = 1:numel(filteredImages)
         % finding the largest overlap we can
         for ll = 1:numel(matchingBoxes)
 
+            ourMatch = cellfun(@(x) double(x), matchingBoxes{ll});
+
             % Calculate IoU for ground truth & detected
-            tmpOverlap = bboxOverlapRatio(cell2mat(matchingBoxes{ll}), ...
-                cell2mat(tmpBox));
+            tmpOverlap = bboxOverlapRatio(ourMatch, tmpBox);
             if tmpOverlap > maxOverlap
                 try
                     % bestBox and bestScore get the best fit we have
-                    bestBox = matchingBoxes{ll};
+                    bestBox = ourMatch;
                     bestScore = matchingScores(ll);
                     maxOverlap = tmpOverlap;
                 catch err
@@ -186,7 +206,7 @@ for ii = 1:numel(filteredImages)
             else
                 scoreData = bestScore(1);
             end
-            BBoxes(imgIndex) = {cell2mat(bestBox)};
+            BBoxes(imgIndex) = {bestBox};
             Results(imgIndex) = scoreData;
         catch
             % pause
@@ -220,38 +240,36 @@ end
 function detectorResults = scaleDetectorResults(sensorImage)
 % We need to scale YOLOData to match ther resolution of the GT Scene
 % and the aspect ratio, since the YOLOdata was captured in a sensor image
-% that has the sensor resolution and aspect ratio.
-ourDB = isetdb();
-dbTable = 'sensors';
-
-% Find the sensor so we can get its size
-sensorName = sensorImage.sensorname;
-
-queryString = sprintf("{""name"": ""%s""}", sensorName);
-sensor = ourDB.docFind(dbTable, queryString);
-sceneSize = sensorImage.sceneSize;
-
-detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+% that has a modified sensor resolution and aspect ratio.
 
 % Scale to [width height] multiplier
-sensorSize = double([sensor.rows sensor.cols]);
+sceneSize = sensorImage.sceneSize;
+sensorSize = sensorImage.YOLO.imgSize;
+
+if isfield(sensorImage,'YOLOData')
+    detectorResults = sensorImage.YOLOData; % gets bboxes, scores, labels
+else
+    fprintf("Warning: No Yolo Data for %s\n", sensorImage.sceneID);
+    detectorResults = [];
+end
+
 % sceneSize is in  rows, columns
-scaleRatioVertical = double(sceneSize{1}) / double(sensorSize(1));
-scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize(2));
+scaleRatioVertical = double(sceneSize{1}) / double(sensorSize{1});
+scaleRatioHorizontal = double(sceneSize{2}) / double(sensorSize{2});
 
 % Now figure out crop factor adjustment as needed
-sensorAspect = double((sensorSize(1) / sensorSize(2)));
+sensorAspect = double(sensorSize{1}) / double(sensorSize{2});
 sceneAspect = double(sceneSize{1}) / double(sceneSize{2});
 
 % Handle the case where the top and bottom are padded because our sensor
 % is "more square" than our 1080p scenes. If we had massively horizontal
 % sensors we'd need to do the equivalent for left & right
 if sensorAspect > sceneAspect % sensor "taller" than scene
-    simSensorHeight = sensorSize(1) * scaleRatioHorizontal;
+    simSensorHeight = sensorSize{1} * scaleRatioHorizontal;
 
     % Establish how far to offset the sensor YOLO data so that the top
     % left corner matches (0,0) in the scene ground truth
-    vOffset = double(sceneSize{1} - simSensorHeight) / 2;
+    vOffset = (sensorSize{1} - (sensorSize{2} * sceneAspect)) /2;
 else
     % should handle the other case eventually
     vOffset = 0;
@@ -265,6 +283,14 @@ end
 % and that the resulting image needs to be scaled according to the
 % horizontal difference in resolution (adjusted for the padding)
 
+if isempty(detectorResults)
+    warning("Need to handle empty detector results!");
+    detectorResults.bboxes{1} = {1, 1, 1, 1};
+    detectorResults.labels = '';
+    detectorResults.scores = [];
+    return
+end
+
 % NB This seems to be working well for the MT Auto sensor, but with odd
 %    effects for the AP sensor
 if numel(detectorResults.scores) == 1
@@ -272,7 +298,7 @@ if numel(detectorResults.scores) == 1
         % bboxes are:
         %columns (from left), rows (from top), width, height
         tmpBoxes{1}{1} = double(detectorResults.bboxes{1}) * scaleRatioHorizontal;
-        tmpBoxes{1}{2} = double(detectorResults.bboxes{2}) * scaleRatioHorizontal + vOffset;
+        tmpBoxes{1}{2} = (double(detectorResults.bboxes{2}) - vOffset) * scaleRatioHorizontal;
         tmpBoxes{1}{3} = double(detectorResults.bboxes{3}) * scaleRatioHorizontal;
         tmpBoxes{1}{4} = double(detectorResults.bboxes{4}) * scaleRatioHorizontal;
         detectorResults.bboxes = tmpBoxes;
@@ -283,9 +309,9 @@ else
     for qq = 1:numel(detectorResults.bboxes)
         try
             %fprintf("Sensor: %s \n", sensorName)
-            %celldisp(detectorResults.bboxes{qq}, "Original")
+            origBoxes = detectorResults.bboxes{qq};
             detectorResults.bboxes{qq}{1} = double(detectorResults.bboxes{qq}{1}) * scaleRatioHorizontal;
-            detectorResults.bboxes{qq}{2} = double(detectorResults.bboxes{qq}{2})  * scaleRatioHorizontal +vOffset;
+            detectorResults.bboxes{qq}{2} = (double(detectorResults.bboxes{qq}{2}) - vOffset)  * scaleRatioHorizontal;
             detectorResults.bboxes{qq}{3} = double(detectorResults.bboxes{qq}{3}) * scaleRatioHorizontal;
             detectorResults.bboxes{qq}{4} = double(detectorResults.bboxes{qq}{4}) * scaleRatioHorizontal;
             %celldisp(detectorResults.bboxes{qq}, "Scaled")
@@ -294,6 +320,7 @@ else
         end
     end
 end
+
 
 end
 

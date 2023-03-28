@@ -1,10 +1,14 @@
 % Store the PBRT version of the assets created for isetauto
 % Fairly fixed function for now.
 %
-% Eventually should also store ISET assets, etc.
+% Currently doesn't store meshes or textures or skymaps in with
+% the other assets. Easy enough to do, but need to decide if they
+% should be separate collections or just "types"
+%
+% Eventually should also store other ISET assets, etc.
 %
 ourDB = isetdb();
-assetDir = fullfile(iaFileDataRoot('local',true),'PBRT_assets');
+assetDir = fullfile(iaFileDataRoot('type','PBRT_assets'));
 
 assetFolders = dir(assetDir);
 
