@@ -1,6 +1,6 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "ISETOnline",
+  "name": "Web interface to selected ISET Scene Data",
   "icons": [
     {
       "src": "favicon.ico",

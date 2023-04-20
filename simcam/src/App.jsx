@@ -61,13 +61,14 @@ import { breakpoints } from "@mui/system";
 // They are located in sub-folders under /public
 // NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
-let imageDir = "/images/"; // Should use /public by default?
+
+let imageDir = "./images/"; // Should use /public by default?
 let sensorDir = "./data/sensors/";
 
 let imageMetaData = require(dataDir + "metadata.json");
 var imageData;
 
-let SU_Logo = "/glyphs/Stanford_Logo.png";
+let SU_Logo = "./glyphs/Stanford_Logo.png";
 let previewImage = SU_Logo; // imageDir + imageData[0].jpegName
 let computedImage = SU_Logo; // imageDir + imageData[0].jpegName
 
@@ -753,7 +754,7 @@ const App = () => {
           <CImage width="100" src={SU_Logo}></CImage>
         </CCol>
         <CCol xs={4}>
-          <CImage width="300" src="/glyphs/Vista_Lab_Logo.png"></CImage>
+          <CImage width="300" src="./glyphs/Vista_Lab_Logo.png"></CImage>
           <h2>ISET Hyperspectral Scene Dataset</h2>
         </CCol>
         <CCol xs={7}>

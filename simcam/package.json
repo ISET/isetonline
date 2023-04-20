@@ -1,6 +1,6 @@
 {
-  "name": "camsim",
-  "version": "0.1.1",
+  "name": "ISETOnline",
+  "version": "0.1.2",
   "private": true,
   "dependencies": {
     "@coreui/coreui": "^4.2.2",
@@ -37,11 +37,14 @@
     "webpack": "^5.75.0"
   },
   "scripts": {
+   "predeploy": "npm run build",
+   "deploy": "gh-pages -d build",
     "start": "react-app-rewired start",
     "build": "react-app-rewired build",
     "test": "react-app-rewired test",
     "eject": "react-scripts eject"
   },
+  "homepage": ".",
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -60,7 +63,7 @@
       "last 1 safari version"
     ]
   },
-  "description": "This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).",
+  "description": "Online interface to some Stanford ISET Scenes",
   "main": "index.js",
   "keywords": [],
   "author": "",
