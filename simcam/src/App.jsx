@@ -62,7 +62,9 @@ import { breakpoints } from "@mui/system";
 // NOTE: datadir + a subdir doesn't seem to work?
 let dataDir = "./data/";
 
-let imageDir = "./images/"; // Should use /public by default?
+// We are trying to host images externally now
+// let imageDir = "./images/"; // Should use /public by default?
+let imageDir = "https://raw.githubusercontent.com/ISET/isetdata/main/images/"; // Should use /public by default?
 let sensorDir = "./data/sensors/";
 
 let imageMetaData = require(dataDir + "metadata.json");

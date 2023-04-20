@@ -32,8 +32,8 @@
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
 %scenarioName = 'nighttime';
-%scenarioName = 'nighttime_No_Streetlamps';
-scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
+scenarioName = 'nighttime_No_Streetlamps';
+%scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
 
