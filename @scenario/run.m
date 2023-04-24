@@ -1,8 +1,8 @@
 function result = run(obj)
 % Run a specific scenario on a set of scenes
-switch obj.scenarioType
+switch obj.sourceType
     case 'isetscene'
         result = makeScenesFromRenders(obj.scenarioInput, ...
-            obj.scenarioParameters{:});
+            obj.lightingParameters{:});
 end
 end
