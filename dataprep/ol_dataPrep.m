@@ -32,7 +32,7 @@
 projectName = 'Ford';
 % Currently we have 3 lighting scenarios
 %scenarioName = 'nighttime';
-scenarioName = 'nighttime_No_Streetlamps';
+scenarioName = 'nighttime_No_StreetLamps';
 %scenarioName = 'daytime_20_500'; % day with 20*sky, 500 ml
 
 %% Set output folder
@@ -107,13 +107,13 @@ sceneFolder = fullfile(datasetFolder, 'SceneISET', scenarioName);
 sceneFileEntries = dir(fullfile(sceneFolder,'*.mat'));
 
 % for DEBUG: Limit how many scenes we use for testing to speed things up
-sceneNumberLimit = 3000;
+sceneNumberLimit = 441;
 numScenes = min(sceneNumberLimit, numel(sceneFileEntries));
 
 sceneFileNames = '';
 jj = 1;
-
-for ii = 1:numScenes
+startNum = 2501;
+for ii = startNum:startNum+numScenes
     sceneFileNames{jj} = fullfile(sceneFileEntries(ii).folder, sceneFileEntries(ii).name);
     jj = jj+1;
 end
@@ -123,7 +123,7 @@ end
 
 % Currently we can't use parfor without database because we concatenate onto
 % imagemetadataarray on all threads...
-parfor ii = 1:numScenes
+for ii = 1:numScenes
 
     fprintf("Scene %d\n", ii)
     % If we use parfor, each thread needs a db connection
