@@ -32,11 +32,16 @@ function documents = docFind(obj,collection, useQuery)
 %
 
 % Assume our db is open & query
+if isempty(obj)
+    obj = idb();    
+end
+
+%{
 if ~isopen(obj.connection)
     documents = -1; % oops!
     return;
 end
-
+%}
 
 try
     if isempty(useQuery)
