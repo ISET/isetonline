@@ -9,7 +9,19 @@ projectName = 'ISET3d'; % we currently use folders per project
 % /acorn/data/iset/iset3d-repo/data/scenes, and have the same name as their pbrt file
 
 % Enumerate scenes:
-sceneParentFolder = '/acorn/data/iset/iset3d-repo/data/scenes';
+
+pcDataRoot = 'y:\'; % place your local version here
+linuxDataRoot = '/acorn/';
+macDataRoot = '/Volumes'; % SOMETHING like this
+if ispc
+    dataRoot = pcDataRoot;
+else
+    dataRoot = linuxDataRoot;
+end
+
+sceneRelativePath = 'data/iset/iset3d-repo/data/scenes';
+sceneLocalParentFolder = fullfile(dataRoot, sceneRelativePath);
+sceneParentFolder = fullfile(dataRoot, sceneRelativePath);
 sceneFolders = dir(sceneParentFolder);
 
 sceneRecipeFiles = {};
@@ -48,23 +60,36 @@ end
 for ii = 1:numel(sceneRecipeFiles)
 
     % clear these
-    ourRecipe.fileName = sceneRecipeFiles{ii};
+    ourRecipe.fileName = fixPath(sceneRecipeFiles{ii});
 
     % get the scene id if needed
-    p = sceneRecipeFiles{ii}.folder;
-    ne = sceneRecipeFiles{ii}.name;
-    [~, n, e] = fileparts(sceneRecipeFiles{ii}.name);
+    [~, n, e] = fileparts(sceneRecipeFiles{ii});
+    ourRecipe.sceneID = n;
 
     % Project-specific metadata
     ourRecipe.project = "ISET3d";
     ourRecipe.creator = "Various";
     ourRecipe.sceneSource = "ISET3d Repo";
-    ourRecipe.sceneID = n;
-    ourRecipe.recipeFile = sceneRecipeFiles{ii};
+    ourRecipe.recipeFile = fixPath(sceneRecipeFiles{ii});
 
     % First store the original @recipe info
-    ourDB.store(ourRecipe, 'collection', recipeCollection);
+    ourDB.store(ourRecipe, 'collection', pbrtCollection);
 
 end
 
+function newPath = fixPath(oldPath)
 
+% Eventually improve how we pass these in:
+pcDataRoot = 'y:\'; % place your local version here
+linuxDataRoot = '/acorn/';
+macDataRoot = '/Volumes'; % SOMETHING like this
+
+if ispc
+        % swap pcDataRoot to linuxDataRoot
+        newPath = strrep(oldPath, pcDataRoot, linuxDataRoot);
+        newPath = dockerWrapper.pathToLinux(newPath);
+    else
+        newPath = oldPath;
+    end
+
+end
