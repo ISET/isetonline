@@ -7,8 +7,8 @@ classdef idb < handle
     % docker run --name mongodb -d -e MONGO_INITDB_ROOT_USERNAME=AzureDiamond -e MONGO_INITDB_ROOT_PASSWORD=hunter2 mongo
     %
     % setpref('db','server','acorn');
-    % Ask DJC about the port
-    % setpref('db','port',....)
+    % setpref('db','port',49153)
+    %
     % Typically we only connect to a single db instance, where our 
     % ISET data is kept. So make this the default
     methods (Static)
