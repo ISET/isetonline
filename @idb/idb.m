@@ -35,7 +35,7 @@ classdef idb < handle
         dbServer  = getpref('db','server','localhost');
         dbPort = getpref('db','port',27017); % port to use and connect to
 
-        % we don'w support username or password yet
+        % we don't support username or password yet
         dbUserName  = getpref('db','username','');
         dbPassword  = getpref('db','password','');
         
