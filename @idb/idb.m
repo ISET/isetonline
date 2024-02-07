@@ -85,16 +85,16 @@ classdef idb < handle
 
             try
                 obj.connection = mongoc(obj.dbServer, obj.dbPort, obj.dbName);
-                % sometimes this doesn't work the first time, but
-                % I don't know why. Try a pause
                 if isopen(obj.connection)
                     % ASSUME already created: obj.createSchema;
                     return; % not sure how we signal trouble?
                 else
-                    warning("unable to connect to database");
+                    warning("unable to connect to database server %s, port %d, database %s\n", ...
+                        obj.dbServer, obj.dbPort, Obj.dbName);
                 end
             catch
-                warning("Can't connect to mongoDB")
+                    warning("unable to connect to database server %s, port %d, database %s\n", ...
+                        obj.dbServer, obj.dbPort, Obj.dbName);
             end
         end
 
