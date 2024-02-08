@@ -14,6 +14,10 @@ assets = ourDB.connection.find(assetCollection);
 % array of thumbnails
 images = {};
 
+% NOTE: Currently this relies on having file system
+%       access to the thumbnail files, which is possible
+%       over WebDAV for local and VPN
+
 for ii = 1:numel(assets)
     if ~isempty(assets(ii).thumbnail) && isfile(assets(ii).thumbnail)% we've found a thumbnail to display
         images(end+1) = {assets(ii).thumbnail}; %#ok<SAGROW> 
