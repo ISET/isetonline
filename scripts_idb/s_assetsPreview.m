@@ -9,7 +9,7 @@ assetCollection = 'assetsPBRT';
 
 ourDB = isetdb();
 
-assets = ourDB.find(assetCollection);
+assets = ourDB.connection.find(assetCollection);
 
 % array of thumbnails
 images = {};
