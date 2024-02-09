@@ -23,6 +23,11 @@ s_storeISETSceneRecipes;
 fprintf("Storing PBRT-v4 Scene Recipes\n");
 s_storePBRTSceneRecipes;
 
+%% Currently we import Textures from ISETResources
+%  for the remoteRecipe case, each recipe has their own
+fprintf("Storing Textures from ISETResources\n");
+s_storeTextures;
+
 %% These are Auto specific, so have left them out of generic update
 % s_storeAutoAssets;
 % s_storeAutoSceneEXRData;
