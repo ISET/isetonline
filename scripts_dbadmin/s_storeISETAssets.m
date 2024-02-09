@@ -24,7 +24,7 @@ assetsLocalParentFolder = fullfile(dataRoot, assetsRelativePath);
 assetsParentFolder = fullfile(dataRoot, assetsRelativePath);
 assetFolders = dir(assetsParentFolder);
 
-assetRecipeFiles = {};
+assetMATFiles = {};
 
 for ii=1:numel(assetFolders)
     if assetFolders(ii).name(1)~='.'
@@ -33,6 +33,9 @@ for ii=1:numel(assetFolders)
         % Can't use fullfile as works backwards on Windows
         % (or use pathToLinux after it)
         assetMATFile = [fixPath(assetFolders(ii).folder) '/' assetFolders(ii).name];
+        
+        % now we have one to import
+        assetMATFiles{end+1} = assetMATFile; %#ok<SAGROW>
 
     end
 end
@@ -71,20 +74,20 @@ try
 catch
 end
 
-for ii = 1:numel(assetRecipeFiles)
+for ii = 1:numel(assetMATFiles)
 
     % clear these
-    ourAsset.fileName = fixPath(assetRecipeFiles{ii});
+    ourAsset.fileName = fixPath(assetMATFiles{ii});
 
     % get the scene id if needed
-    [~, n, e] = fileparts(assetRecipeFiles{ii});
+    [~, n, e] = fileparts(assetMATFiles{ii});
     ourAsset.assetID = n;
 
     % Project-specific metadata
     ourAsset.project = "ISET3d";
     ourAsset.creator = "Various";
     ourAsset.assetSource = "ISET3d Repo";
-    ourAsset.assetFile = fixPath(assetRecipeFiles{ii});
+    ourAsset.assetFile = fixPath(assetMATFiles{ii});
 
     % First store the original @recipe info
     ourDB.store(ourAsset, 'collection', assetCollection);
@@ -102,8 +105,8 @@ if ispc
         % swap pcDataRoot to linuxDataRoot
         newPath = strrep(oldPath, pcDataRoot, linuxDataRoot);
         newPath = dockerWrapper.pathToLinux(newPath);
-    else
+else
         newPath = oldPath;
-    end
+end
 
 end

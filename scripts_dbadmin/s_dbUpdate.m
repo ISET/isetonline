@@ -23,6 +23,12 @@ s_storeISETSceneRecipes;
 fprintf("Storing PBRT-v4 Scene Recipes\n");
 s_storePBRTSceneRecipes;
 
+%% Our main source of mergable assets is iset3d/data/assets
+s_storeISETAssets;
+
+% We don't try and merge Auto assets here, as they are a different
+% kind of thing.
+
 %% Currently we import Textures from ISETResources
 %  for the remoteRecipe case, each recipe has their own
 fprintf("Storing Textures from ISETResources\n");
