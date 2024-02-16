@@ -24,7 +24,11 @@ switch dbCollection
     case 'assets'
         foundDocuments = obj.connection.find('assets');
     case 'lenses'
-        foundDocuments = obj.connection.find('lenses');
+        
+        foundLenses = obj.connection.find('lenses');
+        % In this case we get a cell array
+        foundDocuments = [cellfun(@(x) x.name, foundLenses, 'UniformOutput',false)];
+
     case 'textures'
         foundDocuments = obj.connection.find('textures');
     case 'auto_scenes'
@@ -39,21 +43,23 @@ if isempty(foundDocuments)
     return
 end
 
+
+%% Common pretty-printing
+
 % Some objects (like ISET scenes) return a simple Struct Array
 % But other objects (like lenses) are more complex, so Matlab
 % returns them in a cell array with each element being the 
 % structure for one of the objects
-
 if iscell(foundDocuments)
-    foundDocuments = [foundDocuments{:}]; % maybe?
+    documentTable = cell2table(foundDocuments);
+else
+    % Drop _id column
+    foundDocuments = rmfield(foundDocuments,'_id');
+    documentTable = struct2table(foundDocuments);
 end
 
-%% Common pretty-printing
-% Drop _id column
-foundDocuments = rmfield(foundDocuments,'_id');
 
 %% Now we show the collection to the user
-documentTable = struct2table(foundDocuments);
 ourFigure = uifigure('Name', ['Showing: ' dbCollection],...
     'Position',[200 200 800 450]);
 
